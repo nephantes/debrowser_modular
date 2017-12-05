@@ -55,14 +55,14 @@ Imports:
     sva,
     shinydashboard,
     RCurl,
-    pathview,
     shinyBS,
-    googleAuthR
+    googleAuthR,
+    plotly
 RoxygenNote: 6.0.1
-Suggests: testthat,
-    rmarkdown,
-    knitr,
-    R.rsp
+Suggests: DESeq2,
+    EdgeR,
+    limma,
+    clusterProfiler
 VignetteBuilder: knitr,  R.rsp
 URL: https://github.com/UMMS-Biocore/debrowser
 BugReports: https://github.com/UMMS-Biocore/debrowser/issues/new

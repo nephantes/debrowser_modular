@@ -81,7 +81,6 @@
 #' @import V8
 #' @import shinydashboard
 #' @import shinyBS
-#' @import pathview
 #' @import googleAuthR
 
 deServer <- function(input, output, session) {
@@ -435,9 +434,10 @@ deServer <- function(input, output, session) {
                 condmsg$text <- getCondMsg(dc(), input$compselect,
                     cols(), conds())
                 selected$data <- getMainPanelPlots(filt_data(), 
-                    cols(), conds(), input, compselect)
+                    cols(), conds(), input, compselect, output)
             }
         })
+        
         observeEvent(input$startPlots, {
             startPlots()
         })
