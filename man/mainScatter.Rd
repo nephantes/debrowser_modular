@@ -4,13 +4,11 @@
 \alias{mainScatter}
 \title{mainScatter}
 \usage{
-mainScatter(dat = NULL, lb = NULL, data_tooltip = NULL, x = NULL,
-  y = NULL, domains = NULL, colors = NULL)
+mainScatter(dat = NULL, data_tooltip = NULL, x = NULL, y = NULL,
+  domains = NULL, colors = NULL)
 }
 \arguments{
 \item{dat, }{dataframe that has log2FoldChange and log10padj values}
-
-\item{lb, }{the linked brush}
 
 \item{data_tooltip, }{toolstip specific to this plot}
 

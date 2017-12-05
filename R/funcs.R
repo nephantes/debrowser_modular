@@ -63,7 +63,7 @@ getColors <- function(domains = NULL){
     colors <- c()
     for ( dn in seq(1:length(domains)) ){
     if (domains[dn] == "NS" || domains[dn] == "NA")
-        colors <- c(colors, "#aaa")
+        colors <- c(colors, "grey")
     else if (domains[dn] == "Up")
         colors <- c(colors, "green")
     else if (domains[dn] == "Down")

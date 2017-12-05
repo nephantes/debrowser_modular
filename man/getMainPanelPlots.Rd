@@ -5,7 +5,7 @@
 \title{getMainPanelPlots}
 \usage{
 getMainPanelPlots(filt_data = NULL, cols = NULL, conds = NULL,
-  input = NULL, compselect = NULL)
+  input = NULL, compselect = NULL, output = NULL)
 }
 \arguments{
 \item{filt_data, }{filtered data}
@@ -17,6 +17,8 @@ getMainPanelPlots(filt_data = NULL, cols = NULL, conds = NULL,
 \item{input, }{input from ui}
 
 \item{compselect, }{selected comparison number}
+
+\item{output, }{output}
 }
 \value{
 panel

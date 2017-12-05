@@ -14,14 +14,14 @@
 #'
 getMainPanel <- function(randstr = NULL) {
     if (is.null(randstr)) return (NULL)
-    a <- list(
-    column( 6, wellPanel( ggvisOutput(
-            paste0("vplot1-",randstr)) ) ),
-    column( 6, wellPanel( ggvisOutput(
-    paste0("vplot2-",randstr)
+    list(
+        column( 6, wellPanel( plotlyOutput(
+            "vplot1") ) ),
+        column( 6, wellPanel( plotlyOutput(
+            "vplot2"
         ) ) ),
-        column( 6, wellPanel( ggvisOutput("plot3") ) ),
-        column( 6, wellPanel( ggvisOutput("plot4") ) )) 
+        column( 6, wellPanel( plotlyOutput("vplot3") ) ),
+        column( 6, wellPanel( plotlyOutput("vplot4") ) )) 
 }
 
 #' getMainPanelPlots
@@ -33,6 +33,7 @@ getMainPanel <- function(randstr = NULL) {
 #' @param conds, seleced conditions
 #' @param input, input from ui
 #' @param compselect, selected comparison number
+#' @param output, output
 #' @return panel
 #' @export
 #'
@@ -41,16 +42,12 @@ getMainPanel <- function(randstr = NULL) {
 #'
 getMainPanelPlots <- function(filt_data = NULL, 
     cols = NULL, conds = NULL,
-    input = NULL, compselect = NULL) {
+    input = NULL, compselect = NULL, output = NULL) {
     if (is.null(filt_data) || 
         is.null(cols) || is.null(conds) ||
         is.null(input$padjtxt) || is.null(input$foldChangetxt)  )
             return(NULL)
 
-    lb <- link_brush()
-    x <- paste0("Cond", 2*compselect - 1) 
-    y <- paste0("Cond", 2*compselect) 
-    
     domains <- getDomains(filt_data)
     colors <- getColors(domains)
     randstr <- reactive({
@@ -65,66 +62,77 @@ getMainPanelPlots <- function(filt_data = NULL,
     else
        filt_data_rand  <- filt_data_NS
     filt_data <- rbind(filt_data_rand, filt_data_rest)
-    type <- input$mainplot
+    dat <-c()
     if (input$mainplot == "volcano") {
-        volcano_dat <- reactive({
         filt_data[which(!is.na(filt_data$log2FoldChange)
-                        & !is.na(filt_data$log10padj)
-                        & !is.na(filt_data$Legend)),]
-        })
-        volcano_selected <- reactive({
-        volcano_dat()[lb$selected(), ]
-        })
-        volcano_dat1 <- reactive({volcano_dat()})
-        volcano_dat1 %>% volcanoPlot(lb,  data_tooltip, domains, colors) %>%
-        bind_shiny(paste0("vplot1-", randstr()))
-        volcano_selected %>% volcanoZoom(data_tooltip, domains, colors) %>%
-        bind_shiny(paste0("vplot2-", randstr()))
-    } else if (input$mainplot == "scatter") {
-        gene_selected <- reactive({
-        filt_data[lb$selected(), ]
-        })
-        filt_data %>% mainScatter(lb, data_tooltip, x, y, domains, colors) %>% 
-        bind_shiny(paste0("vplot1-", randstr()))
-        gene_selected %>% scatterZoom(data_tooltip, x, y, domains, colors) %>% 
-        bind_shiny(paste0("vplot2-", randstr()))
-    } else if (input$mainplot == "maplot") {
-        ma_dat <- reactive({
+                    & !is.na(filt_data$log10padj)
+                    & !is.na(filt_data$Legend)),]
         dat <- filt_data
-        dat$M <- filt_data$x - filt_data$y
-        dat$A <- (filt_data$x + filt_data$y) / 2
-        return(dat)
-        })
-        ma_dat1 <- reactive({ma_dat()})
-        ma_selected <- reactive({
-        ma_dat1()[lb$selected(), ]
-        })
-        ma_dat1 %>% MAPlot(lb, data_tooltip, domains, colors) %>% 
-        bind_shiny(paste0("vplot1-", randstr()))
-        ma_selected %>% MAZoom(data_tooltip, domains, colors) %>% 
-        bind_shiny(paste0("vplot2-", randstr()))
+        dat$x <- filt_data$log2FoldChange
+        dat$y <- filt_data$log10padj
+        x <- "log2FoldChange"
+        y <- "log10padj"
+    } else if (input$mainplot == "scatter") {
+        x <- paste0("Cond", 2*compselect - 1) 
+        y <- paste0("Cond", 2*compselect) 
+        dat <- filt_data
+    } else if (input$mainplot == "maplot") {
+        dat <- filt_data
+        dat$x <- (filt_data$x + filt_data$y) / 2
+        dat$y <- filt_data$x - filt_data$y
+        x <- "A"
+        y <- "M"
     }
-    # Function for generating tooltip text
-    data_tooltip <- function(dd) {
-        if (is.null(dd) || is.null(dd$ID)) return(NULL)
-        f <- filt_data
-        # Pick out the gene with this ID
-        dat <- f[f$ID == dd$ID, ]
-        bardata <- as.data.frame(cbind(cols,
-            t(dat[, cols]), conds) )
-        getHoverPlots(bardata, dat$ID)
-        paste0(getToolTipText(dat))
-    }
-    getSelected <- reactive({
-        m <- NULL
-        if (input$mainplot == "volcano" && type == "volcano") {
-            m <- volcano_selected()
-        } else if (input$mainplot == "scatter" && type == "scatter") {
-            m <- gene_selected()
-        } else if (input$mainplot == "maplot"  && type == "maplot") {
-            m <- ma_selected()
+
+    
+    scatter_plot <- reactive({ 
+        mainScatter(dat, x, y, domains, colors)
+    })
+    
+    selectedPoint <- reactive({
+        eventdata <- event_data("plotly_click", source = "source")
+        if (is.null(eventdata)){
+            eventdata <- event_data("plotly_hover", source = "source")
+            validate(need(!is.null(eventdata), "Hover over the main plots to show "))
         }
-        m
+        f <-dat
+        datapoint <- as.numeric(eventdata$pointNumber)[1]
+        return(datapoint+1)
+    })
+
+    getSelected  <- reactive({
+        selected <- event_data("plotly_selected", source = "source")
+        dat[(as.numeric(selected$pointNumber)[1] + 1),]
+    })
+    
+    output$vplot1 <- renderPlotly({
+        scatter_plot()
+    })
+    output$vplot2 <- renderPlotly({
+        
+    })
+    output$vplot3 <- renderPlotly({
+        
+        # Get point number
+        datapoint <- selectedPoint()
+        
+        f <- dat
+        # Pick out the gene with this ID
+        data <- f[datapoint, ]
+        genename <- data$ID
+        bardata <- as.data.frame(cbind(cols,
+            t(data[, cols]), conds) )
+        colnames(bardata) <- c("libs", "count", "conds")
+        bardata$count <- as.numeric(as.character(bardata$count))
+        data <- rbind(bardata[bardata$conds == levels(bardata$conds)[1], ],
+            bardata[bardata$conds == levels(bardata$conds)[2], ])    
+        title3 <- paste(genename, " variation")
+        plot_ly(data, x = ~libs, y = ~count, color = ~conds, colors=c("Red", "Blue"))%>% 
+           layout(title = title3,
+           xaxis = list(title = "Samples"),
+           yaxis = list(title = "Read Count"))
+    })
+    output$vplot4 <- renderPlotly({
     })
     list( getSelected = isolate(getSelected), 
         randstr=isolate(randstr) )
