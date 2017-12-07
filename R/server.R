@@ -76,6 +76,7 @@
 #' @import shinydashboard
 #' @import shinyBS
 #' @import plotly
+#' @import heatmaply
 #' @import googleAuthR
 
 deServer <- function(input, output, session) {
@@ -559,7 +560,7 @@ deServer <- function(input, output, session) {
                     scientific = TRUE, digits = 3 )
             rcols <- names(dat2)[!(names(dat2) %in% pcols)]
             dat2[,  rcols] <- apply(dat2[,  rcols], 2,
-                                    function(x) round( as.numeric(x), digits = 2))  
+                function(x) round( as.numeric(x), digits = 2))  
             dat[[1]] <- dat2
             return(dat)
         })

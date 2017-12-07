@@ -75,6 +75,20 @@ getColors <- function(domains = NULL){
     } 
     colors
 }
+#' getCondColors
+#'
+#' get Condition colors for the domains 
+#'
+
+#' @return colors
+#' @export
+#'
+#' @examples
+#'     x<-getCondColors()
+#'
+getCondColors <- function(){
+    c("red3", "dodgerblue")
+}
 
 #' Get the logged in user's email and other info
 #' 

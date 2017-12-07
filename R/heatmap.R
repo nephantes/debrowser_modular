@@ -28,11 +28,9 @@ runHeatmap <- function(data, title="Title", dend = "both",
         "manhattan", "canberra", "binary", "minkowski"), 
     interactive = FALSE) {
     if(is.null(data)) return(NULL)
-    if (nrow(data)>5000)
-        data <- data[1:5000, ]
-    ld <- log2(data + 0.1)
-    cldt <- scale(t(ld), center = TRUE, scale = TRUE)
-    cld <- t(cldt)
+    
+    cld <- prepHeatData(data)
+    
     hclust2 <- function(x, ...) hclust(x, method = clustering_method)
     dist2 <- function(x, ...) {
         if (distance_method != "cor") {
@@ -59,7 +57,28 @@ runHeatmap <- function(data, title="Title", dend = "both",
     }
     m
 }
-
+#' prepHeatData
+#'
+#' scales the data
+#'
+#' @param data, a matrixthat includes expression values
+#' @return heatdata
+#'
+#' @examples
+#'     x <- prepHeatData(mtcars)
+#'
+#' @export
+#'
+prepHeatData <- function(data) 
+{
+    if(is.null(data)) return(NULL)
+    if (nrow(data)>5000)
+        data <- data[1:5000, ]
+    ld <- log2(data + 0.1)
+    cldt <- scale(t(ld), center = TRUE, scale = TRUE)
+    cld <- t(cldt)
+    return(cld)
+}
 
 #' getIntHeatmap
 #'

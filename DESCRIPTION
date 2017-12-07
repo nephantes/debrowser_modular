@@ -57,6 +57,7 @@ Imports:
     shinyBS,
     googleAuthR,
     plotly,
+    heatmaply,
     knitr,
     R.rsp,
     testthat

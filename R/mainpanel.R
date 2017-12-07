@@ -12,12 +12,23 @@
 #' @export
 #'
 getMainPanel <- function() {
-    list(fluidRow(splitLayout(cellWidths = c("50%", "50%"),
-            absolutePanel( draggable = T, resizable = T, plotlyOutput("vplot1") ),
-            absolutePanel( draggable = T, resizable = T, plotlyOutput("vplot2") ) ),
-            splitLayout(cellWidths = c("50%", "50%"),
-            absolutePanel( draggable = T, resizable = T, plotlyOutput("vplot3") ),
-            absolutePanel( draggable = T, resizable = T, plotlyOutput("vplot4") ) ) ))
+    list(fluidRow(
+         column(12,
+         splitLayout(cellWidths = c("50%", "50%"),
+                     box(
+                         collapsible = TRUE, title = "Main Plot", status = "primary", solidHeader = TRUE, width = NULL,
+                         draggable = T, plotlyOutput("vplot1") ),
+                     box(
+                         collapsible = TRUE, title = "Heatmap", status = "primary", solidHeader = TRUE, width = NULL,
+                         draggable = T,  plotlyOutput("vplot2") )) ),
+         column(12,
+         splitLayout(cellWidths = c("50%", "50%"),
+                     box(
+                         collapsible = TRUE, title = "Biological Variation", status = "primary", solidHeader = TRUE, width = NULL,
+                         draggable = T,plotlyOutput("vplot3") ) ,
+                     box(
+                         collapsible = TRUE, title = "Box Plot", status = "primary", solidHeader = TRUE, width = NULL,
+                         draggable = T, plotlyOutput("vplot4") ) ) ) ) )
 }
 
 #' getMainPanelPlots
@@ -44,8 +55,6 @@ getMainPanelPlots <- function(filt_data = NULL,
         is.null(input$padjtxt) || is.null(input$foldChangetxt)  )
             return(NULL)
 
-    domains <- getDomains(filt_data)
-    colors <- getColors(domains)
     filt_data_rest <- filt_data[ filt_data$Legend!="NS",]
     filt_data_NS <- filt_data[ filt_data$Legend=="NS",]
     datapoints <- as.integer(nrow(filt_data_NS) * input$backperc / 100)
@@ -55,24 +64,21 @@ getMainPanelPlots <- function(filt_data = NULL,
     else
        filt_data_rand  <- filt_data_NS
     plot_init_data <- rbind(filt_data_rand, filt_data_rest)
-    plot_init_data$Legend  <- factor(plot_init_data$Legend  , levels = c("NS", "Up", "Down" ))
+    plot_init_data$Legend  <- factor(plot_init_data$Legend  , levels = unique(plot_init_data$Legend))
     
-    plot_data <-c()
+    plot_data <- plot_init_data
     if (input$mainplot == "volcano") {
-        plot_init_data[which(!is.na(plot_init_data$log2FoldChange)
+        plot_data <- plot_init_data[which(!is.na(plot_init_data$log2FoldChange)
                     & !is.na(plot_init_data$log10padj)
                     & !is.na(plot_init_data$Legend)),]
-        plot_data <- plot_init_data
-        plot_data$x <- plot_init_data$log2FoldChange
-        plot_data$y <- plot_init_data$log10padj
+        plot_data$x <- plot_data$log2FoldChange
+        plot_data$y <- plot_data$log10padj
         x <- "log2FC"
         y <- "log10padj"
     } else if (input$mainplot == "scatter") {
-        x <- paste0("Cond", 2*compselect - 1) 
-        y <- paste0("Cond", 2*compselect) 
-        plot_data <- plot_init_data
+        x <-  paste0("Cond", 2*compselect)
+        y <-  paste0("Cond", 2*compselect - 1) 
     } else if (input$mainplot == "maplot") {
-        plot_data <- plot_init_data
         plot_data$x <- (plot_init_data$x + plot_init_data$y) / 2
         plot_data$y <- plot_init_data$x - plot_init_data$y
         x <- "A"
@@ -101,6 +107,8 @@ getMainPanelPlots <- function(filt_data = NULL,
         bardata$count <- as.numeric(as.character(bardata$count))
         data <- rbind(bardata[bardata$conds == levels(bardata$conds)[1], ],
                       bardata[bardata$conds == levels(bardata$conds)[2], ])
+        data$conds  <- factor(data$conds  , levels = unique(data$conds))
+        data
     })
     getSelected  <- reactive({
         selected <- event_data("plotly_selected", source = "source")
@@ -110,29 +118,36 @@ getMainPanelPlots <- function(filt_data = NULL,
     output$vplot1 <- renderPlotly({
         scatter_plot
     })
+    
     output$vplot2 <- renderPlotly({
-        
+        cld <- prepHeatData(filt_data_rest[,cols])
+        p <- heatmaply(source = "source", cld, type="heatmap", colors = bluered(256), k_row = 3, k_col = 2)
+        p$elementId <- NULL
+        p
     })
+
     output$vplot3 <- renderPlotly({
         vardata <- getVariationData()
         title <- paste(vardata$genename, " variation")
-        p <- plot_ly(vardata, x = ~libs, y = ~count, type = "bar",
-            colors=~c("Red", "Blue"))%>%
+        p <- plot_ly(vardata, x = ~libs, y = ~count, 
+           color=~conds, colors=getCondColors(), type = "bar") %>%
            layout(title = title,
-           xaxis = list(title = "Samples"),
+           xaxis = list(title = "Samples",categoryorder = "array", 
+               categoryarray = vardata$libs),
            yaxis = list(title = "Read Count"),
            margin = list(pad=10))
         p$elementId <- NULL
         p
     })
     output$vplot4 <- renderPlotly({
-        data <- getVariationData()
-        title <- paste(data$ID, " variation")
-        p <- plot_ly(data, x = ~conds, y = ~count, 
-            boxpoints = "all", type = "box")%>%
+        vardata <- getVariationData()
+        title <- paste(vardata$genename, " variation")
+        p <- plot_ly(vardata, x = ~conds, y = ~count, 
+            color=~conds, colors=getCondColors(),
+            boxpoints = "all", type = "box") %>%
             layout(title = title,
-                   xaxis = list(title = "Conditions"),
-                   yaxis = list(title = "Read Count"))
+               xaxis = list(title = "Conditions"),
+               yaxis = list(title = "Read Count"))
         p$elementId <- NULL
         p
     })

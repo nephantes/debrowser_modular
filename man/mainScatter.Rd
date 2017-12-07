@@ -4,19 +4,14 @@
 \alias{mainScatter}
 \title{mainScatter}
 \usage{
-mainScatter(dat = NULL, x = NULL, y = NULL, domains = NULL,
-  colors = NULL)
+mainScatter(data = NULL, x = NULL, y = NULL)
 }
 \arguments{
-\item{dat, }{dataframe that has log2FoldChange and log10padj values}
+\item{data, }{dataframe that has log2FoldChange and log10padj values}
 
 \item{x, }{the name of the x coordinate}
 
 \item{y, }{the name of the y coordinate}
-
-\item{domains, }{the domains to be colored}
-
-\item{colors, }{colors for each domain}
 }
 \value{
 volcano plot

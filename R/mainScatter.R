@@ -3,7 +3,7 @@
 #' Creates the main scatter plot to be displayed within the main
 #' panel.
 #'
-#' @param dat, dataframe that has log2FoldChange and log10padj values
+#' @param data, dataframe that has log2FoldChange and log10padj values
 #' @param x, the name of the x coordinate
 #' @param y, the name of the y coordinate
 #' @return volcano plot
