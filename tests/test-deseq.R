@@ -16,14 +16,9 @@ test_that("Able to run DESeq2", {
     expect_true(exists("deseqrun"))
 })
 
-test_that("Linked brush initialization", {
-    expect_silent( lb <- linked_brush())
-    expect_true(exists("lb"))
-})
 
 ##################################################
 deseqrun <- runDESeq(data, columns, conds)
-lb <- linked_brush()
 
 de_res <- data.frame(deseqrun)
 norm_data <- getNormalizedMatrix(data[, columns])
@@ -67,24 +62,5 @@ test_that("Check the QC plots", {
 
     heatmap <- runHeatmap(mtcars)
     expect_false( is.null(heatmap) )
-    expect_silent( MAP <- MAPlot(dat, lb) )
-    expect_false( is.null(MAP) )
-
-    expect_silent( test_scat <- mainScatter(rdata, lb, 
-        x="Cond1", y="Cond2") )
-    expect_false(is.null(test_scat))
-    expect_silent( test_scat_zoom <- scatterZoom(rdata,
-        x="Cond1", y="Cond2") )
-    expect_false(is.null(test_scat_zoom))
-
-    expect_silent( test_volc <- volcanoPlot(rdata, lb) )
-    expect_false(is.null(test_volc))
-    expect_silent( test_volc_zoom <- volcanoZoom(rdata) )
-    expect_false(is.null(test_volc_zoom))
-
-    expect_silent( test_ma <- MAPlot(dat, lb) )
-    expect_false(is.null(test_ma))
-    expect_silent( test_ma_zoom <- MAZoom(dat) )
-    expect_false(is.null(test_ma_zoom))
 })
 

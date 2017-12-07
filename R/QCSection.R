@@ -26,8 +26,8 @@ getQCPanel <- function(input = NULL) {
         conditionalPanel(condition = "input.qcplot == 'IQR' 
                          || input.qcplot == 'Density'
                          || input.qcplot == 'pca'",
-            column(12, ggvisOutput("ggvisQC1")),
-            column(12, ggvisOutput("ggvisQC2"))
+            column(12, plotlyOutput("plotQC1")),
+            column(12, plotlyOutput("plotQC2"))
         ),
         conditionalPanel(condition = 
             "(!(input.interactive && input.qcplot == 'heatmap'))",
@@ -50,7 +50,6 @@ getQCPanel <- function(input = NULL) {
 #'
 #' Gathers the conditional panel for interactive heatmap
 #'
-#' @param randstr, randstr
 #' @note \code{getIntHeatmapVis}
 #' @return the panel interactive heatmap
 #'
@@ -59,12 +58,11 @@ getQCPanel <- function(input = NULL) {
 #'
 #' @export
 #'
-getIntHeatmapVis <- function(randstr = NULL) {
-    if (is.null(randstr)) return(NULL)
+getIntHeatmapVis <- function() {
     intHeatmap <- list(
     conditionalPanel(condition = 
         "(input.qcplot == 'heatmap' && input.interactive)",
-        column(12, ggvisOutput(paste0("heatmapplot-", randstr)))
+        column(12, plotlyOutput("heatmapplot"))
     ))
     return(intHeatmap)
 }
@@ -104,8 +102,8 @@ getQCPlots <- function(dataset = NULL, input = NULL,
                 size = 5, shape = sc$shape,
                 textonoff = sc$textonoff, 
                 legendSelect = sc$legendSelect )
-            pcaplot %>% bind_shiny("ggvisQC1")
-            drawPCAExplained %>%  bind_shiny("ggvisQC2")
+            #pcaplot %>% bind_shiny("ggvisQC1")
+            #drawPCAExplained %>%  bind_shiny("ggvisQC2")
             
         } else if (input$qcplot == "IQR" || input$qcplot == "Density" ) {
             prepAddQCPlots(dataset, input)
@@ -250,14 +248,14 @@ getIQRPlot <- function(data=NULL, cols=NULL, title = ""){
     mdata <- melt(as.data.frame(data[,c("ID", cols)]),"ID")
     colnames(mdata)<-c("ID", "samples", "logcount")
     ypos <- -5 * max(nchar(as.vector(mdata$samples)))
-    visIQR <- mdata %>%
-        ggvis(x = ~samples, y = ~logcount, fill := "green") %>%
-        layer_boxplots() %>% 
-        set_options(width = "auto", height = 350, resizable=TRUE) %>%
-        add_title_pos(title = "", angle = 310,
-            dy = ypos, dx = 0) %>%
-        add_tooltip(getToolTipPCA, "hover") %>%
-        add_axis("y", title = "logcount")
+    #visIQR <- mdata %>%
+    #    ggvis(x = ~samples, y = ~logcount, fill := "green") %>%
+    #    layer_boxplots() %>% 
+    #    set_options(width = "auto", height = 350, resizable=TRUE) %>%
+    #    add_title_pos(title = "", angle = 310,
+    #        dy = ypos, dx = 0) %>%
+    #    add_tooltip(getToolTipPCA, "hover") %>%
+    #    add_axis("y", title = "logcount")
 }
 
 #' getDensityPlot
@@ -283,14 +281,14 @@ getDensityPlot <- function(data=NULL, cols=NULL, title = ""){
     mdata <- melt(as.data.frame(data[,c("ID", cols)]),"ID")
     colnames(mdata)<-c("ID", "samples", "density")
     ypos <- -5 * max(nchar(as.vector(mdata$samples)))
-    visDensity <- mdata %>%
-        ggvis(~density, fill = ~samples) %>%
-        group_by(samples) %>%
-        set_options(width = "auto", height = 350, resizable=TRUE) %>%
-        layer_densities() %>% 
-        add_axis("x", title = "logcount") %>%
-        add_tooltip(getToolTipPCA, "hover") %>%
-        add_axis("y", title = "density")
+    #visDensity <- mdata %>%
+    #    ggvis(~density, fill = ~samples) %>%
+    #    group_by(samples) %>%
+    #    set_options(width = "auto", height = 350, resizable=TRUE) %>%
+    #    layer_densities() %>% 
+    #    add_axis("x", title = "logcount") %>%
+    #    add_tooltip(getToolTipPCA, "hover") %>%
+    #    add_axis("y", title = "density")
 }
 
 #' prepAddQCPlots
@@ -311,19 +309,19 @@ prepAddQCPlots <- function(data=NULL, input=NULL){
     if(!is.null(input$qcplot)){
         if (input$qcplot == "IQR"){
             getIQRPlot(data, colnames(data), 
-                "IQR Plot(Before Normalization)") %>% 
-                bind_shiny("ggvisQC1")
+                "IQR Plot(Before Normalization)")
+                #bind_shiny("ggvisQC1")
             getIQRPlot(getNormalizedMatrix(data, input$norm_method), 
-                colnames(data), "IQR Plot(After Normalization)") %>% 
-                bind_shiny("ggvisQC2")
+                colnames(data), "IQR Plot(After Normalization)")
+                #bind_shiny("ggvisQC2")
         }
         else if (input$qcplot == "Density"){
             getDensityPlot(data, colnames(data), 
-                "Density Plot(Before Normalization)") %>% 
-                bind_shiny("ggvisQC1")
+                "Density Plot(Before Normalization)") 
+                #bind_shiny("ggvisQC1")
             getDensityPlot(getNormalizedMatrix(data, input$norm_method), 
-                colnames(data), "Density Plot(After Normalization)") %>% 
-                bind_shiny("ggvisQC2")    
+                colnames(data), "Density Plot(After Normalization)")
+                #bind_shiny("ggvisQC2")    
         }
     }
 }

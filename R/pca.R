@@ -79,26 +79,26 @@ plot_pca <- function(dat = NULL, pcx = 1, pcy = 2,
         yaxis <- sprintf("PC%d (%.2f%%)", pcy,
             round(explained[pcy] * 100, 2))
 
-        a <- p_data %>% ggvis(x = ~x, y = ~y) %>% 
-            layer_points(size := 100, 
-                fill =~ color, shape =~ shape, key := ~samples) %>%
-            add_tooltip(getToolTipPCA, "hover") %>%
-            add_axis("x", title = xaxis) %>%
-            add_axis("y", title = yaxis) %>%
-            set_options(duration = 0, width = "auto", height = "auto", 
-                resizable = TRUE)
-        if (textonoff == "On")
-            a <- a %>% layer_text(text := ~samples,  fontSize := 12, 
-                       align := "left", baseline := "bottom", stroke := "black")
-        if (legendSelect == "color") {
-            a <- a %>% hide_legend("shape") %>%
-            add_legend("fill")
-        }
-        else{
-            a <- a %>% hide_legend("fill") %>%
-            add_legend("shape")
-        }
-        a
+        #a <- p_data %>% ggvis(x = ~x, y = ~y) %>% 
+        #    layer_points(size := 100, 
+        #        fill =~ color, shape =~ shape, key := ~samples) %>%
+        #    add_tooltip(getToolTipPCA, "hover") %>%
+        #    add_axis("x", title = xaxis) %>%
+        #    add_axis("y", title = yaxis) %>%
+        #    set_options(duration = 0, width = "auto", height = "auto", 
+        #        resizable = TRUE)
+        #if (textonoff == "On")
+        #    a <- a %>% layer_text(text := ~samples,  fontSize := 12, 
+        #               align := "left", baseline := "bottom", stroke := "black")
+        #if (legendSelect == "color") {
+        #    a <- a %>% hide_legend("shape") %>%
+        #    add_legend("fill")
+        #}
+        #else{
+        #    a <- a %>% hide_legend("fill") %>%
+        #    add_legend("shape")
+        #}
+        #a
 }
 
 #' getToolTipPCA
@@ -186,10 +186,10 @@ getPCAexplained <- function(datasetInput = NULL,
 drawPCAExplained <- function(explainedData = NULL){
     a <- NULL
     if (is.null(explainedData)) return(NULL)
-    a <- explainedData %>% ggvis(x = ~PCs, y = ~explained) %>% 
-        layer_bars() %>%
-        set_options(width = "auto", height = "auto", resizable = TRUE ) %>%
-        scale_ordinal('x', domain=explainedData$PCs)
+    #a <- explainedData %>% ggvis(x = ~PCs, y = ~explained) %>% 
+    #    layer_bars() %>%
+    #    set_options(width = "auto", height = "auto", resizable = TRUE ) %>%
+    #    scale_ordinal('x', domain=explainedData$PCs)
     a
 }
 

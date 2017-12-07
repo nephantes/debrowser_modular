@@ -4,10 +4,7 @@
 \alias{getMainPanel}
 \title{getMainPanel}
 \usage{
-getMainPanel(randstr = NULL)
-}
-\arguments{
-\item{randstr, }{random string for the plot containers}
+getMainPanel()
 }
 \value{
 the panel for main plots;

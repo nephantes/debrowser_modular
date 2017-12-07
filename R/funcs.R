@@ -65,13 +65,13 @@ getColors <- function(domains = NULL){
     if (domains[dn] == "NS" || domains[dn] == "NA")
         colors <- c(colors, "grey")
     else if (domains[dn] == "Up")
-        colors <- c(colors, "green")
-    else if (domains[dn] == "Down")
         colors <- c(colors, "red")
+    else if (domains[dn] == "Down")
+        colors <- c(colors, "blue")
     else if (domains[dn] == "MV")
         colors <- c(colors, "orange")
     else if (domains[dn] == "GS")
-        colors <- c(colors, "blue")
+        colors <- c(colors, "green")
     } 
     colors
 }

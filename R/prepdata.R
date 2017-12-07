@@ -275,23 +275,31 @@ applyFilters <- function(filt_data = NULL, cols = NULL, conds=NULL,
     m <- filt_data
     # Add column which says whether a gene significant or not
     m$Legend <- character(nrow(m))
-    m$Size <- character(nrow(m))
-    m[, "Size"] <- "40"
+    m$Color <- character(nrow(m))
+    m[, "Color"] <- "Grey"
     m$Legend <- "NS"
-    if (input$dataset == "up" || input$dataset == "up+down") 
+    if (input$dataset == "up" || input$dataset == "up+down"){
         m$Legend[m$foldChange >= foldChange_cutoff &
                m$padj <= padj_cutoff] <- "Up"
-    if (input$dataset == "down" || input$dataset == "up+down")
+        m$Color[m$foldChange >= foldChange_cutoff &
+                     m$padj <= padj_cutoff] <- "Red"
+    }
+    if (input$dataset == "down" || input$dataset == "up+down"){
         m$Legend[m$foldChange <= (1 / foldChange_cutoff) &
                m$padj <= padj_cutoff] <- "Down"
+        m$Color[m$foldChange <= (1 / foldChange_cutoff) &
+                     m$padj <= padj_cutoff] <- "Blue"
+    }
     if (input$dataset == "most-varied" && !is.null(cols)) {
         most_varied <- getMostVariedList(m, cols, input)
         m[rownames(most_varied), c("Legend")] <- "MV"
+        m[rownames(most_varied), c("Color")] <- "orange"
     }
     if (input$dataset == "selected" &&
         !is.null(input$genenames)) {
         selectedGenes <- unlist(strsplit(input$genenames, ","))
         m[selectedGenes, c("Legend")] <- "GS"
+        m[selectedGenes, c("Color")] <- "green"
     }
     if (!is.null(input$genesetarea) && input$genesetarea != ""
         && input$methodtabs == "panel1") {

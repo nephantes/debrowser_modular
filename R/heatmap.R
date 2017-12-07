@@ -96,12 +96,8 @@ getIntHeatmap <- function(data = NULL,  input = NULL, inputQCPlot = NULL) {
 #'
 getSelHeat <- function(data=NULL, input = NULL) {
     if (is.null(input)) return(NULL)
-    randstr <- reactive({
-        stri_rand_strings(n=1, length=8, pattern="[A-Za-z0-9]")
-    })
     getSelected <- reactive({
         selectedData <- data[unlist(strsplit(input, ",")), ]
     })
-    list( getSelected = isolate(getSelected), 
-        randstr=isolate(randstr) )
+    list( getSelected = isolate(getSelected) )
 }

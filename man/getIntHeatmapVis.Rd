@@ -4,10 +4,7 @@
 \alias{getIntHeatmapVis}
 \title{getIntHeatmapVis}
 \usage{
-getIntHeatmapVis(randstr = NULL)
-}
-\arguments{
-\item{randstr, }{randstr}
+getIntHeatmapVis()
 }
 \value{
 the panel interactive heatmap

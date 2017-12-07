@@ -34,12 +34,6 @@
 #' @importFrom ggplot2 aes aes_string geom_bar geom_point ggplot
 #'             labs scale_x_discrete scale_y_discrete ylab
 #'             autoplot
-#' @importFrom ggvis add_axis add_legend add_tooltip axis_props
-#'             bind_shiny create_broker ggvis ggvisOutput handle_brush
-#'             hide_legend layer_bars layer_boxplots layer_points
-#'             scale_nominal set_options %>% group_by layer_rects
-#'             band scale_numeric hide_axis layer_densities scale_ordinal
-#'             layer_text
 #' @importFrom gplots heatmap.2 redblue
 #' @importFrom igraph layout.kamada.kawai  
 #' @importFrom grDevices dev.off pdf
@@ -81,11 +75,12 @@
 #' @import V8
 #' @import shinydashboard
 #' @import shinyBS
+#' @import plotly
 #' @import googleAuthR
 
 deServer <- function(input, output, session) {
     #library(debrowser)
-    #library(googleAuthR)
+    library(googleAuthR)
     enableBookmarking("server")
     tryCatch(
     {
@@ -198,10 +193,7 @@ deServer <- function(input, output, session) {
             getProgramTitle(session)
         })
         output$mainpanel <- renderUI({
-            debrowser_mainpanel <- NULL
-            if (!is.null(randstr()))
-                debrowser_mainpanel <- getMainPanel(randstr())
-            debrowser_mainpanel
+            getMainPanel()
         })
         output$qcpanel <- renderUI({
             getQCPanel(input)
@@ -362,7 +354,6 @@ deServer <- function(input, output, session) {
             init_data <- NULL 
             togglePanels(1, c( 0, 1, 2, 3, 4), session)
             choicecounter$qc <- 0
-            selected$data$randstr <- NULL
         })
         observeEvent(input$goQCplots, {
             choicecounter$qc <- 1
@@ -399,12 +390,6 @@ deServer <- function(input, output, session) {
                 applyFilters(init_data(), isolate(cols()), 
                     isolate(conds()), input)
             }
-        })
-        randstr <- reactive({ 
-            tmpRand<-NULL
-            if (!is.null(selected$data$randstr))
-                tmpRand<-selected$data$randstr() 
-            tmpRand
         })
         selected <- reactiveValues(data = NULL)
         observe({
@@ -528,10 +513,10 @@ deServer <- function(input, output, session) {
                     isolate(edat$val$pcaset))
             genedata <- getEntrezIds(dat[[1]], org)
             i <- input$gotable_rows_selected
-            pv.out <- pathview::pathview(gene.data = genedata, 
-                      pathway.id = inputGOstart()$table$ID[i],
-                      species = substr(inputGOstart()$table$ID[i],0,3), 
-                      out.suffix = "b.2layer", kegg.native = T)
+            #pv.out <- pathview::pathview(gene.data = genedata, 
+            #          pathway.id = inputGOstart()$table$ID[i],
+            #          species = substr(inputGOstart()$table$ID[i],0,3), 
+            #          out.suffix = "b.2layer", kegg.native = T)
             list(src = paste0(inputGOstart()$table$ID[i],".b.2layer.png"),
                  contentType = 'image/png')
         }, deleteFile = TRUE)

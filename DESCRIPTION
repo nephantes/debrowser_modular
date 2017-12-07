@@ -18,19 +18,21 @@ Description: Bioinformatics platform containing interactive plots and tables
 Depends:
     R (>= 3.3.0),
     shiny,
-    ggvis,
     jsonlite,
     shinyjs
 License: GPL-3 + file LICENSE
 LazyData: true
 Imports:
+    DESeq2,
+    edgeR,
+    limma,
+    clusterProfiler,
     DT,
     ggplot2,
     RColorBrewer,
     annotate,
     gplots,
     AnnotationDbi,
-    DESeq2,
     DOSE,
     igraph,
     grDevices,
@@ -47,9 +49,6 @@ Imports:
     d3heatmap,
     org.Hs.eg.db,
     org.Mm.eg.db,
-    limma,
-    edgeR,
-    clusterProfiler,
     V8,
     methods,
     sva,
@@ -57,12 +56,12 @@ Imports:
     RCurl,
     shinyBS,
     googleAuthR,
-    plotly
+    plotly,
+    knitr,
+    R.rsp,
+    testthat
 RoxygenNote: 6.0.1
-Suggests: DESeq2,
-    EdgeR,
-    limma,
-    clusterProfiler
+Suggests:
 VignetteBuilder: knitr,  R.rsp
 URL: https://github.com/UMMS-Biocore/debrowser
 BugReports: https://github.com/UMMS-Biocore/debrowser/issues/new
