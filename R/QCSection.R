@@ -26,8 +26,15 @@ getQCPanel <- function(input = NULL) {
         conditionalPanel(condition = "input.qcplot == 'IQR' 
                          || input.qcplot == 'Density'
                          || input.qcplot == 'pca'",
-            column(12, plotlyOutput("plotQC1")),
-            column(12, plotlyOutput("plotQC2"))
+         list(fluidRow(
+             column(12,
+                splitLayout(cellWidths = c("50%", "50%"),
+                box(
+                    collapsible = TRUE, title = "Plot1", status = "primary", solidHeader = TRUE, width = NULL,
+                    draggable = T, plotlyOutput("qcplot1") ),
+                box(
+                    collapsible = TRUE, title = "Plot2", status = "primary", solidHeader = TRUE, width = NULL,
+                    draggable = T,  plotlyOutput("qcplot2") )) ) ) )
         ),
         conditionalPanel(condition = 
             "(!(input.interactive && input.qcplot == 'heatmap'))",
@@ -76,7 +83,6 @@ getIntHeatmapVis <- function() {
 #' @param input, user input
 #' @param metadata, coupled samples and conditions
 #' @param inputQCPlot, input QC params
-#' @param drawPCAExplained, to draw pca loading plot
 #' @return the panel for QC plots
 #' @examples
 #'     x <- getQCPlots()
@@ -84,7 +90,7 @@ getIntHeatmapVis <- function() {
 #' @export
 #'
 getQCPlots <- function(dataset = NULL, input = NULL,
-    metadata = NULL, inputQCPlot = NULL, drawPCAExplained = NULL) {
+    metadata = NULL, inputQCPlot = NULL) {
     if (is.null(dataset)) return(NULL)
     qcPlots <- NULL
     if (nrow(dataset) > 0) {
@@ -101,12 +107,12 @@ getQCPlots <- function(dataset = NULL, input = NULL,
                 metadata = metadata, color = sc$color,
                 size = 5, shape = sc$shape,
                 textonoff = sc$textonoff, 
-                legendSelect = sc$legendSelect )
-            #pcaplot %>% bind_shiny("ggvisQC1")
-            #drawPCAExplained %>%  bind_shiny("ggvisQC2")
+                legendSelect = sc$legendSelect, input = input )
+            qcPlots$plot1 <- pcaplot$plot1
+            qcPlots$plot2 <- pcaplot$plot2
             
         } else if (input$qcplot == "IQR" || input$qcplot == "Density" ) {
-            prepAddQCPlots(dataset, input)
+            qcPlots <- prepAddQCPlots(dataset, input)
         }
     }
     return(qcPlots)
@@ -145,7 +151,6 @@ getShapeColor <- function(input = NULL) {
 #' @param datasetInput, the dataset to use
 #' @param input, user input
 #' @param inputQCPlot, input QC params
-#' @param drawPCAExplained, to draw pca loading plot
 #' @return the panel for QC plots
 #' @examples
 #'     x <- getQCReplot()
@@ -153,8 +158,7 @@ getShapeColor <- function(input = NULL) {
 #' @export
 #'
 getQCReplot <- function(cols = NULL, conds = NULL, 
-    datasetInput = NULL, input = NULL, inputQCPlot = NULL,
-    drawPCAExplained = NULL){
+    datasetInput = NULL, input = NULL, inputQCPlot = NULL){
     if (is.null(datasetInput)) return(NULL)
     samples <- c()
     color <- c()
@@ -183,8 +187,7 @@ getQCReplot <- function(cols = NULL, conds = NULL,
 
     if (nrow(dataset)<3) return(NULL)
         getQCPlots(dataset, input, metadata,
-            inputQCPlot = inputQCPlot,
-            drawPCAExplained = drawPCAExplained)
+            inputQCPlot = inputQCPlot)
 }
 
 #' saveQCPlot
@@ -306,6 +309,7 @@ getDensityPlot <- function(data=NULL, cols=NULL, title = ""){
 #'
 prepAddQCPlots <- function(data=NULL, input=NULL){
     if(is.null(data)) return(NULL)
+    qcplot <- c()
     if(!is.null(input$qcplot)){
         if (input$qcplot == "IQR"){
             getIQRPlot(data, colnames(data), 
@@ -316,14 +320,13 @@ prepAddQCPlots <- function(data=NULL, input=NULL){
                 #bind_shiny("ggvisQC2")
         }
         else if (input$qcplot == "Density"){
-            getDensityPlot(data, colnames(data), 
+            qcplot$plot1 <- getDensityPlot(data, colnames(data), 
                 "Density Plot(Before Normalization)") 
-                #bind_shiny("ggvisQC1")
-            getDensityPlot(getNormalizedMatrix(data, input$norm_method), 
+            qcplot$plot2 <- getDensityPlot(getNormalizedMatrix(data, input$norm_method), 
                 colnames(data), "Density Plot(After Normalization)")
-                #bind_shiny("ggvisQC2")    
         }
     }
+    return(qcplot)
 }
 
 #' getSelectedCols

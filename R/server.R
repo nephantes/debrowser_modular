@@ -434,6 +434,21 @@ deServer <- function(input, output, session) {
         observeEvent(input$qcplot, {
             shinyjs::js$showQCPlot()
         })
+        qcplots <- reactive({
+            qcplots <- getQCReplot(isolate(cols()), isolate(conds()), 
+                    df_select(), input, inputQCPlot())
+            return(qcplots)
+        })
+        output$qcplot1 <- renderPlotly({
+            qcplots()$plot1
+        })
+        output$qcplot2 <- renderPlotly({
+            qcplots()$plot2
+        })
+        explainedData <- reactive({
+            qcplots()$pcaset
+        })
+        
         output$qcplotout <- renderPlot({
             if (is.null(input$col_list) && is.null(df_select())) return(NULL)
             updateTextInput(session, "dataset", 
@@ -441,9 +456,7 @@ deServer <- function(input, output, session) {
             edat$val <- explainedData()
             #if(input$qcplot=="pca" || input$qcplot=="IQR" || input$qcplot=="Density")
             #    shinyjs::js$hideQCPlot()
-            getQCReplot(isolate(cols()), isolate(conds()), 
-                df_select(), input, inputQCPlot(),
-                drawPCAExplained(edat$val$plotdata) )
+
         })
         df_select <- reactive({
             getSelectedCols(Dataset(), datasetInput(), input)
@@ -469,10 +482,7 @@ deServer <- function(input, output, session) {
                 selected=existing_cols)
             )
         })
-        explainedData <- reactive({
-            getPCAexplained( df_select(), input )
-        })
-        
+
         inputQCPlot <- reactiveValues(clustering_method = "ward.D2",
             distance_method = "cor", interactive = FALSE, width = 700, height = 500)
         inputQCPlot <- eventReactive(input$startQCPlot, {

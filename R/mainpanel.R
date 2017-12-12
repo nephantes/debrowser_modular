@@ -54,7 +54,7 @@ getMainPanelPlots <- function(filt_data = NULL,
         is.null(cols) || is.null(conds) ||
         is.null(input$padjtxt) || is.null(input$foldChangetxt)  )
             return(NULL)
-
+    filt_data$key <-filt_data$ID
     filt_data_rest <- filt_data[ filt_data$Legend!="NS",]
     filt_data_NS <- filt_data[ filt_data$Legend=="NS",]
     datapoints <- as.integer(nrow(filt_data_NS) * input$backperc / 100)
@@ -84,14 +84,15 @@ getMainPanelPlots <- function(filt_data = NULL,
         x <- "A"
         y <- "M"
     }
-    plot_data$key <-plot_data$ID
+    
     scatter_plot <- mainScatter(plot_data, x, y)
     
     selectedPoint <- reactive({
          eventdata <- event_data("plotly_click", source = "source")
          if (is.null(eventdata)){
              eventdata <- event_data("plotly_hover", source = "source")
-             validate(need(!is.null(eventdata), "Hover over the main plots to show "))
+             validate(need(!is.null(eventdata), "Hover over the main plots to show. 
+             Click on a point to keep the plots. Double click to reset the plots."))
          }
          key <- eventdata$key
          return(key)
@@ -112,6 +113,7 @@ getMainPanelPlots <- function(filt_data = NULL,
     })
     getSelected  <- reactive({
         selected <- event_data("plotly_selected", source = "source")
+        if (is.null(selected$key)) return (NULL)
         plot_data[selected$key,]
     })
     
@@ -120,8 +122,12 @@ getMainPanelPlots <- function(filt_data = NULL,
     })
     
     output$vplot2 <- renderPlotly({
-        cld <- prepHeatData(filt_data_rest[,cols])
-        p <- heatmaply(source = "source", cld, type="heatmap", colors = bluered(256), k_row = 3, k_col = 2)
+        dat <- getSelected()
+        validate(need(dim(dat)[1]!=0, "Select an area in the main plot to draw the heatmap. Heatmap can only show, up&down regulated points. 
+                      To visualize other points in the heatmap, please change padj value and foldChange!"))
+       
+        cld <- prepHeatData(dat[,cols])
+        p <- heatmaply(source = "hsource", cld, type="heatmap", colors = bluered(256), k_row = 3, k_col = 2)
         p$elementId <- NULL
         p
     })
@@ -151,5 +157,6 @@ getMainPanelPlots <- function(filt_data = NULL,
         p$elementId <- NULL
         p
     })
+    selected <- getSelected()
     list( getSelected = isolate(getSelected) )
 }
