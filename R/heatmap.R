@@ -10,7 +10,6 @@
 #' 'mcquitty', 'median' , 'centroid')
 #' @param distance_method = c('cor','euclidean', 'maximum', 'manhattan',
 #' 'canberra', 'binary' ,'minkowski')
-#' @param interactive, interactive heatmap
 #' @return heatmap.2 plot
 #'
 #' @examples
@@ -25,8 +24,7 @@ runHeatmap <- function(data, title="Title", dend = "both",
     clustering_method = c("ward.D2", "complete", "single",
         "average", "mcquitty", "median", "centroid"),
     distance_method = c("euclidean", "cor", "maximum",
-        "manhattan", "canberra", "binary", "minkowski"), 
-    interactive = FALSE) {
+        "manhattan", "canberra", "binary", "minkowski")) {
     if(is.null(data)) return(NULL)
     
     cld <- prepHeatData(data)
@@ -39,23 +37,9 @@ runHeatmap <- function(data, title="Title", dend = "both",
             return(as.dist(1 - cor(t(x))))
         }
     }
-    if (interactive == FALSE){
-        m <- heatmap.2(cld, Rowv = TRUE, main = title, dendrogram = dend,
-        Colv = TRUE, col = bluered(256), labRow = names,
-        distfun = dist2, hclustfun = hclust2, density.info = "none",
-        trace = "none", margins = c(10, 10))
-    }
-    else {
-        m <- d3heatmap::d3heatmap(cld,
-                  colors = bluered(256),
-                  RowV = TRUE,
-                  ColV = TRUE,
-                  distfun = dist2, hclustfun = hclust2,
-                  yaxis_font_size = "7px",
-                  xaxis_font_size = "10px",
-                  show_grid = FALSE)
-    }
-    m
+    p <- heatmaply(cld, type="heatmap", colors = bluered(256), k_row = 2, k_col = 2)
+    p$elementId <- NULL
+    p
 }
 #' prepHeatData
 #'
@@ -86,19 +70,17 @@ prepHeatData <- function(data)
 #'
 #' @param data, heatData
 #' @param input, all input params
-#' @param inputQCPlot, input poarams for QC
 #' @return plot
 #' @export
 #'
 #' @examples
 #'     getIntHeatmap()
 #'
-getIntHeatmap <- function(data = NULL,  input = NULL, inputQCPlot = NULL) {
+getIntHeatmap <- function(data = NULL,  input = NULL) {
     if(is.null(data)) return(NULL)
-    if (input$interactive == TRUE)
-        runHeatmap(data, title = paste("Dataset:", input$dataset),
-            clustering_method = inputQCPlot$clustering_method,
-            distance_method = inputQCPlot$distance_method, interactive = TRUE)
+    runHeatmap(data, title = paste("Dataset:", input$dataset),
+        clustering_method = input$clustering_method,
+        distance_method = input$distance_method)
 }
 
 #' getSelHeat

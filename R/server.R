@@ -28,12 +28,11 @@
 #'             onRestored NS
 #' @importFrom shinyjs show hide enable disable useShinyjs extendShinyjs
 #'             js inlineCSS onclick
-#' @importFrom d3heatmap d3heatmap renderD3heatmap d3heatmapOutput
 #' @importFrom DT datatable dataTableOutput renderDataTable formatStyle
 #'             styleInterval formatRound
 #' @importFrom ggplot2 aes aes_string geom_bar geom_point ggplot
-#'             labs scale_x_discrete scale_y_discrete ylab
-#'             autoplot
+#'             labs scale_x_discrete scale_y_discrete ylab geom_density
+#'             autoplot theme_minimal theme element_blank geom_text
 #' @importFrom gplots heatmap.2 redblue
 #' @importFrom igraph layout.kamada.kawai  
 #' @importFrom grDevices dev.off pdf
@@ -78,11 +77,13 @@
 #' @import plotly
 #' @import heatmaply
 #' @import googleAuthR
+#' @import GGally
 
 deServer <- function(input, output, session) {
     #library(debrowser)
-    library(googleAuthR)
+    #library(googleAuthR)
     enableBookmarking("server")
+    options(warn = -1)
     tryCatch(
     {
         if (!interactive()) {
@@ -395,7 +396,7 @@ deServer <- function(input, output, session) {
         selected <- reactiveValues(data = NULL)
         observe({
             setFilterParams(session, input)
-            if ((!is.null(input$genenames) && input$interactive == TRUE) || 
+            if ((!is.null(input$genenames) && input$qcplot == "heatmap") || 
                 (!is.null(input$genesetarea) && input$genesetarea != "")){
                 tmpDat <- init_data()
                 if (!is.null(filt_data()))
@@ -435,40 +436,37 @@ deServer <- function(input, output, session) {
             shinyjs::js$showQCPlot()
         })
         qcplots <- reactive({
-            qcplots <- getQCReplot(isolate(cols()), isolate(conds()), 
-                    df_select(), input, inputQCPlot())
-            return(qcplots)
+            qcp <- getQCReplot(isolate(cols()), isolate(conds()), 
+                    df_select(), input)
+            return(qcp)
         })
         output$qcplot1 <- renderPlotly({
+            if (is.null(qcplots()$plot1)) return(plotly_empty())
             qcplots()$plot1
         })
         output$qcplot2 <- renderPlotly({
+            if (is.null(qcplots()$plot2)) return(plotly_empty())
+            edat$val <- explainedData()
             qcplots()$plot2
         })
         explainedData <- reactive({
+            if (is.null(qcplots()$pcaset)) return(NULL)
             qcplots()$pcaset
         })
         
-        output$qcplotout <- renderPlot({
-            if (is.null(input$col_list) && is.null(df_select())) return(NULL)
-            updateTextInput(session, "dataset", 
-                value =  choicecounter$lastselecteddataset)
-            edat$val <- explainedData()
-            #if(input$qcplot=="pca" || input$qcplot=="IQR" || input$qcplot=="Density")
-            #    shinyjs::js$hideQCPlot()
-
+        output$qcplotout <- renderPlotly({
+            if (is.null(qcplots())) return(plotly_empty())
+            ggplotly(qcplots())
         })
         df_select <- reactive({
             getSelectedCols(Dataset(), datasetInput(), input)
         })
-        
-        v <- c()
-        output$intheatmap <- d3heatmap::renderD3heatmap({
-            shinyjs::onclick("intheatmap", js$getNames(v))
+
+        output$intheatmap <-renderPlotly({
             dat <- df_select()
             if (!is.null(cols()))
                 dat <- dat[,cols()]
-            getIntHeatmap(dat, input, inputQCPlot())
+            getIntHeatmap(dat, input)
         })
         
         output$columnSelForQC <- renderUI({
@@ -481,18 +479,6 @@ deServer <- function(input, output, session) {
                 existing_cols, 
                 selected=existing_cols)
             )
-        })
-
-        inputQCPlot <- reactiveValues(clustering_method = "ward.D2",
-            distance_method = "cor", interactive = FALSE, width = 700, height = 500)
-        inputQCPlot <- eventReactive(input$startQCPlot, {
-            tmpDat <- c()
-            tmpDat$clustering_method <- input$clustering_method
-            tmpDat$distance_method <- input$distance_method
-            tmpDat$interactive <- input$interactive
-            tmpDat$width <- input$width
-            tmpDat$height <- input$height
-            return(tmpDat)
         })
         
         goplots <- reactive({
@@ -659,26 +645,6 @@ deServer <- function(input, output, session) {
             if(!("ID" %in% names(dat2)))
                 dat2 <- addID(dat2)
             write.table(dat2, file, sep = ",", row.names = FALSE)
-        })
-
-        output$downloadPlot <- downloadHandler(filename = function() {
-            paste(input$qcplot, ".pdf", sep = "")
-        }, content = function(file) {
-            
-            if (choicecounter$qc == 0)
-                saveQCPlot(file, input, df_select(), 
-                           cols(), conds(), inputQCPlot())
-            else
-                saveQCPlot(file, input, df_select(),
-                           inputQCPlot = inputQCPlot())
-        })
-        
-        output$downloadGOPlot <- downloadHandler(filename = function() {
-            paste(input$goplot, ".pdf", sep = "")
-        }, content = function(file) {
-            pdf(file)
-            print( inputGOstart()$p )
-            dev.off()
         })
     },
     err=function(errorCondition) {

@@ -7,8 +7,7 @@
 runHeatmap(data, title = "Title", dend = "both", names = FALSE,
   clustering_method = c("ward.D2", "complete", "single", "average",
   "mcquitty", "median", "centroid"), distance_method = c("euclidean", "cor",
-  "maximum", "manhattan", "canberra", "binary", "minkowski"),
-  interactive = FALSE)
+  "maximum", "manhattan", "canberra", "binary", "minkowski"))
 }
 \arguments{
 \item{data, }{a matrixthat includes expression values}
@@ -24,8 +23,6 @@ runHeatmap(data, title = "Title", dend = "both", names = FALSE,
 
 \item{distance_method}{= c('cor','euclidean', 'maximum', 'manhattan',
 'canberra', 'binary' ,'minkowski')}
-
-\item{interactive, }{interactive heatmap}
 }
 \value{
 heatmap.2 plot

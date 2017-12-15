@@ -4,8 +4,7 @@
 \alias{getQCPlots}
 \title{getQCPlots}
 \usage{
-getQCPlots(dataset = NULL, input = NULL, metadata = NULL,
-  inputQCPlot = NULL, drawPCAExplained = NULL)
+getQCPlots(dataset = NULL, input = NULL, metadata = NULL)
 }
 \arguments{
 \item{dataset, }{the dataset to use}
@@ -13,10 +12,6 @@ getQCPlots(dataset = NULL, input = NULL, metadata = NULL,
 \item{input, }{user input}
 
 \item{metadata, }{coupled samples and conditions}
-
-\item{inputQCPlot, }{input QC params}
-
-\item{drawPCAExplained, }{to draw pca loading plot}
 }
 \value{
 the panel for QC plots

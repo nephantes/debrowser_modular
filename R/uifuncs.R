@@ -60,10 +60,6 @@ if (is.null(input)) return(NULL)
                 ),
             getMainPlotsLeftMenu()),
         conditionalPanel( (condition <- "input.methodtabs=='panel2'"),
-                          
-            conditionalPanel( condition <- "input.qcplot=='heatmap'",
-                actionButton("startQCPlot", "Submit!")),
-                          
         shinydashboard::menuItem(" Plot Type", icon = icon("star-o"), startExpanded = TRUE,
         wellPanel(radioButtons("qcplot",
                 paste("QC Plots:", sep = ""),
@@ -139,8 +135,7 @@ getGOLeftMenu <- function() {
             conditionalPanel( ( condition <- "input.goplot=='compare'"),
                 selectInput("gofunc", "Plot Function:",
                 choices =  c( "enrichGO", "enrichDO", "enrichKEGG"))
-            ),
-            downloadButton("downloadGOPlot", "Download Plots"))
+            ))
     )
 
 }
@@ -198,18 +193,14 @@ getQCLeftMenu <- function( input = NULL) {
         shinydashboard::menuItem(" Select Columns", icon = icon("star-o"), startExpanded=TRUE, 
             uiOutput("columnSelForQC")),
             shinydashboard::menuItem(" QC Options", icon = icon("star-o"), startExpanded=FALSE,
-            conditionalPanel( (condition <- "input.qcplot=='heatmap'"),
-                 checkboxInput("interactive", "Interactive", value = FALSE)),
-            conditionalPanel( (condition <- "(input.qcplot=='all2all' ||
-            input.qcplot=='heatmap') && !(input.interactive)"),
+            conditionalPanel( (condition <- "(input.qcplot=='all2all')"),
             sliderInput("width", "width",
-            min = 100, max = 2000, step = 10, value = 700),
+            min = 100, max = 2000, step = 10, value = 640),
             sliderInput("height", "height",
-            min = 100, max = 2000, step = 10, value = 500)),
-            conditionalPanel( (condition <- "input.qcplot=='all2all'"),
+            min = 100, max = 2000, step = 10, value = 640),
                 sliderInput("cex", "corr font size",
-                min = 0.1, max = 10,
-                step = 0.1, value = 2)),
+                min = 0.1, max = 4,
+                step = 0.1, value = 0.7)),
             conditionalPanel( (condition <- "input.qcplot=='heatmap'"),
                 selectInput("clustering_method", "Clustering Method:",
                 choices <- c("complete", "ward.D2", "single", "average",
@@ -227,8 +218,7 @@ getQCLeftMenu <- function( input = NULL) {
             getTextOnOff(),
             getLegendSelect(),
             getColorShapeSelection(input)
-        ),
-        downloadButton("downloadPlot", "Download Plot"))
+        ))
     )
 }
 

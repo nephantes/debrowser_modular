@@ -3,20 +3,22 @@
 #' Prepares all2all scatter plots for given datasets. 
 #'
 #' @param data, data that have the sample names in the header.
-#' @param cex text size
+#' @param cex, dot size
 #' @return all2all scatter plots
 #' @examples
 #'     plot<-all2all(mtcars)
 #'
 #' @export
 #'
-all2all <- function(data, cex=2) {
-    pcor <- function(x, y, ...) panel.cor(x, y, cex.cor = cex)
+all2all <- function(data, cex = 0.4) {
     nr <- nrow(data)
     if (nr > 1000)
         nr <- 1000
-    pairs(log10(data[1:nr, ]), cex = 0.25,
-            diag.panel = panel.hist, lower.panel = pcor)
+    dat <-log10(data[1:nr,] + 0.1)
+    pm <- ggpairs(dat, type="scatter",
+          lower = list(continuous = wrap("points", alpha = 0.3, size=cex)))
+    
+    return(pm)
 }
 
 #' panel.hist

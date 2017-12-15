@@ -5,7 +5,7 @@
 \title{getQCReplot}
 \usage{
 getQCReplot(cols = NULL, conds = NULL, datasetInput = NULL,
-  input = NULL, inputQCPlot = NULL, drawPCAExplained = NULL)
+  input = NULL)
 }
 \arguments{
 \item{cols, }{the dataset to use}
@@ -15,10 +15,6 @@ getQCReplot(cols = NULL, conds = NULL, datasetInput = NULL,
 \item{datasetInput, }{the dataset to use}
 
 \item{input, }{user input}
-
-\item{inputQCPlot, }{input QC params}
-
-\item{drawPCAExplained, }{to draw pca loading plot}
 }
 \value{
 the panel for QC plots

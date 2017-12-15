@@ -46,7 +46,6 @@ Imports:
     stringi,
     reshape2,
     baySeq,
-    d3heatmap,
     org.Hs.eg.db,
     org.Mm.eg.db,
     V8,
@@ -60,7 +59,8 @@ Imports:
     heatmaply,
     knitr,
     R.rsp,
-    testthat
+    testthat,
+    GGally
 RoxygenNote: 6.0.1
 Suggests:
 VignetteBuilder: knitr,  R.rsp

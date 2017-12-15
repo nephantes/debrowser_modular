@@ -94,7 +94,7 @@ getMainPanelPlots <- function(filt_data = NULL,
              validate(need(!is.null(eventdata), "Hover over the main plots to show. 
              Click on a point to keep the plots. Double click to reset the plots."))
          }
-         key <- eventdata$key
+         key <- as.vector(unlist(eventdata$key))
          return(key)
     })
     getVariationData <- reactive({
@@ -114,7 +114,7 @@ getMainPanelPlots <- function(filt_data = NULL,
     getSelected  <- reactive({
         selected <- event_data("plotly_selected", source = "source")
         if (is.null(selected$key)) return (NULL)
-        plot_data[selected$key,]
+        filt_data[as.vector(unlist(selected$key)),]
     })
     
     output$vplot1 <- renderPlotly({
@@ -123,11 +123,11 @@ getMainPanelPlots <- function(filt_data = NULL,
     
     output$vplot2 <- renderPlotly({
         dat <- getSelected()
-        validate(need(dim(dat)[1]!=0, "Select an area in the main plot to draw the heatmap. Heatmap can only show, up&down regulated points. 
-                      To visualize other points in the heatmap, please change padj value and foldChange!"))
+        validate(need(dim(dat)[1]!=0, "Select an area in the main plot to draw the heatmap. 
+                      Use either 'Box Select' or 'Lasso Select' options in 'Main Plot'!"))
        
         cld <- prepHeatData(dat[,cols])
-        p <- heatmaply(source = "hsource", cld, type="heatmap", colors = bluered(256), k_row = 3, k_col = 2)
+        p <- heatmaply(cld, type="heatmap", colors = bluered(256), k_row = 2, k_col = 2)
         p$elementId <- NULL
         p
     })

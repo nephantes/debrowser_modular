@@ -40,25 +40,7 @@ deUI <- function() {
     '
     
 enableBookmarking("server")
-    heatmapJScode <-
-        "shinyjs.getNames = function(){
-        var count = document.getElementsByClassName('tick').length;
-        var start = 0;
-        while(document.getElementsByClassName('tick')[start].getElementsByTagName('line')[0].getAttribute('x2') == 0){
-        start += 1;
-        }
-        var out = '';
-        for (i = start; i < count; i++)
-        {
-        if('opacity: 1;' == document.getElementsByClassName('tick')[i].getAttribute('style')){
-        out += document.getElementsByClassName('tick')[i].getElementsByTagName('text')[0].innerHTML + ',';
-        }
-        }
-        //document.getElementById('genenames').innerHTML = out;
-        Shiny.onInputChange('genenames', out);
-    };"
-
-    dbHeader <- shinydashboard::dashboardHeader(titleWidth = 350,
+    dbHeader <- shinydashboard::dashboardHeader(titleWidth = 250,
         shinydashboard::dropdownMenu(type = "notifications", 
             badgeStatus = "primary", icon = shiny::icon("cog"),
             shinydashboard::messageItem("Sign Out", "",
@@ -91,7 +73,6 @@ enableBookmarking("server")
     else{
         debrowser <- (fluidPage(
         shinyjs::useShinyjs(),
-        shinyjs::extendShinyjs(text = heatmapJScode, functions = c("getNames")),
         shinyjs::inlineCSS("
         #loading-debrowser {
         position: absolute;
@@ -114,10 +95,12 @@ enableBookmarking("server")
     shinydashboard::dashboardPage(
         dbHeader,
         shinydashboard::dashboardSidebar(
-            width = 350,
+            width = 250,
             conditionalPanel(condition = "!output.user_name",
                 googleAuthR::googleAuthUI("initial_google_button")),
             conditionalPanel(condition = "output.user_name",
+                conditionalPanel(condition = "output.user_name != 'local'",
+                h6(" Logged in as: ", textOutput("user_name"))),
                 uiOutput("loading"),
                 uiOutput("initialmenu"),
                 conditionalPanel(condition = "(output.dataready)",
@@ -132,7 +115,7 @@ enableBookmarking("server")
     shinydashboard::dashboardBody(
         conditionalPanel(condition = "output.user_name",
         mainPanel(
-            width = 10,
+            width = 12,
             tags$head(
                 tags$style(type = "text/css",
                         "#methodtabs.nav-tabs {font-size: 14px} ")),
@@ -141,7 +124,8 @@ enableBookmarking("server")
                     tabPanel(title = "Data Prep", value = "panel0", id="panel0",
                             uiOutput("preppanel")),
                     tabPanel(title = "Main Plots", value = "panel1", id="panel1",
-                            uiOutput("mainmsgs"),
+                             box(collapsible = TRUE, title = "Main Plot", status = "primary", solidHeader = TRUE, width = NULL,
+                                 draggable = T, uiOutput("mainmsgs") ),
                             conditionalPanel(condition = "input.demo || output.dataready", uiOutput("mainpanel"))),
                     tabPanel(title = "QC Plots", value = "panel2", id="panel2",
                             uiOutput("qcpanel")),
@@ -150,7 +134,6 @@ enableBookmarking("server")
                     tabPanel(title = "Tables", value = "panel4", id="panel4",
                             DT::dataTableOutput("tables")))
         ),
-        p("Logged in as: ", textOutput("user_name")),
         shinyjs::extendShinyjs(text = getUrlJSCode)
         )))
     )

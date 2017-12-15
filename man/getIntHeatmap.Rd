@@ -4,14 +4,12 @@
 \alias{getIntHeatmap}
 \title{getIntHeatmap}
 \usage{
-getIntHeatmap(data = NULL, input = NULL, inputQCPlot = NULL)
+getIntHeatmap(data = NULL, input = NULL)
 }
 \arguments{
 \item{data, }{heatData}
 
 \item{input, }{all input params}
-
-\item{inputQCPlot, }{input poarams for QC}
 }
 \value{
 plot

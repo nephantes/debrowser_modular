@@ -19,60 +19,35 @@ getQCPanel <- function(input = NULL) {
         width = input$width
     }
     qcPanel <- list(
-        wellPanel(helpText( "Please select the parameters and press the 
-        submit button in the left menu for the plots" ),
+        wellPanel( conditionalPanel( (condition <- "input.qcplot=='heatmap'"),
         getHelpButton("method", 
-        "http://debrowser.readthedocs.io/en/develop/quickstart/quickstart.html#quality-control-plots")),
+        "http://debrowser.readthedocs.io/en/develop/quickstart/quickstart.html#quality-control-plots"))),
         conditionalPanel(condition = "input.qcplot == 'IQR' 
                          || input.qcplot == 'Density'
                          || input.qcplot == 'pca'",
          list(fluidRow(
              column(12,
-                splitLayout(cellWidths = c("50%", "50%"),
                 box(
                     collapsible = TRUE, title = "Plot1", status = "primary", solidHeader = TRUE, width = NULL,
                     draggable = T, plotlyOutput("qcplot1") ),
                 box(
                     collapsible = TRUE, title = "Plot2", status = "primary", solidHeader = TRUE, width = NULL,
-                    draggable = T,  plotlyOutput("qcplot2") )) ) ) )
+                    draggable = T,  plotlyOutput("qcplot2") )) ) ) 
         ),
         conditionalPanel(condition = 
-            "(!(input.interactive && input.qcplot == 'heatmap'))",
-            column(12, plotOutput("qcplotout",
-            height = height, width = width))),    
-        conditionalPanel(condition = "(input.interactive && input.qcplot == 'heatmap')",
-            d3heatmap::d3heatmapOutput("intheatmap", width = width, height=height),
-            tags$script('
-                $(document).ready(function() {
-                    $("#heatmap").on("shiny:recalculating", function(event) {
-                    $(".d3heatmap-tip").remove();
-                    });
-                });
-        '))
+            "(input.qcplot == 'all2all')",
+            column(12,  box(
+                collapsible = TRUE, title = "Plot2", status = "primary", solidHeader = TRUE,
+                draggable = T,  plotlyOutput("qcplotout",  height = height, width = width) , 
+                height = (height + 300), width = 12))),    
+        conditionalPanel(condition = "(input.qcplot == 'heatmap')",
+             box(
+                 collapsible = TRUE, title = "Heatmap", status = "primary", solidHeader = TRUE, width = NULL,
+                 draggable = T, plotlyOutput("intheatmap") ))
        )
     return(qcPanel)
 }
 
-#' getIntHeatmapVis
-#'
-#' Gathers the conditional panel for interactive heatmap
-#'
-#' @note \code{getIntHeatmapVis}
-#' @return the panel interactive heatmap
-#'
-#' @examples
-#'     x <- getIntHeatmapVis()
-#'
-#' @export
-#'
-getIntHeatmapVis <- function() {
-    intHeatmap <- list(
-    conditionalPanel(condition = 
-        "(input.qcplot == 'heatmap' && input.interactive)",
-        column(12, plotlyOutput("heatmapplot"))
-    ))
-    return(intHeatmap)
-}
 #' getQCPlots
 #'
 #' Gathers the plot data to be displayed within the
@@ -82,7 +57,6 @@ getIntHeatmapVis <- function() {
 #' @param dataset, the dataset to use
 #' @param input, user input
 #' @param metadata, coupled samples and conditions
-#' @param inputQCPlot, input QC params
 #' @return the panel for QC plots
 #' @examples
 #'     x <- getQCPlots()
@@ -90,7 +64,7 @@ getIntHeatmapVis <- function() {
 #' @export
 #'
 getQCPlots <- function(dataset = NULL, input = NULL,
-    metadata = NULL, inputQCPlot = NULL) {
+    metadata = NULL) {
     if (is.null(dataset)) return(NULL)
     qcPlots <- NULL
     if (nrow(dataset) > 0) {
@@ -99,8 +73,8 @@ getQCPlots <- function(dataset = NULL, input = NULL,
             qcPlots <- all2all(dat, input$cex)
         } else if (input$qcplot == "heatmap") {
             qcPlots <- runHeatmap(dat, title = paste("Dataset:", input$dataset),
-                clustering_method = inputQCPlot$clustering_method,
-                distance_method = inputQCPlot$distance_method,  interactive = FALSE)
+                clustering_method = input$clustering_method,
+                distance_method = input$distance_method)
         } else if (input$qcplot == "pca") {
             sc <- getShapeColor(input)
             pcaplot <- plot_pca(dat, input$pcselx, input$pcsely,
@@ -150,7 +124,6 @@ getShapeColor <- function(input = NULL) {
 #' @param conds, the dataset to use
 #' @param datasetInput, the dataset to use
 #' @param input, user input
-#' @param inputQCPlot, input QC params
 #' @return the panel for QC plots
 #' @examples
 #'     x <- getQCReplot()
@@ -158,8 +131,10 @@ getShapeColor <- function(input = NULL) {
 #' @export
 #'
 getQCReplot <- function(cols = NULL, conds = NULL, 
-    datasetInput = NULL, input = NULL, inputQCPlot = NULL){
+    datasetInput = NULL, input = NULL){
     if (is.null(datasetInput)) return(NULL)
+    metadata <- NULL
+
     samples <- c()
     color <- c()
     shape <- c()
@@ -177,6 +152,7 @@ getQCReplot <- function(cols = NULL, conds = NULL,
         color  <- colnames(dataset)
         shape <- "Conds"
     }
+    if (input$qcplot == "pca") {
     mdata <- readMetaData(input)
     if (!is.null(input$color_pca) && input$color_pca != "None")
         color <- as.character(mdata[samples, input$color_pca])
@@ -184,48 +160,9 @@ getQCReplot <- function(cols = NULL, conds = NULL,
         shape <- as.character(mdata[samples, input$shape_pca])
     
     metadata <- cbind(samples, color, shape)
-
+    }
     if (nrow(dataset)<3) return(NULL)
-        getQCPlots(dataset, input, metadata,
-            inputQCPlot = inputQCPlot)
-}
-
-#' saveQCPlot
-#'
-#' Saves the current QC plot selection to the users local disk.
-#'
-#' @note \code{saveQCPlot}
-#' @param filename, filename
-#' @param input, input params
-#' @param datasetInput, dataset
-#' @param cols, selected columns
-#' @param conds, selected conditions
-#' @param inputQCPlot, clustering method and distance method
-#' @examples
-#'     saveQCPlot()
-#'
-#' @export
-#'
-saveQCPlot <- function(filename = NULL, input = NULL, datasetInput = NULL, 
-    cols = NULL, conds = NULL, inputQCPlot = NULL){
-    if (is.null(datasetInput)) return(NULL)
-    pdf(filename, height = input$height * 0.010370,
-        width = input$width * 0.010370)
-    if (!is.null(cols)){
-        dataset <- datasetInput[, input$col_list]
-        new_cols <- cols[which(cols %in% input$col_list)]
-        new_conds <- conds[which(cols %in% input$col_list)]
-        metadata <- cbind(new_cols, new_conds)
-    }else{
-        dataset <- datasetInput[,c(input$col_list)]
-        metadata <- cbind(colnames(dataset), "Conds")
-    }
-    if (nrow(dataset)>2){
-        getQCPlots(dataset, input, metadata,
-            inputQCPlot = inputQCPlot)
-        print(getPCAexplained(datasetInput, input))
-    }
-    dev.off()
+        getQCPlots(dataset, input, metadata)
 }
 
 #' getIQRPlot
@@ -251,14 +188,14 @@ getIQRPlot <- function(data=NULL, cols=NULL, title = ""){
     mdata <- melt(as.data.frame(data[,c("ID", cols)]),"ID")
     colnames(mdata)<-c("ID", "samples", "logcount")
     ypos <- -5 * max(nchar(as.vector(mdata$samples)))
-    #visIQR <- mdata %>%
-    #    ggvis(x = ~samples, y = ~logcount, fill := "green") %>%
-    #    layer_boxplots() %>% 
-    #    set_options(width = "auto", height = 350, resizable=TRUE) %>%
-    #    add_title_pos(title = "", angle = 310,
-    #        dy = ypos, dx = 0) %>%
-    #    add_tooltip(getToolTipPCA, "hover") %>%
-    #    add_axis("y", title = "logcount")
+    
+    p <- plot_ly(mdata, x = ~samples, y = ~logcount, 
+                 color="steelblue", type = "box") %>%
+        layout(title = title,
+               xaxis = list(title = "samples"),
+               yaxis = list(title = "logcount"))
+    p$elementId <- NULL
+    p
 }
 
 #' getDensityPlot
@@ -283,15 +220,13 @@ getDensityPlot <- function(data=NULL, cols=NULL, title = ""){
     data <- addID(data)
     mdata <- melt(as.data.frame(data[,c("ID", cols)]),"ID")
     colnames(mdata)<-c("ID", "samples", "density")
-    ypos <- -5 * max(nchar(as.vector(mdata$samples)))
-    #visDensity <- mdata %>%
-    #    ggvis(~density, fill = ~samples) %>%
-    #    group_by(samples) %>%
-    #    set_options(width = "auto", height = 350, resizable=TRUE) %>%
-    #    layer_densities() %>% 
-    #    add_axis("x", title = "logcount") %>%
-    #    add_tooltip(getToolTipPCA, "hover") %>%
-    #    add_axis("y", title = "density")
+    
+    p <- ggplot(data=mdata, aes(x=density)) +
+        geom_density(aes(fill = samples), alpha = 0.5) +
+        labs(x = "logcount", y = "man/getDensityPlot.Rd") +
+        theme_minimal()
+    p$elementId <- NULL
+    p
 }
 
 #' prepAddQCPlots
@@ -312,12 +247,10 @@ prepAddQCPlots <- function(data=NULL, input=NULL){
     qcplot <- c()
     if(!is.null(input$qcplot)){
         if (input$qcplot == "IQR"){
-            getIQRPlot(data, colnames(data), 
+            qcplot$plot1 <- getIQRPlot(data, colnames(data), 
                 "IQR Plot(Before Normalization)")
-                #bind_shiny("ggvisQC1")
-            getIQRPlot(getNormalizedMatrix(data, input$norm_method), 
+            qcplot$plot2 <- getIQRPlot(getNormalizedMatrix(data, input$norm_method), 
                 colnames(data), "IQR Plot(After Normalization)")
-                #bind_shiny("ggvisQC2")
         }
         else if (input$qcplot == "Density"){
             qcplot$plot1 <- getDensityPlot(data, colnames(data), 

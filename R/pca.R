@@ -80,64 +80,25 @@ plot_pca <- function(dat = NULL, pcx = 1, pcy = 2,
     yaxis <- sprintf("PC%d (%.2f%%)", pcy,
                      round(explained[pcy] * 100, 2))
     
-    plot1 <- ggplot(data=p_data, aes(x=x, y=y, shape=shape, color=color))
+    plot1 <- ggplot(data=p_data, aes(x=x, y=y))
         
     
     if (legendSelect == "color") {
-        plot1 <-  plot1 + geom_point(mapping=aes(shape=factor(shape),color=color))
+        plot1 <-  plot1 + geom_point(mapping=aes(shape=shape, color=color), size=3 )
     }else{
-        plot1 <-  plot1 + geom_point(mapping=aes(shape=factor(shape),color=shape))
+        plot1 <-  plot1 + geom_point(mapping=aes(shape=shape, color=shape), size=3 )
     }
     if (textonoff == "On")
         plot1 <- plot1 + geom_text(aes(label=samples), vjust = 0, nudge_y = 1)
-    #plot1 <- plot1 +theme(legend.title = element_blank())
-    # plot1 <-plot_ly(data=p_data, x=~x, y=~y,
-    #        color=~color,  type="scatter")  %>%
-    #    layout(xaxis = list(title = xaxis),
-    #        yaxis = list(title = yaxis))
+    plot1 <- plot1 + theme(legend.title = element_blank())
+    plot1 <- plot1 +  labs(x = xaxis, y = yaxis)
     plot1$elementId <- NULL
     
     pcaExp <- getPCAexplained(dat, pca_data, input)
     
     plot2 <- drawPCAExplained(pcaExp$plotdata)
-    #a <- p_data %>% ggvis(x = ~x, y = ~y) %>% 
-    #    layer_points(size := 100, 
-    #        fill =~ color, shape =~ shape, key := ~samples) %>%
-    #    add_tooltip(getToolTipPCA, "hover") %>%
-    #    add_axis("x", title = xaxis) %>%
-    #    add_axis("y", title = yaxis) %>%
-    #    set_options(duration = 0, width = "auto", height = "auto", 
-    #        resizable = TRUE)
-    #if (textonoff == "On")
-    #    a <- a %>% layer_text(text := ~samples,  fontSize := 12, 
-    #               align := "left", baseline := "bottom", stroke := "black")
-    #if (legendSelect == "color") {
-    #    a <- a %>% hide_legend("shape") %>%
-    #    add_legend("fill")
-    #}
-    #else{
-    #    a <- a %>% hide_legend("fill") %>%
-    #    add_legend("shape")
-    #}
+   
     return (list(plot1 =  plot1, plot2 =  plot2, pcaset = pcaExp$pcaset))
-}
-
-#' getToolTipPCA
-#'
-#' Prepares tooltiptext for PCA plot
-#'
-#' @param dat, data
-#' @return tooltip text
-#'
-#' @export
-#'
-#' @examples
-#' x <- getToolTipPCA()
-#'
-getToolTipPCA <- function(dat=NULL){
-    if (is.null(dat)) return(NULL)
-    
-    paste0("<b>", dat$samples, "</b>")
 }
 
 #' getPCAexplained
@@ -202,8 +163,9 @@ getPCAexplained <- function(datasetInput = NULL,
 drawPCAExplained <- function(explainedData = NULL){
     p <- NULL
     if (is.null(explainedData)) return(NULL)
-    p <- plot_ly(data=explainedData, x=~PCs, y=~explained,
-                 color=~explainedData$PCs,  type = "bar")
+    p <- ggplot(data=explainedData, aes(x=PCs, y=explained)) +
+        geom_bar(stat="identity", fill="steelblue") +
+        theme_minimal()
     p$elementId <- NULL
     p
 }
