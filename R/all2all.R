@@ -14,7 +14,7 @@ all2all <- function(data, cex = 0.4) {
     nr <- nrow(data)
     if (nr > 1000)
         nr <- 1000
-    dat <-log10(data[1:nr,] + 0.1)
+    dat <-data.frame(log10(data[1:nr,] + 0.1))
     pm <- ggpairs(dat, type="scatter",
           lower = list(continuous = wrap("points", alpha = 0.3, size=cex)))
     

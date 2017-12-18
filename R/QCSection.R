@@ -68,7 +68,8 @@ getQCPlots <- function(dataset = NULL, input = NULL,
     if (is.null(dataset)) return(NULL)
     qcPlots <- NULL
     if (nrow(dataset) > 0) {
-        dat <- dataset
+        norm_data <- getNormalizedMatrix(dataset, input$norm_method)
+        dat <- norm_data
         if (input$qcplot == "all2all") {
             qcPlots <- all2all(dat, input$cex)
         } else if (input$qcplot == "heatmap") {

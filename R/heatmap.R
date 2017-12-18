@@ -37,7 +37,7 @@ runHeatmap <- function(data, title="Title", dend = "both",
             return(as.dist(1 - cor(t(x))))
         }
     }
-    p <- heatmaply(cld, type="heatmap", colors = bluered(256), k_row = 2, k_col = 2)
+    p <- heatmaply(cld, type="heatmap", distfun=dist2, hclustfun=hclust2, colors = bluered(256), k_row = 2, k_col = 2)
     p$elementId <- NULL
     p
 }

@@ -432,9 +432,6 @@ deServer <- function(input, output, session) {
             prepDataForQC(Dataset()[,input$samples], input)
         })
         edat <- reactiveValues(val = NULL)
-        observeEvent(input$qcplot, {
-            shinyjs::js$showQCPlot()
-        })
         qcplots <- reactive({
             qcp <- getQCReplot(isolate(cols()), isolate(conds()), 
                     df_select(), input)
@@ -446,10 +443,10 @@ deServer <- function(input, output, session) {
         })
         output$qcplot2 <- renderPlotly({
             if (is.null(qcplots()$plot2)) return(plotly_empty())
-            edat$val <- explainedData()
+            edat$val <- pcaset()
             qcplots()$plot2
         })
-        explainedData <- reactive({
+        pcaset <- reactive({
             if (is.null(qcplots()$pcaset)) return(NULL)
             qcplots()$pcaset
         })

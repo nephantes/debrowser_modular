@@ -93,10 +93,10 @@ if (is.null(input)) return(NULL)
 #'
 getMainPlotsLeftMenu <- function() {
     mainPlotsLeftMenu <- list(
-        shinydashboard::menuItem(" Background Selection", icon = icon("star-o"),
+        shinydashboard::menuItem("Main Options", icon = icon("star-o"),
         sliderInput("backperc", "Background Data(%):",
             min=10, max=100, value=10, sep = "",
-            animate = FALSE))
+            animate = FALSE), getHeatmapControls())
         )
     return(mainPlotsLeftMenu)
 }
@@ -202,14 +202,7 @@ getQCLeftMenu <- function( input = NULL) {
                 min = 0.1, max = 4,
                 step = 0.1, value = 0.7)),
             conditionalPanel( (condition <- "input.qcplot=='heatmap'"),
-                selectInput("clustering_method", "Clustering Method:",
-                choices <- c("complete", "ward.D2", "single", "average",
-                "mcquitty", "median", "centroid")),
-                selectInput("distance_method", "Distance Method:",
-                choices <- c("cor", "euclidean", "maximum", "manhattan",
-                "canberra", "binary", "minkowski")),
-                getHelpButton("method",
-                              "http://debrowser.readthedocs.io/en/develop/quickstart/quickstart.html#heat-maps")
+                getHeatmapControls()
             ),
         conditionalPanel( (condition <- "input.qcplot=='pca'"),
             getPCselection(1, "x"),
@@ -219,6 +212,27 @@ getQCLeftMenu <- function( input = NULL) {
             getLegendSelect(),
             getColorShapeSelection(input)
         ))
+    )
+}
+#' getHeatmapControls
+#'
+#' Generates the left menu to be used for heatmap plots
+#'
+#' @note \code{getHeatmapControls}
+#' @return HeatmapControls
+#' @examples
+#'     x <- getHeatmapControls()
+#' @export
+#'
+getHeatmapControls <- function() {
+    list(selectInput("clustering_method", "Clustering Method:",
+            choices <- c("complete", "ward.D2", "single", "average",
+                         "mcquitty", "median", "centroid")),
+    selectInput("distance_method", "Distance Method:",
+                choices <- c("cor", "euclidean", "maximum", "manhattan",
+                             "canberra", "binary", "minkowski")),
+    getHelpButton("method",
+                  "http://debrowser.readthedocs.io/en/develop/quickstart/quickstart.html#heat-maps")
     )
 }
 

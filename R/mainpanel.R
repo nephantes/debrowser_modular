@@ -126,9 +126,13 @@ getMainPanelPlots <- function(filt_data = NULL,
         validate(need(dim(dat)[1]!=0, "Select an area in the main plot to draw the heatmap. 
                       Use either 'Box Select' or 'Lasso Select' options in 'Main Plot'!"))
        
-        cld <- prepHeatData(dat[,cols])
-        p <- heatmaply(cld, type="heatmap", colors = bluered(256), k_row = 2, k_col = 2)
-        p$elementId <- NULL
+        p <- runHeatmap(dat[,cols], title = paste("Dataset:", input$dataset),
+                   clustering_method = input$clustering_method,
+                   distance_method = input$distance_method)
+        
+        #cld <- prepHeatData(dat[,cols])
+        #p <- heatmaply(cld, type="heatmap", colors = bluered(256), k_row = 2, k_col = 2)
+        #p$elementId <- NULL
         p
     })
 
