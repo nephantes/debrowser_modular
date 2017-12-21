@@ -46,6 +46,19 @@ deUI <- function() {
            }
            Shiny.onInputChange("hoveredgenename", out);
         }
+        shinyjs.getSelectedGenes = function(){
+            var count = document.querySelectorAll("g").length
+            var start = 0
+            var out = ""
+            
+            for (i = start; i < count; i++)
+            {
+                if (typeof document.querySelectorAll("g.y2tick")[i] != "undefined"){
+                  out += document.querySelectorAll("g.y2tick")[i].innerHTML.match(">(.*)</text>")[1]  + ","
+                }
+            }
+            Shiny.onInputChange("selgenenames", out);
+        }
         '
 enableBookmarking("server")
     dbHeader <- shinydashboard::dashboardHeader(titleWidth = 250,
@@ -81,7 +94,7 @@ enableBookmarking("server")
     else{
         debrowser <- (fluidPage(
         shinyjs::useShinyjs(),
-        shinyjs::extendShinyjs(text = heatmapJScode, functions = c("getHoverName")),
+        shinyjs::extendShinyjs(text = heatmapJScode, functions = c("getHoverName", "getSelectedGenes")),
         shinyjs::inlineCSS("
         #loading-debrowser {
         position: absolute;

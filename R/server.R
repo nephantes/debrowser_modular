@@ -410,10 +410,7 @@ deServer <- function(input, output, session) {
                     cols(), conds(), input, compselect, output)
             }
         })
-        
-        #observeEvent(input$startPlots, {
-        #    startPlots()
-        #})
+
         qcdata <- reactive({
             prepDataForQC(Dataset()[,input$samples], input)
         })
@@ -425,11 +422,11 @@ deServer <- function(input, output, session) {
             return(qcp)
         })
         output$qcplot1 <- renderPlotly({
-            if (is.null(qcplots()$plot1)) return(plotly_empty())
+            if (is.null(qcplots()$plot1)) return(plotly_empty(type = "scatter"))
             qcplots()$plot1
         })
         output$qcplot2 <- renderPlotly({
-            if (is.null(qcplots()$plot2)) return(plotly_empty())
+            if (is.null(qcplots()$plot2)) return(plotly_empty(type = "scatter"))
             qcplots()$plot2
         })
 

@@ -532,8 +532,7 @@ getCondMsg <- function(dc = NULL, num = NULL, cols = NULL, conds = NULL) {
     if (is.null(num)) num <- 1
     cnd <- data.frame(cbind(conds, cols))
     params_str <- paste(dc[[as.numeric(num)]]$demethod_params, collapse = ',')
-    a <-list(
-        column( 12, wellPanel(
+    a <-list(wellPanel(
             style = "overflow-x:scroll",
             HTML( paste0( "<b>Selected Parameters:</b> ", params_str,
             "</br><b>",unique(conds)[1], ":</b> "),
@@ -543,7 +542,7 @@ getCondMsg <- function(dc = NULL, num = NULL, cols = NULL, conds = NULL) {
             paste(cnd[cnd$conds == unique(conds)[2], "cols"],
             collapse =","),
         getHelpButton("method",
-"http://debrowser.readthedocs.io/en/develop/quickstart/quickstart.html#the-main-plots")))))
+"http://debrowser.readthedocs.io/en/develop/quickstart/quickstart.html#the-main-plots"))))
 }
 
 #' togglePanels

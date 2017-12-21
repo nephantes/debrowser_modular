@@ -90,6 +90,10 @@ getMainPanelPlots <- function(filt_data = NULL,
     scatter_plot <- mainScatter(plot_data, x, y)
     
     selectedPoint <- reactive({
+        key <- NULL
+        if (shg() != "") {
+            key <- shg()
+        }else{
          eventdata <- event_data("plotly_click", source = "source")
          if (is.null(eventdata)){
              eventdata <- event_data("plotly_hover", source = "source")
@@ -97,13 +101,14 @@ getMainPanelPlots <- function(filt_data = NULL,
              Click on a point to keep the plots. Double click to reset the plots."))
          }
          key <- as.vector(unlist(eventdata$key))
-         return(key)
+        }
+        return(key)
     })
     getVariationData <- reactive({
         # Get point number
         key <- selectedPoint()
         # Pick out the gene with this ID
-        vardata <- plot_data[key, ]
+        vardata <- filt_data[key, ]
         bardata <- as.data.frame(cbind(key, cols,
             t(vardata[, cols]), conds) )
         colnames(bardata) <- c("genename", "libs", "count", "conds")
@@ -114,19 +119,26 @@ getMainPanelPlots <- function(filt_data = NULL,
         data
     })
     getSelected  <- reactive({
-        selected <- event_data("plotly_selected", source = "source")
-        if (is.null(selected$key)) return (NULL)
-        filt_data[as.vector(unlist(selected$key)),]
+        keys <- NULL
+        if (hselGenes() != "") {
+            keys <- hselGenes()
+        }else{
+            selected <- event_data("plotly_selected", source = "source")
+            if (is.null(selected$key)) return (NULL)
+            keys <- as.vector(unlist(selected$key))
+        }
+        filt_data[keys,]
     })
     
     output$vplot1 <- renderPlotly({
         scatter_plot
     })
-    v <- c()
+
     output$vplot2 <- renderPlotly({
         dat <- getSelected()
-        
-        shinyjs::onevent("mousemove", "vplot2", js$getHoverName(v))
+
+        shinyjs::onevent("mousemove", "vplot2", js$getHoverName())
+        #shinyjs::onevent( "vplot2", js$getSelectedGenes())
         
         validate(need(dim(dat)[1]!=0, "Select an area in the main plot to draw the heatmap. 
                       Use either 'Box Select' or 'Lasso Select' options in 'Main Plot'!"))
@@ -136,7 +148,13 @@ getMainPanelPlots <- function(filt_data = NULL,
                    distance_method = input$distance_method1)
         p
     })
+    hselGenes <- reactive({
+        if (is.null(input$selgenenames)) return("")
+        unlist(strsplit(input$selgenenames, split=","))
+    })
+    
     shg <- reactive({
+        if (is.null(input$hoveredgenename)) return("")
         input$hoveredgenename
     })
     output$vplot3 <- renderPlotly({
@@ -169,9 +187,7 @@ getMainPanelPlots <- function(filt_data = NULL,
         shg()
     })
     output$heatmap_selected <- renderPrint({
-        
-        event_data("plotly_selected", source="heatmap")
-        
+        hselGenes()
     })
     selected <- getSelected()
     list( getSelected = isolate(getSelected) )
