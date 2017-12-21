@@ -20,12 +20,14 @@ getMainPanel <- function() {
                          draggable = T, plotlyOutput("vplot1") ),
                      box(
                          collapsible = TRUE, title = "Heatmap", status = "primary", solidHeader = TRUE, width = NULL,
-                         draggable = T,  plotlyOutput("vplot2") )) ),
+                         draggable = T,  plotlyOutput("vplot2"), 
+                         verbatimTextOutput("heatmap_hover"),
+                         verbatimTextOutput("heatmap_selected") )) ),
          column(12,
          splitLayout(cellWidths = c("50%", "50%"),
                      box(
                          collapsible = TRUE, title = "Biological Variation", status = "primary", solidHeader = TRUE, width = NULL,
-                         draggable = T,plotlyOutput("vplot3") ) ,
+                         draggable = T,plotlyOutput("vplot3")) ,
                      box(
                          collapsible = TRUE, title = "Box Plot", status = "primary", solidHeader = TRUE, width = NULL,
                          draggable = T, plotlyOutput("vplot4") ) ) ) ) )
@@ -120,22 +122,23 @@ getMainPanelPlots <- function(filt_data = NULL,
     output$vplot1 <- renderPlotly({
         scatter_plot
     })
-    
+    v <- c()
     output$vplot2 <- renderPlotly({
         dat <- getSelected()
+        
+        shinyjs::onevent("mousemove", "vplot2", js$getHoverName(v))
+        
         validate(need(dim(dat)[1]!=0, "Select an area in the main plot to draw the heatmap. 
                       Use either 'Box Select' or 'Lasso Select' options in 'Main Plot'!"))
        
         p <- runHeatmap(dat[,cols], title = paste("Dataset:", input$dataset),
-                   clustering_method = input$clustering_method,
-                   distance_method = input$distance_method)
-        
-        #cld <- prepHeatData(dat[,cols])
-        #p <- heatmaply(cld, type="heatmap", colors = bluered(256), k_row = 2, k_col = 2)
-        #p$elementId <- NULL
+                   clustering_method = input$clustering_method1,
+                   distance_method = input$distance_method1)
         p
     })
-
+    shg <- reactive({
+        input$hoveredgenename
+    })
     output$vplot3 <- renderPlotly({
         vardata <- getVariationData()
         title <- paste(vardata$genename, " variation")
@@ -160,6 +163,15 @@ getMainPanelPlots <- function(filt_data = NULL,
                yaxis = list(title = "Read Count"))
         p$elementId <- NULL
         p
+    })
+    
+    output$heatmap_hover <- renderPrint({
+        shg()
+    })
+    output$heatmap_selected <- renderPrint({
+        
+        event_data("plotly_selected", source="heatmap")
+        
     })
     selected <- getSelected()
     list( getSelected = isolate(getSelected) )

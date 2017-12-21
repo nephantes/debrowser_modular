@@ -318,7 +318,6 @@ applyFilters <- function(filt_data = NULL, cols = NULL, conds=NULL,
 #' @param getSelected, selected data
 #' @param getMostVaried, most varied data
 #' @param mergedComparison, merged comparison data
-#' @param explainedData, pca set
 #' @param input, input parameters
 #' @return data
 #' @export
@@ -327,7 +326,7 @@ applyFilters <- function(filt_data = NULL, cols = NULL, conds=NULL,
 #'     x <- getSelectedDatasetInput()
 #'
 getSelectedDatasetInput<-function(rdata = NULL, getSelected = NULL, 
-    getMostVaried = NULL, mergedComparison = NULL, explainedData = NULL, 
+    getMostVaried = NULL, mergedComparison = NULL,
     input = NULL) {
     if (is.null(rdata)) return (NULL)
     m <- rdata
@@ -347,8 +346,6 @@ getSelectedDatasetInput<-function(rdata = NULL, getSelected = NULL,
         m <- mergedComparison
     } else if (input$dataset == "searched") {
         m <- searched
-    } else if (input$dataset == "pcaset") {
-       m <- explainedData
     }
     m
 }
@@ -528,7 +525,6 @@ getUpDown <- function(filt_data = NULL){
 #' @param selected, selected genes
 #' @param getMostVaried, most varied genes
 #' @param mergedComp, merged comparison set
-#' @param explainedData, pca gene set
 #' @return data
 #' @export
 #'
@@ -537,8 +533,7 @@ getUpDown <- function(filt_data = NULL){
 #'
 getDataForTables <- function(input = NULL, init_data = NULL,
     filt_data = NULL, selected = NULL,
-    getMostVaried = NULL,  mergedComp = NULL,
-    explainedData = NULL){
+    getMostVaried = NULL,  mergedComp = NULL){
     if (is.null(init_data )) return(NULL)
     pastr <- "padj"
     fcstr <- "foldChange"
@@ -562,9 +557,6 @@ getDataForTables <- function(input = NULL, init_data = NULL,
     }
     else if (input$dataset == "selected"){
         dat <- getSearchData(selected$data$getSelected(), input)
-    }
-    else if (input$dataset == "pcaset"){
-        dat <- getSearchData( explainedData, input )
     }
     else if (input$dataset == "most-varied"){
         dat <- getSearchData(getMostVaried, input)

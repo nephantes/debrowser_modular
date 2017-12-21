@@ -209,11 +209,11 @@ deServer <- function(input, output, session) {
             getCutOffSelection(nc)
         })
         output$downloadSection <- renderUI({
-            choices <- c("most-varied", "alldetected", "pcaset")
+            choices <- c("most-varied", "alldetected")
             if (buttonValues$startDE)
                 choices <- c("up+down", "up", "down",
                              "comparisons", "alldetected",
-                             "most-varied", "pcaset")
+                             "most-varied")
             choices <- c(choices, "selected")
             getDownloadSection(TRUE, choices)
         })
@@ -239,10 +239,8 @@ deServer <- function(input, output, session) {
             getAfterLoadMsg()
         })
         output$mainmsgs <- renderUI({
-            if (is.null(condmsg$text))
-                getStartPlotsMsg()
-            else
-                condmsg$text 
+            if (!is.null(condmsg$text))
+                condmsg$text
         })
         buttonValues <- reactiveValues(goQCplots = FALSE, goDE = FALSE,
             startDE = FALSE, gotoanalysis = FALSE)
@@ -396,23 +394,11 @@ deServer <- function(input, output, session) {
         selected <- reactiveValues(data = NULL)
         observe({
             setFilterParams(session, input)
-            if ((!is.null(input$genenames) && input$qcplot == "heatmap") || 
-                (!is.null(input$genesetarea) && input$genesetarea != "")){
-                tmpDat <- init_data()
-                if (!is.null(filt_data()))
-                    tmpDat <- filt_data()
-                genenames <- ""
-                if (!is.null(input$genenames)){
-                    genenames <- input$genenames
-                } else {
-                   tmpDat <- getSearchData(tmpDat, input)
-                   genenames <- paste(rownames(tmpDat), collapse = ",")
-                }
-                selected$data <- getSelHeat(tmpDat, genenames)
-            }
+            startPlots()
         })
         condmsg <- reactiveValues(text = NULL)
         startPlots <- reactive({
+            if (is.null(filt_data())) return(NULL)
             compselect <- 1
             if (!is.null(input$compselect) ) 
                 compselect <- as.integer(input$compselect)
@@ -425,13 +411,14 @@ deServer <- function(input, output, session) {
             }
         })
         
-        observeEvent(input$startPlots, {
-            startPlots()
-        })
+        #observeEvent(input$startPlots, {
+        #    startPlots()
+        #})
         qcdata <- reactive({
             prepDataForQC(Dataset()[,input$samples], input)
         })
         edat <- reactiveValues(val = NULL)
+        
         qcplots <- reactive({
             qcp <- getQCReplot(isolate(cols()), isolate(conds()), 
                     df_select(), input)
@@ -443,27 +430,21 @@ deServer <- function(input, output, session) {
         })
         output$qcplot2 <- renderPlotly({
             if (is.null(qcplots()$plot2)) return(plotly_empty())
-            edat$val <- pcaset()
             qcplots()$plot2
         })
-        pcaset <- reactive({
-            if (is.null(qcplots()$pcaset)) return(NULL)
-            qcplots()$pcaset
-        })
-        
-        output$qcplotout <- renderPlotly({
-            if (is.null(qcplots())) return(plotly_empty())
-            ggplotly(qcplots())
-        })
-        df_select <- reactive({
-            getSelectedCols(Dataset(), datasetInput(), input)
-        })
 
-        output$intheatmap <-renderPlotly({
-            dat <- df_select()
-            if (!is.null(cols()))
-                dat <- dat[,cols()]
-            getIntHeatmap(dat, input)
+        df_select <- reactive({
+            dat <- getSelectedCols(Dataset(), datasetInput(), input)
+            norm_dat <- getNormalizedMatrix(dat, 
+                                            input$norm_method)
+        })
+        output$plotly_heatmap <-renderPlotly({
+            p <- runHeatmap(df_select(), title = paste("Dataset:", input$dataset),
+                            clustering_method = input$clustering_method2,
+                            distance_method = input$distance_method2)
+        })
+        output$plotly_all2all <- renderPlotly({
+            all2all(df_select(), input)
         })
         
         output$columnSelForQC <- renderUI({
@@ -478,11 +459,14 @@ deServer <- function(input, output, session) {
             )
         })
         
-        goplots <- reactive({
-            dat <- getDataForTables(input, init_data(),
+        datForTables <- reactive({
+            getDataForTables(input, init_data(),
                 filt_data(), selected,
-                getMostVaried(),  isolate(mergedComp()),
-                isolate(edat$val$pcaset))
+                getMostVaried(),  mergedComp())
+        })
+        
+        goplots <- reactive({
+            dat <- datForTables()
             tmpPlots <- getGOPlots(dat[[1]][, isolate(cols())], input)
             return(tmpPlots)
         })
@@ -501,10 +485,7 @@ deServer <- function(input, output, session) {
         })
         output$KEGGPlot <- renderImage({
             org <- input$organism
-            dat <- getDataForTables(input, init_data(),
-                    filt_data(), selected,
-                    getMostVaried(),  isolate(mergedComp()),
-                    isolate(edat$val$pcaset))
+            dat <- datForTables()
             genedata <- getEntrezIds(dat[[1]], org)
             i <- input$gotable_rows_selected
             #pv.out <- pathview::pathview(gene.data = genedata, 
@@ -522,12 +503,9 @@ deServer <- function(input, output, session) {
                 && all(input$table_col_list %in% colnames(tabledat()[[1]])))
                 selected_list <- input$table_col_list
             colsForTable <- list(
-                wellPanel(id = "tPanel",
-                    style = "overflow-y:scroll; max-height: 200px",
                     checkboxGroupInput("table_col_list", "Select col to include:",
                     table_col_names(), 
                     selected=selected_list)
-                )
             )
             return(colsForTable)
         })
@@ -536,10 +514,7 @@ deServer <- function(input, output, session) {
             colnames(tabledat()[[1]])
         })
         tabledat <- reactive({
-            dat <- getDataForTables(input, init_data(),
-                filt_data(), selected,
-                getMostVaried(),  isolate(mergedComp()),
-                isolate(edat$val$pcaset))
+            dat <- datForTables()
             if (is.null(dat)) return (NULL)
             dat2 <- removeCols(c("ID", "x", "y","Legend", "Size"), dat[[1]])
             
@@ -616,28 +591,22 @@ deServer <- function(input, output, session) {
                 }
                 tmpDat <- getSelectedDatasetInput(filt_data(), 
                      selected$data$getSelected(), getMostVaried(),
-                     mergedCompDat, isolate(edat$val$pcaset), input)
+                     mergedCompDat, input)
             }
             else
                 tmpDat <- getSelectedDatasetInput(init_data(), 
                      getSelected = selected$data$getSelected(),
                      getMostVaried = getMostVaried(),
-                     explainedData = isolate(edat$val$pcaset),
                      input = input)
             if(addIdFlag)
                 tmpDat <- addID(tmpDat)
-            if (input$dataset != "pcaset"){
-                choicecounter$lastselecteddataset = input$dataset
-            }
+            choicecounter$lastselecteddataset = input$dataset
             return(tmpDat)
         }
         output$downloadData <- downloadHandler(filename = function() {
             paste(input$dataset, "csv", sep = ".")
         }, content = function(file) {
-            dat <- getDataForTables(input, init_data(),
-                filt_data(), selected,
-                getMostVaried(),  isolate(mergedComp()),
-                isolate(edat$val$pcaset))
+            dat <- datForTables()
             dat2 <- removeCols(c("x", "y","Legend", "Size"), dat[[1]])
             if(!("ID" %in% names(dat2)))
                 dat2 <- addID(dat2)

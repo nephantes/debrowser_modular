@@ -38,7 +38,15 @@ deUI <- function() {
                     document.getElementsByClassName("shiny-plot-output")[0].getElementsByTagName("img")[0].style.display = "block";
         }
     '
-    
+    heatmapJScode <-
+        'shinyjs.getHoverName = function(){
+           var out = ""
+           if (typeof document.getElementsByClassName("nums")[0] != "undefined"){
+              out = document.getElementsByClassName("nums")[0].innerHTML.match("row: (.*)</tspan>")[1]
+           }
+           Shiny.onInputChange("hoveredgenename", out);
+        }
+        '
 enableBookmarking("server")
     dbHeader <- shinydashboard::dashboardHeader(titleWidth = 250,
         shinydashboard::dropdownMenu(type = "notifications", 
@@ -73,6 +81,7 @@ enableBookmarking("server")
     else{
         debrowser <- (fluidPage(
         shinyjs::useShinyjs(),
+        shinyjs::extendShinyjs(text = heatmapJScode, functions = c("getHoverName")),
         shinyjs::inlineCSS("
         #loading-debrowser {
         position: absolute;

@@ -52,7 +52,6 @@ getLeftMenu <- function(input = NULL) {
 if (is.null(input)) return(NULL)
    leftMenu <- list(
         conditionalPanel( (condition <- "input.methodtabs=='panel1'"),
-                          actionButton("startPlots", "Submit!"),
         shinydashboard::menuItem(" Plot Type", icon = icon("star-o"), startExpanded=TRUE,
         radioButtons("mainplot", paste("Main Plots:", sep = ""),
             c(Scatter = "scatter", VolcanoPlot = "volcano",
@@ -96,7 +95,7 @@ getMainPlotsLeftMenu <- function() {
         shinydashboard::menuItem("Main Options", icon = icon("star-o"),
         sliderInput("backperc", "Background Data(%):",
             min=10, max=100, value=10, sep = "",
-            animate = FALSE), getHeatmapControls())
+            animate = FALSE), getHeatmapControls("1"))
         )
     return(mainPlotsLeftMenu)
 }
@@ -194,15 +193,13 @@ getQCLeftMenu <- function( input = NULL) {
             uiOutput("columnSelForQC")),
             shinydashboard::menuItem(" QC Options", icon = icon("star-o"), startExpanded=FALSE,
             conditionalPanel( (condition <- "(input.qcplot=='all2all')"),
-            sliderInput("width", "width",
-            min = 100, max = 2000, step = 10, value = 640),
-            sliderInput("height", "height",
-            min = 100, max = 2000, step = 10, value = 640),
-                sliderInput("cex", "corr font size",
+                getSizeControls("all2all",640,640),
+                sliderInput("cex", "point size",
                 min = 0.1, max = 4,
                 step = 0.1, value = 0.7)),
             conditionalPanel( (condition <- "input.qcplot=='heatmap'"),
-                getHeatmapControls()
+                getSizeControls("heatmap",500,640),
+                getHeatmapControls("2")
             ),
         conditionalPanel( (condition <- "input.qcplot=='pca'"),
             getPCselection(1, "x"),
@@ -214,21 +211,42 @@ getQCLeftMenu <- function( input = NULL) {
         ))
     )
 }
+
 #' getHeatmapControls
 #'
 #' Generates the left menu to be used for heatmap plots
 #'
 #' @note \code{getHeatmapControls}
+#' @param num, num for repetions of the controls
 #' @return HeatmapControls
 #' @examples
 #'     x <- getHeatmapControls()
 #' @export
 #'
-getHeatmapControls <- function() {
-    list(selectInput("clustering_method", "Clustering Method:",
+getSizeControls <- function(name, h = 500, w = 640) {
+    list(
+    sliderInput(paste0(name, "width"), "width",
+                min = 100, max = 2000, step = 10, value = w),
+    sliderInput(paste0(name, "height"), "height",
+                min = 100, max = 2000, step = 10, value = h)
+    )
+}
+#' getHeatmapControls
+#'
+#' Generates the left menu to be used for heatmap plots
+#'
+#' @note \code{getHeatmapControls}
+#' @param num, num for repetions of the controls
+#' @return HeatmapControls
+#' @examples
+#'     x <- getHeatmapControls()
+#' @export
+#'
+getHeatmapControls <- function(num) {
+    list(selectInput(paste0("clustering_method", num), "Clustering Method:",
             choices <- c("complete", "ward.D2", "single", "average",
                          "mcquitty", "median", "centroid")),
-    selectInput("distance_method", "Distance Method:",
+    selectInput(paste0("distance_method",num), "Distance Method:",
                 choices <- c("cor", "euclidean", "maximum", "manhattan",
                              "canberra", "binary", "minkowski")),
     getHelpButton("method",
@@ -514,7 +532,7 @@ getCondMsg <- function(dc = NULL, num = NULL, cols = NULL, conds = NULL) {
     if (is.null(num)) num <- 1
     cnd <- data.frame(cbind(conds, cols))
     params_str <- paste(dc[[as.numeric(num)]]$demethod_params, collapse = ',')
-    a <-list( conditionalPanel(condition <- "input.startPlots",
+    a <-list(
         column( 12, wellPanel(
             style = "overflow-x:scroll",
             HTML( paste0( "<b>Selected Parameters:</b> ", params_str,
@@ -523,7 +541,7 @@ getCondMsg <- function(dc = NULL, num = NULL, cols = NULL, conds = NULL) {
             collapse =","),
             paste0(" vs. ","<b>",unique(conds)[2], ":", "</b> "),
             paste(cnd[cnd$conds == unique(conds)[2], "cols"],
-            collapse =",")),
+            collapse =","),
         getHelpButton("method",
 "http://debrowser.readthedocs.io/en/develop/quickstart/quickstart.html#the-main-plots")))))
 }

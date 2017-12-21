@@ -4,12 +4,12 @@
 \alias{all2all}
 \title{all2all}
 \usage{
-all2all(data, cex = 0.4)
+all2all(data, input)
 }
 \arguments{
 \item{data, }{data that have the sample names in the header.}
 
-\item{cex, }{dot size}
+\item{input, }{input}
 }
 \value{
 all2all scatter plots
@@ -18,6 +18,8 @@ all2all scatter plots
 Prepares all2all scatter plots for given datasets.
 }
 \examples{
-    plot<-all2all(mtcars)
+    input <- c()
+    input$cex <- 0.7
+    plot<-all2all(mtcars, input)
 
 }

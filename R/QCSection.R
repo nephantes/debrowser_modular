@@ -12,12 +12,6 @@
 #' @export
 #'
 getQCPanel <- function(input = NULL) {
-    height = "700"
-    width = "500"
-    if (!is.null(input)) {
-        height = input$height
-        width = input$width
-    }
     qcPanel <- list(
         wellPanel( conditionalPanel( (condition <- "input.qcplot=='heatmap'"),
         getHelpButton("method", 
@@ -34,16 +28,10 @@ getQCPanel <- function(input = NULL) {
                     collapsible = TRUE, title = "Plot2", status = "primary", solidHeader = TRUE, width = NULL,
                     draggable = T,  plotlyOutput("qcplot2") )) ) ) 
         ),
-        conditionalPanel(condition = 
-            "(input.qcplot == 'all2all')",
-            column(12,  box(
-                collapsible = TRUE, title = "Plot2", status = "primary", solidHeader = TRUE,
-                draggable = T,  plotlyOutput("qcplotout",  height = height, width = width) , 
-                height = (height + 300), width = 12))),    
+        conditionalPanel(condition = "(input.qcplot == 'all2all')",
+            column(12,  plotlyOutput("plotly_all2all", height= input$all2allheight, width=input$all2allwidth))),
         conditionalPanel(condition = "(input.qcplot == 'heatmap')",
-             box(
-                 collapsible = TRUE, title = "Heatmap", status = "primary", solidHeader = TRUE, width = NULL,
-                 draggable = T, plotlyOutput("intheatmap") ))
+            column(12,  plotlyOutput("plotly_heatmap", height= input$heatmapheight, width=input$heatmapwidth)))
        )
     return(qcPanel)
 }
@@ -68,15 +56,9 @@ getQCPlots <- function(dataset = NULL, input = NULL,
     if (is.null(dataset)) return(NULL)
     qcPlots <- NULL
     if (nrow(dataset) > 0) {
-        norm_data <- getNormalizedMatrix(dataset, input$norm_method)
-        dat <- norm_data
-        if (input$qcplot == "all2all") {
-            qcPlots <- all2all(dat, input$cex)
-        } else if (input$qcplot == "heatmap") {
-            qcPlots <- runHeatmap(dat, title = paste("Dataset:", input$dataset),
-                clustering_method = input$clustering_method,
-                distance_method = input$distance_method)
-        } else if (input$qcplot == "pca") {
+        
+        dat <- dataset
+        if (input$qcplot == "pca") {
             sc <- getShapeColor(input)
             pcaplot <- plot_pca(dat, input$pcselx, input$pcsely,
                 metadata = metadata, color = sc$color,
@@ -85,7 +67,6 @@ getQCPlots <- function(dataset = NULL, input = NULL,
                 legendSelect = sc$legendSelect, input = input )
             qcPlots$plot1 <- pcaplot$plot1
             qcPlots$plot2 <- pcaplot$plot2
-            
         } else if (input$qcplot == "IQR" || input$qcplot == "Density" ) {
             qcPlots <- prepAddQCPlots(dataset, input)
         }
