@@ -47,7 +47,7 @@ deUI <- function() {
            Shiny.onInputChange("hoveredgenename", out);
         }
         shinyjs.getSelectedGenes = function(){
-            var count = document.querySelectorAll("g").length
+            var count = document.querySelectorAll("g.y2tick").length
             var start = 0
             var out = ""
             

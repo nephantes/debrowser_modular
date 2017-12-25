@@ -556,7 +556,7 @@ getDataForTables <- function(input = NULL, init_data = NULL,
             dat <- getSearchData(getDown(filt_data), input)
     }
     else if (input$dataset == "selected"){
-        dat <- getSearchData(selected$data$getSelected(), input)
+        dat <- getSearchData(selected$data$getSelected, input)
     }
     else if (input$dataset == "most-varied"){
         dat <- getSearchData(getMostVaried, input)
@@ -567,6 +567,7 @@ getDataForTables <- function(input = NULL, init_data = NULL,
         pastr<-colnames(mergedComp)[grepl("padj", colnames(mergedComp))]
         dat <- getSearchData(mergedComp, input)
     }
+    if(is.null(dat) || nrow(dat)<1) return(NULL)
     list(dat, pastr, fcstr)
 }
 

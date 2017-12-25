@@ -120,13 +120,9 @@ getMainPanelPlots <- function(filt_data = NULL,
     })
     getSelected  <- reactive({
         keys <- NULL
-        if (hselGenes() != "") {
-            keys <- hselGenes()
-        }else{
-            selected <- event_data("plotly_selected", source = "source")
-            if (is.null(selected$key)) return (NULL)
-            keys <- as.vector(unlist(selected$key))
-        }
+        selected <- event_data("plotly_selected", source = "source")
+        if (is.null(selected$key)) return (NULL)
+        keys <- as.vector(unlist(selected$key))
         filt_data[keys,]
     })
     
@@ -138,7 +134,7 @@ getMainPanelPlots <- function(filt_data = NULL,
         dat <- getSelected()
 
         shinyjs::onevent("mousemove", "vplot2", js$getHoverName())
-        #shinyjs::onevent( "vplot2", js$getSelectedGenes())
+        shinyjs::onevent("click", "vplot2", js$getSelectedGenes())
         
         validate(need(dim(dat)[1]!=0, "Select an area in the main plot to draw the heatmap. 
                       Use either 'Box Select' or 'Lasso Select' options in 'Main Plot'!"))
@@ -189,6 +185,17 @@ getMainPanelPlots <- function(filt_data = NULL,
     output$heatmap_selected <- renderPrint({
         hselGenes()
     })
-    selected <- getSelected()
-    list( getSelected = isolate(getSelected) )
+    selectedGenes <- reactive({
+        ret <- c()
+        if (!is.null(isolate(hselGenes())) && isolate(hselGenes()) != "") {
+             keys <- isolate(hselGenes())
+             ret <-  filt_data[keys,]
+        }
+        else{
+            ret <- isolate(getSelected())
+        }
+       return(ret)
+    })
+    selected <- selectedGenes()
+    list( getSelected = isolate(selectedGenes()) )
 }

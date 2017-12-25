@@ -395,6 +395,7 @@ deServer <- function(input, output, session) {
         observe({
             setFilterParams(session, input)
             startPlots()
+            startQCPlots(Dataset(), datasetInput(), cols(), conds(), input, output)
         })
         condmsg <- reactiveValues(text = NULL)
         startPlots <- reactive({
@@ -414,52 +415,12 @@ deServer <- function(input, output, session) {
         qcdata <- reactive({
             prepDataForQC(Dataset()[,input$samples], input)
         })
-        edat <- reactiveValues(val = NULL)
-        
-        qcplots <- reactive({
-            qcp <- getQCReplot(isolate(cols()), isolate(conds()), 
-                    df_select(), input)
-            return(qcp)
-        })
-        output$qcplot1 <- renderPlotly({
-            if (is.null(qcplots()$plot1)) return(plotly_empty(type = "scatter"))
-            qcplots()$plot1
-        })
-        output$qcplot2 <- renderPlotly({
-            if (is.null(qcplots()$plot2)) return(plotly_empty(type = "scatter"))
-            qcplots()$plot2
-        })
 
-        df_select <- reactive({
-            dat <- getSelectedCols(Dataset(), datasetInput(), input)
-            norm_dat <- getNormalizedMatrix(dat, 
-                                            input$norm_method)
-        })
-        output$plotly_heatmap <-renderPlotly({
-            p <- runHeatmap(df_select(), title = paste("Dataset:", input$dataset),
-                            clustering_method = input$clustering_method2,
-                            distance_method = input$distance_method2)
-        })
-        output$plotly_all2all <- renderPlotly({
-            all2all(df_select(), input)
-        })
-        
-        output$columnSelForQC <- renderUI({
-            existing_cols <- input$samples
-            if (!is.null(cols()))
-                existing_cols <- cols()
-            wellPanel(id = "tPanel",
-                style = "overflow-y:scroll; max-height: 200px",
-                checkboxGroupInput("col_list", "Select col to include:",
-                existing_cols, 
-                selected=existing_cols)
-            )
-        })
-        
         datForTables <- reactive({
-            getDataForTables(input, init_data(),
+            dat <- getDataForTables(input, init_data(),
                 filt_data(), selected,
-                getMostVaried(),  mergedComp())
+                getMostVaried(), mergedComp())
+            return(dat)
         })
         
         goplots <- reactive({
@@ -587,12 +548,12 @@ deServer <- function(input, output, session) {
                     mergedCompDat <- mergedComp()
                 }
                 tmpDat <- getSelectedDatasetInput(filt_data(), 
-                     selected$data$getSelected(), getMostVaried(),
+                     selected$data$getSelected, getMostVaried(),
                      mergedCompDat, input)
             }
             else
                 tmpDat <- getSelectedDatasetInput(init_data(), 
-                     getSelected = selected$data$getSelected(),
+                     getSelected = selected$data$getSelected,
                      getMostVaried = getMostVaried(),
                      input = input)
             if(addIdFlag)

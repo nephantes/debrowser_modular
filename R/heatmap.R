@@ -25,7 +25,7 @@ runHeatmap <- function(data, title="Title", dend = "both",
         "average", "mcquitty", "median", "centroid"),
     distance_method = c("euclidean", "cor", "maximum",
         "manhattan", "canberra", "binary", "minkowski")) {
-    if(is.null(data)) return(NULL)
+    if(is.null(data) || nrow(data)<3) return(plotly_empty(type = "scatter"))
     
     cld <- prepHeatData(data)
     
