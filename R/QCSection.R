@@ -322,7 +322,7 @@ startQCPlots <- function(Dataset = NULL,
     })
     output$plotly_heatmap <-renderPlotly({
         if (is.null(df_select())) return(plotly_empty(type = "scatter"))
-        runHeatmap(df_select(), input)
+        runHeatmap(df_select(), input, 2)
     })
     output$plotly_all2all <- renderPlotly({
         if (is.null(df_select())) return(plotly_empty(type = "scatter"))

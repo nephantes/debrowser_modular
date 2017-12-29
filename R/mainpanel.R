@@ -143,7 +143,7 @@ getMainPanelPlots <- function(filt_data = NULL,
         validate(need(dim(dat)[1]!=0, "Select an area in the main plot to draw the heatmap. 
                       Use either 'Box Select' or 'Lasso Select' options in 'Main Plot'!"))
        
-        p <- runHeatmap(dat[,cols], input)
+        p <- runHeatmap(dat[,cols], input, 1)
         p
     })
     hselGenes <- reactive({

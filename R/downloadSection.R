@@ -19,7 +19,7 @@ getDownloadSection <- function(flag = FALSE, choices=NULL, defaultSelected = NUL
     if (flag){
         a <- list(conditionalPanel( (condition <- "input.methodtabs!='panel0'"),
                 shinydashboard::menuItem(" Select Plot Options",
-                                         icon = icon("star-o"),                
+                                         icon = getMenuIcon(),                
                     selectInput("dataset", "Choose a dataset:",
                     choices = choices, selected = defaultSelected), 
                     selectInput("norm_method", "Normalization Method:",

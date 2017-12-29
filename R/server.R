@@ -211,7 +211,7 @@ deServer <- function(input, output, session) {
         })
         output$downloadSection <- renderUI({
             choices <- c("most-varied", "alldetected", "selected")
-            defaultSelected <- "most-varied"
+
             if (buttonValues$startDE)
                 if (input$methodtabs != "panel1"){
                    choices <- c("up+down", "up", "down",

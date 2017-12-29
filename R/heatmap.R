@@ -3,7 +3,8 @@
 #' Creates a heatmap based on the user selected parameters within shiny.
 #'
 #' @param data, a matrixthat includes expression values
-#' @param  input, input varsiables
+#' @param input, input varsiables
+#' @param num, the heatmap number 
 #' @return heatmap.2 plot
 #'
 #' @examples
@@ -13,55 +14,59 @@
 #' @import gplots
 #' @import RColorBrewer
 #'
-runHeatmap <- function(data = NULL, input){
+runHeatmap <- function(data = NULL, input, num = 1){
     if(is.null(data) || nrow(data)<3) return(plotly_empty(type = "scatter"))
     
     cld <- prepHeatData(data)
     
-    hclustfun_row <- function(x, ...) hclust(x, method = input$hclustFun_Row)
-    hclustfun_col <- function(x, ...) hclust(x, method = input$hclustFun_Col)
+    hclustfun_row <- function(x, ...) hclust(x, method = input[[paste0("hclustFun_Row", num)]])
+    hclustfun_col <- function(x, ...) hclust(x, method = input[[paste0("hclustFun_Col", num)]])
     distfun_row <- function(x, ...) {
-        if (input$distFun_Row != "cor") {
-            return(dist(x, method = input$distFun_Row))
+        if (input[[paste0("distFun_Row",num)]] != "cor") {
+            return(dist(x, method = input[[paste0("distFun_Row",num)]]))
         } else {
             return(as.dist(1 - cor(t(x))))
         }
     }
     distfun_col <- function(x, ...) {
-        if (input$distFun_Col != "cor") {
-            return(dist(x, method = input$distFun_Col))
+        if (input[[paste0("distFun_Col",num)]] != "cor") {
+            return(dist(x, method = input[[paste0("distFun_Col",num)]]))
         } else {
             return(as.dist(1 - cor(t(x))))
         }
     }
 
-    labRow = input$labRow
-    if (labRow == TRUE && nrow(data) > 50)
-        labRow = FALSE
-    
     if (!input$customColors1 && !input$customColors2)    
-        heatmapColors <- eval(parse(text=paste0(input$pal,'(',input$ncol,')')))
+        heatmapColors <- eval(parse(text=paste0(input[[paste0("pal", num)]],
+            '(',input[[paste0("ncol", num)]],')')))
     else{
-        if (!is.null(input$color1_1))
-            heatmapColors <- colorRampPalette(c(input$color1_1, input$color2_1, input$color3_1))(n = 1000)
+        if (!is.null(input[[paste0("color1_", num)]]))
+            heatmapColors <- colorRampPalette(c(input[[paste0("color1_",num)]], 
+                input[[paste0("color2_",num)]], input[[paste0("color3_",num)]]))(n = 1000)
         #heatmapColors <- colorRampPalette(c("red", "white", "blue"))(n = 1000)
     }
     p <- heatmaply(cld,
-        main = input$main,xlab = input$xlab,ylab = input$ylab,
-        row_text_angle = input$row_text_angle,
-        column_text_angle = input$column_text_angle,
-        dendrogram = input$dendrogram,
-        branches_lwd = input$branches_lwd,
-        seriate = input$seriation,
+        main = input[[paste0("main", num)]],
+        xlab = input[[paste0("xlab", num)]],
+        ylab = input[[paste0("ylab", num)]],
+        row_text_angle = input[[paste0("row_text_angle", num)]],
+        column_text_angle = input[[paste0("column_text_angle", num)]],
+        dendrogram = input[[paste0("dendrogram", num)]],
+        branches_lwd = input[[paste0("branches_lwd", num)]],
+        seriate = input[[paste0("seriation", num)]],
         colors = heatmapColors,
         distfun_row =  distfun_row,
         hclustfun_row = hclustfun_row,
         distfun_col = distfun_col,
         hclustfun_col = hclustfun_col,
-        showticklabels = c(labRow, input$labCol),
-        k_col = input$k_Col, 
-        k_row = input$k_Row) %>% 
-    plotly::layout(margin = list(l = input$left, b = input$bottom))
+        showticklabels = c(input[[paste0("labRow", num)]], input[[paste0("labCol", num)]]),
+        k_col = input[[paste0("k_Col", num)]], 
+        k_row = input[[paste0("k_Row", num)]]) %>% 
+    plotly::layout(margin = list(l = input[[paste0("left", num)]],
+        b = input[[paste0("bottom", num)]],
+        t = input[[paste0("top", num)]],
+        r = input[[paste0("right", num)]]
+        ))
     
     p$elementId <- NULL
     p

@@ -52,14 +52,14 @@ getLeftMenu <- function(input = NULL) {
 if (is.null(input)) return(NULL)
    leftMenu <- list(
         conditionalPanel( (condition <- "input.methodtabs=='panel1'"),
-        shinydashboard::menuItem(" Plot Type", icon = icon("star-o"), startExpanded=TRUE,
-        radioButtons("mainplot", paste("Main Plots:", sep = ""),
+        shinydashboard::menuItem(" Plot Type", icon = getMenuIcon(), startExpanded=TRUE,
+            radioButtons("mainplot", "Main Plots:",
             c(Scatter = "scatter", VolcanoPlot = "volcano",
             MAPlot = "maplot"))
                 ),
             getMainPlotsLeftMenu()),
         conditionalPanel( (condition <- "input.methodtabs=='panel2'"),
-        shinydashboard::menuItem(" Plot Type", icon = icon("star-o"), startExpanded = TRUE,
+        shinydashboard::menuItem(" Plot Type", icon =getMenuIcon(), startExpanded = TRUE,
         wellPanel(radioButtons("qcplot",
                 paste("QC Plots:", sep = ""),
                 c(PCA = "pca", All2All = "all2all", Heatmap = "heatmap", IQR = "IQR",
@@ -67,14 +67,14 @@ if (is.null(input)) return(NULL)
             getQCLeftMenu(input)),
         conditionalPanel( (condition <- "input.methodtabs=='panel3'"),
             actionButton("startGO", "Submit!"),
-        shinydashboard::menuItem(" Plot Type", icon = icon("star-o"), startExpanded = TRUE,
+        shinydashboard::menuItem(" Plot Type", icon = getMenuIcon(), startExpanded = TRUE,
             wellPanel(radioButtons("goplot", paste("Go Plots:", sep = ""),
                 c(enrichGO = "enrichGO", enrichKEGG = "enrichKEGG",
                 Disease = "disease", compareClusters = "compare")))),
                 getGOLeftMenu()
                 ),
         conditionalPanel( (condition <- "input.methodtabs=='panel4'"),
-        shinydashboard::menuItem(" Select Columns", icon = icon("star-o"), startExpanded=TRUE,
+        shinydashboard::menuItem(" Select Columns", icon = getMenuIcon(), startExpanded=TRUE,
              uiOutput("getColumnsForTables")
         ))
     )
@@ -92,12 +92,27 @@ if (is.null(input)) return(NULL)
 #'
 getMainPlotsLeftMenu <- function() {
     mainPlotsLeftMenu <- list(
-        shinydashboard::menuItem("Main Options", icon = icon("star-o"),
+        shinydashboard::menuItem("Main Options", icon = getMenuIcon(),
         sliderInput("backperc", "Background Data(%):",
             min=10, max=100, value=10, sep = "",
             animate = FALSE),
         getHeatmapControls("1")))
     return(mainPlotsLeftMenu)
+}
+
+#' getMenuIcon
+#'
+#' Returns the menu icons
+#'
+#' @note \code{getMenuIcon}
+#' @return returns the left menu according to the selected tab;
+#' @examples
+#'     x <- getMenuIcon()
+#' @export
+#'
+getMenuIcon <- function() {
+    #icon("angle-double-right")
+    return(NULL)
 }
 
 #' getGOLeftMenu
@@ -112,7 +127,7 @@ getMainPlotsLeftMenu <- function() {
 #'
 getGOLeftMenu <- function() {
     list(
-    shinydashboard::menuItem(" Go Term Options", icon = icon("star-o"), startExpanded=TRUE, 
+    shinydashboard::menuItem(" Go Term Options", icon = getMenuIcon(), startExpanded=TRUE, 
                                        
     tags$head(tags$script(HTML(logSliderJScode("gopvalue")))),
     sliderInput("gopvalue", "p.adjust cut off",
@@ -189,9 +204,9 @@ getColorShapeSelection <- function(input = NULL) {
 getQCLeftMenu <- function( input = NULL) {
     if (is.null(input)) return(NULL)
         list(
-        shinydashboard::menuItem(" Select Columns", icon = icon("star-o"), startExpanded=TRUE, 
+        shinydashboard::menuItem(" Select Columns", icon = getMenuIcon(), startExpanded=TRUE, 
             uiOutput("columnSelForQC")),
-            shinydashboard::menuItem(" QC Options", icon = icon("star-o"), startExpanded=FALSE,
+            shinydashboard::menuItem(" QC Options", icon = getMenuIcon(), startExpanded=FALSE,
             conditionalPanel( (condition <- "(input.qcplot=='all2all')"),
                 getSizeControls("all2all",640,640),
                 sliderInput("cex", "point size",
@@ -247,29 +262,35 @@ getSizeControls <- function(name = "sizecontrol", h = 500, w = 640) {
 #'
 getHeatmapControls <- function(num) {
     list(
-    getDendControls("Row"),
-    getDendControls("Col"),
-    shinydashboard::menuItem("Heatmap Colors", icon = icon("star-o"),
-        getPal(),
+    getDendControls("Row", num),
+    getDendControls("Col", num),
+    shinydashboard::menuItem("Heatmap Colors", icon = getMenuIcon(),
+        getPal(num),
         conditionalPanel(paste0('!input.customColors',num),
-           sliderInput("ncol", "# of Colors", min = 1, max = 256, value = 256)),
+           sliderInput(paste0("ncol",num), "# of Colors", min = 1, max = 256, value = 256)),
         getCustomColors(num)
     ),
-    shinydashboard::menuItem("Heatmap Dendrogram", icon = icon("star-o"),
-        selectInput('dendrogram','Type',choices = c("both", "row", "column", "none"),selected = 'both'),
-        selectizeInput("seriation", "Seriation", c(OLO="OLO", GW="GW", Mean="mean", None="none"),selected = 'OLO'),
-        sliderInput('branches_lwd','Branch Width',value = 0.6,min=0,max=5,step = 0.1)
+    shinydashboard::menuItem("Heatmap Dendrogram", icon = getMenuIcon(),
+        selectInput(paste0('dendrogram',num),'Type',choices = c("both", "row", "column", "none"),selected = 'both'),
+        selectizeInput(paste0("seriation",num), "Seriation", c(OLO="OLO", GW="GW", Mean="mean", None="none"),selected = 'OLO'),
+        sliderInput(paste0('branches_lwd',num),'Branch Width',value = 0.6,min=0,max=5,step = 0.1)
     ),
-    shinydashboard::menuItem("Heatmap Layout", icon = icon("star-o"),
-        checkboxInput('labRow','X names', value = TRUE),
-        checkboxInput('labCol','Y names', value = TRUE),
-        textInput('main','Title',''),
-        textInput('xlab','labelX',''),
-        textInput('ylab', 'labelY',''),
-        sliderInput('row_text_angle','Row Text Angle',value = 0,min=0,max=180),
-        sliderInput('column_text_angle','Col Text Angle',value = 45,min=0,max=180),
-        sliderInput("left", "Margin Width", min = 0, max = 200, value = 100),
-        sliderInput("bottom", "Margin Height", min = 0, max = 200, value = 100))
+    shinydashboard::menuItem("Heatmap Layout", icon = getMenuIcon(),
+        textInput(paste0('main',num),'Title',''),
+        textInput(paste0('xlab',num),'Sample label',''),
+        checkboxInput(paste0('labRow',num), 'Sample names', value = TRUE),
+        conditionalPanel(paste0('input.labRow',num),
+        sliderInput(paste0('row_text_angle',num),'Sample Text Angle',value = 0,min=0,max=180)),
+        textInput(paste0('ylab',num), 'Gene/Region label',''),
+        checkboxInput(paste0('labCol',num), 'Gene/Region names', value = TRUE),
+        conditionalPanel(paste0('input.labCol',num),
+        sliderInput(paste0('column_text_angle',num),'Gene/Region Text Angle',value = 45,min=0,max=180)),
+        checkboxInput(paste0('margins',num), 'Margins', value = FALSE),
+        conditionalPanel(paste0('input.margins',num),
+        sliderInput(paste0("top",num), "Margin Top", min = 0, max = 200, value = 100),
+        sliderInput(paste0("bottom",num), "Margin Bottom", min = 0, max = 200, value = 100),
+        sliderInput(paste0("left",num), "Margin Left", min = 0, max = 200, value = 100),
+        sliderInput(paste0("right",num), "Margin Right", min = 0, max = 200, value = 100)))
     )
 }
 
@@ -279,20 +300,21 @@ getHeatmapControls <- function(num) {
 #'
 #' @note \code{getDendControls}
 #' @param dendtype, Row or Col
+#' @param num, control num
 #' @return pals
 #' @examples
 #'     x <- getDendControls()
 #' @export
 #'
-getDendControls <- function(dendtype = "Row") {
-    shinydashboard::menuItem(paste0(dendtype, " dendrogram"), icon = icon("star-o"),
-    selectizeInput(paste0("distFun_", dendtype), "Dist. method", 
+getDendControls <- function(dendtype = "Row", num = 1) {
+    shinydashboard::menuItem(paste0(dendtype, " dendrogram"), icon = getMenuIcon(),
+    selectizeInput(paste0("distFun_", dendtype, num), "Dist. method", 
                    getDistFunParams(),
                    selected = 'euclidean'),
-    selectizeInput(paste0("hclustFun_", dendtype), "Clustering linkage",
+    selectizeInput(paste0("hclustFun_", dendtype, num), "Clustering linkage",
                    getClustFunParams(), 
                    selected = 'complete'),
-    sliderInput(paste0("k_", dendtype), "# of Clusters", min = 1, max = 10, value = 2))
+    sliderInput(paste0("k_", dendtype, num), "# of Clusters", min = 1, max = 10, value = 2))
 }
 
 #' getClustFunParams
@@ -342,7 +364,7 @@ getPal <- function( num = 1) {
     
     colSel='RdBu'
     
-    shiny::selectizeInput(inputId ="pal", label ="Select Color Palette",
+    shiny::selectizeInput(inputId =paste0("pal",num), label ="Select Color Palette",
                           choices = c('RdBu' = 'RdBu',
                                       'BlueRed' = 'bluered',
                                       'RedBlue' = 'redblue',
@@ -423,7 +445,7 @@ getCutOffSelection <- function(nc = 1){
     list( conditionalPanel( (condition <- "input.dataset!='most-varied' &&
         input.methodtabs!='panel0'"),
         tags$head(tags$script(HTML(logSliderJScode("padj")))),
-        shinydashboard::menuItem(" Filter", icon = icon("star-o"),
+        shinydashboard::menuItem(" Filter", icon = getMenuIcon(),
             #h4("Filter"),
             sliderInput("padj", "padj value cut off",
                 min=0, max=10, value=6, sep = "",

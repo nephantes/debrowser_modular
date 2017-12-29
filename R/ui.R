@@ -71,8 +71,9 @@ deUI <- function() {
             Shiny.onInputChange(params.controlname, out);
         }
         '
+menuWidth = 300
 enableBookmarking("server")
-    dbHeader <- shinydashboard::dashboardHeader(titleWidth = 250,
+    dbHeader <- shinydashboard::dashboardHeader(titleWidth = menuWidth,
         shinydashboard::dropdownMenu(type = "notifications", 
             badgeStatus = "primary", icon = shiny::icon("cog"),
             shinydashboard::messageItem("Sign Out", "",
@@ -128,7 +129,7 @@ enableBookmarking("server")
     shinydashboard::dashboardPage(
         dbHeader,
         shinydashboard::dashboardSidebar(
-            width = 250,
+            width = menuWidth,
             conditionalPanel(condition = "!output.user_name",
                 googleAuthR::googleAuthUI("initial_google_button")),
             conditionalPanel(condition = "output.user_name",
