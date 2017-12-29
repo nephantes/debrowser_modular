@@ -5,7 +5,7 @@
 #'
 #' @param flag, to show the download selection
 #' @param choices, main vs. QC section
-#'
+#' @param defaultSelected, default selected item
 #' @note \code{getDownloadSection}
 #' @return the panel for download section in the menu;
 #'
@@ -14,14 +14,14 @@
 #'
 #' @export
 #'
-getDownloadSection <- function(flag = FALSE, choices=NULL) {
+getDownloadSection <- function(flag = FALSE, choices=NULL, defaultSelected = NULL) {
     a <- NULL
     if (flag){
         a <- list(conditionalPanel( (condition <- "input.methodtabs!='panel0'"),
                 shinydashboard::menuItem(" Select Plot Options",
                                          icon = icon("star-o"),                
                     selectInput("dataset", "Choose a dataset:",
-                    choices = choices), 
+                    choices = choices, selected = defaultSelected), 
                     selectInput("norm_method", "Normalization Method:",
                         choices <- c("TMM", "RLE", "upperquartile", "none")),
                     downloadButton("downloadData", "Download Data"),

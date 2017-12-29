@@ -60,7 +60,8 @@ Imports:
     knitr,
     R.rsp,
     testthat,
-    GGally
+    GGally,
+    colourpicker
 RoxygenNote: 6.0.1
 Suggests:
 VignetteBuilder: knitr,  R.rsp

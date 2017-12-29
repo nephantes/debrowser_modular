@@ -19,5 +19,5 @@ Generates the left menu to be used for heatmap plots
 \code{getHeatmapControls}
 }
 \examples{
-    x <- getHeatmapControls()
+    x <- getHeatmapControls(1)
 }

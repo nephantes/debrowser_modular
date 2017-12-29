@@ -69,6 +69,7 @@
 #' @importFrom limma lmFit voom eBayes topTable
 #' @importFrom sva ComBat
 #' @importFrom RCurl getURL
+#' @importFrom colourpicker colourInput
 #' @import org.Hs.eg.db
 #' @import org.Mm.eg.db
 #' @import V8
@@ -209,12 +210,19 @@ deServer <- function(input, output, session) {
             getCutOffSelection(nc)
         })
         output$downloadSection <- renderUI({
-            choices <- c("most-varied", "alldetected")
+            choices <- c("most-varied", "alldetected", "selected")
+            defaultSelected <- "most-varied"
             if (buttonValues$startDE)
-                choices <- c("up+down", "up", "down",
-                             "comparisons", "alldetected",
-                             "most-varied")
-            choices <- c(choices, "selected")
+                if (input$methodtabs != "panel1"){
+                   choices <- c("up+down", "up", "down",
+                               "comparisons", "alldetected",
+                               "most-varied", "selected")
+                }
+                else{
+                   choices <- c("up+down", "up", "down",
+                                 "comparisons", "alldetected",
+                                 "most-varied")
+                }
             getDownloadSection(TRUE, choices)
         })
         output$preppanel <- renderUI({

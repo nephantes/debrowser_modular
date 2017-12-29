@@ -39,25 +39,36 @@ deUI <- function() {
         }
     '
     heatmapJScode <-
-        'shinyjs.getHoverName = function(){
+        '
+        shinyjs.getHoverName = function(params){
+           var defaultParams = {
+               controlname : "hoveredgenename"
+           };
+           params = shinyjs.getParams(params, defaultParams);
            var out = ""
            if (typeof document.getElementsByClassName("nums")[0] != "undefined"){
-              out = document.getElementsByClassName("nums")[0].innerHTML.match("row: (.*)</tspan>")[1]
+                out = document.getElementsByClassName("nums")[0].innerHTML.match("row: (.*)</tspan>")[1]
            }
-           Shiny.onInputChange("hoveredgenename", out);
+           Shiny.onInputChange(params.controlname, out);
         }
-        shinyjs.getSelectedGenes = function(){
-            var count = document.querySelectorAll("g.y2tick").length
+
+        shinyjs.getSelectedGenes = function(params){
+            var defaultParams = {
+               plotId : "vplot2",
+               controlname : "selgenenames"
+            };
+            params = shinyjs.getParams(params, defaultParams);
+            var count = document.getElementById(params.plotId).querySelectorAll("g.y2tick").length
             var start = 0
             var out = ""
             
             for (i = start; i < count; i++)
             {
-                if (typeof document.querySelectorAll("g.y2tick")[i] != "undefined"){
-                  out += document.querySelectorAll("g.y2tick")[i].innerHTML.match(">(.*)</text>")[1]  + ","
+                if (typeof document.getElementById(params.plotId).querySelectorAll("g.y2tick")[i] != "undefined"){
+                  out += document.getElementById(params.plotId).querySelectorAll("g.y2tick")[i].innerHTML.match(">(.*)</text>")[1]  + ","
                 }
             }
-            Shiny.onInputChange("selgenenames", out);
+            Shiny.onInputChange(params.controlname, out);
         }
         '
 enableBookmarking("server")

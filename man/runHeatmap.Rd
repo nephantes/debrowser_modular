@@ -4,25 +4,12 @@
 \alias{runHeatmap}
 \title{runHeatmap}
 \usage{
-runHeatmap(data, title = "Title", dend = "both", names = FALSE,
-  clustering_method = c("ward.D2", "complete", "single", "average",
-  "mcquitty", "median", "centroid"), distance_method = c("euclidean", "cor",
-  "maximum", "manhattan", "canberra", "binary", "minkowski"))
+runHeatmap(data = NULL, input)
 }
 \arguments{
 \item{data, }{a matrixthat includes expression values}
 
-\item{title, }{title of the heatmap}
-
-\item{dend, }{dendogram}
-
-\item{names, }{a flag to show the rownames}
-
-\item{clustering_method}{= c('complete', 'ward.D2', 'single', 'average',
-'mcquitty', 'median' , 'centroid')}
-
-\item{distance_method}{= c('cor','euclidean', 'maximum', 'manhattan',
-'canberra', 'binary' ,'minkowski')}
+\item{input, }{input varsiables}
 }
 \value{
 heatmap.2 plot

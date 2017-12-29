@@ -2,22 +2,26 @@
 % Please edit documentation in R/uifuncs.R
 \name{getSizeControls}
 \alias{getSizeControls}
-\title{getHeatmapControls}
+\title{getSizeControls}
 \usage{
-getSizeControls(name, h = 500, w = 640)
+getSizeControls(name = "sizecontrol", h = 500, w = 640)
 }
 \arguments{
-\item{num, }{num for repetions of the controls}
+\item{name, }{name of the size controls}
+
+\item{h, }{height}
+
+\item{w, }{width}
 }
 \value{
-HeatmapControls
+size controls
 }
 \description{
-Generates the left menu to be used for heatmap plots
+Generates the size controls
 }
 \note{
-\code{getHeatmapControls}
+\code{getSizeControls}
 }
 \examples{
-    x <- getHeatmapControls()
+    x <- getSizeControls()
 }

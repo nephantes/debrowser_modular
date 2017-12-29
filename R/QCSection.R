@@ -322,9 +322,7 @@ startQCPlots <- function(Dataset = NULL,
     })
     output$plotly_heatmap <-renderPlotly({
         if (is.null(df_select())) return(plotly_empty(type = "scatter"))
-        runHeatmap(df_select(), title = paste("Dataset:", input$dataset),
-                        clustering_method = input$clustering_method2,
-                        distance_method = input$distance_method2)
+        runHeatmap(df_select(), input)
     })
     output$plotly_all2all <- renderPlotly({
         if (is.null(df_select())) return(plotly_empty(type = "scatter"))

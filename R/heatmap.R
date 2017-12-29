@@ -3,13 +3,7 @@
 #' Creates a heatmap based on the user selected parameters within shiny.
 #'
 #' @param data, a matrixthat includes expression values
-#' @param title, title of the heatmap
-#' @param dend, dendogram
-#' @param names, a flag to show the rownames
-#' @param clustering_method = c('complete', 'ward.D2', 'single', 'average',
-#' 'mcquitty', 'median' , 'centroid')
-#' @param distance_method = c('cor','euclidean', 'maximum', 'manhattan',
-#' 'canberra', 'binary' ,'minkowski')
+#' @param  input, input varsiables
 #' @return heatmap.2 plot
 #'
 #' @examples
@@ -19,27 +13,56 @@
 #' @import gplots
 #' @import RColorBrewer
 #'
-runHeatmap <- function(data, title="Title", dend = "both",
-    names = FALSE,
-    clustering_method = c("ward.D2", "complete", "single",
-        "average", "mcquitty", "median", "centroid"),
-    distance_method = c("euclidean", "cor", "maximum",
-        "manhattan", "canberra", "binary", "minkowski")) {
+runHeatmap <- function(data = NULL, input){
     if(is.null(data) || nrow(data)<3) return(plotly_empty(type = "scatter"))
     
     cld <- prepHeatData(data)
     
-    hclust2 <- function(x, ...) hclust(x, method = clustering_method)
-    dist2 <- function(x, ...) {
-        if (distance_method != "cor") {
-            return(dist(x, method = distance_method))
+    hclustfun_row <- function(x, ...) hclust(x, method = input$hclustFun_Row)
+    hclustfun_col <- function(x, ...) hclust(x, method = input$hclustFun_Col)
+    distfun_row <- function(x, ...) {
+        if (input$distFun_Row != "cor") {
+            return(dist(x, method = input$distFun_Row))
         } else {
             return(as.dist(1 - cor(t(x))))
         }
     }
-    p <- heatmaply(cld, type="heatmap", distfun=dist2, hclustfun=hclust2,
-        colors = bluered(256), k_row = 2, k_col = 2)
-    p <- ggplotly(p, source = "heatmap") %>% layout(dragmode = "select")
+    distfun_col <- function(x, ...) {
+        if (input$distFun_Col != "cor") {
+            return(dist(x, method = input$distFun_Col))
+        } else {
+            return(as.dist(1 - cor(t(x))))
+        }
+    }
+
+    labRow = input$labRow
+    if (labRow == TRUE && nrow(data) > 50)
+        labRow = FALSE
+    
+    if (!input$customColors1 && !input$customColors2)    
+        heatmapColors <- eval(parse(text=paste0(input$pal,'(',input$ncol,')')))
+    else{
+        if (!is.null(input$color1_1))
+            heatmapColors <- colorRampPalette(c(input$color1_1, input$color2_1, input$color3_1))(n = 1000)
+        #heatmapColors <- colorRampPalette(c("red", "white", "blue"))(n = 1000)
+    }
+    p <- heatmaply(cld,
+        main = input$main,xlab = input$xlab,ylab = input$ylab,
+        row_text_angle = input$row_text_angle,
+        column_text_angle = input$column_text_angle,
+        dendrogram = input$dendrogram,
+        branches_lwd = input$branches_lwd,
+        seriate = input$seriation,
+        colors = heatmapColors,
+        distfun_row =  distfun_row,
+        hclustfun_row = hclustfun_row,
+        distfun_col = distfun_col,
+        hclustfun_col = hclustfun_col,
+        showticklabels = c(labRow, input$labCol),
+        k_col = input$k_Col, 
+        k_row = input$k_Row) %>% 
+    plotly::layout(margin = list(l = input$left, b = input$bottom))
+    
     p$elementId <- NULL
     p
 }
@@ -80,9 +103,7 @@ prepHeatData <- function(data)
 #'
 getIntHeatmap <- function(data = NULL,  input = NULL) {
     if(is.null(data)) return(NULL)
-    runHeatmap(data, title = paste("Dataset:", input$dataset),
-        clustering_method = input$clustering_method,
-        distance_method = input$distance_method)
+    runHeatmap(data, input)
 }
 
 #' getSelHeat

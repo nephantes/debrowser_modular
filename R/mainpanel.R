@@ -91,8 +91,11 @@ getMainPanelPlots <- function(filt_data = NULL,
     
     selectedPoint <- reactive({
         key <- NULL
-        if (shg() != "") {
-            key <- shg()
+        if (shg() != "" || shgClicked()!= "" ) {
+            if (shgClicked() != "")
+                key <- shgClicked()
+            else
+                key <- shg()
         }else{
          eventdata <- event_data("plotly_click", source = "source")
          if (is.null(eventdata)){
@@ -115,14 +118,15 @@ getMainPanelPlots <- function(filt_data = NULL,
         bardata$count <- as.numeric(as.character(bardata$count))
         data <- rbind(bardata[bardata$conds == levels(bardata$conds)[1], ],
                       bardata[bardata$conds == levels(bardata$conds)[2], ])
+        js$getSelectedGenes()
         data$conds  <- factor(data$conds  , levels = unique(data$conds))
         data
     })
     getSelected  <- reactive({
         keys <- NULL
-        selected <- event_data("plotly_selected", source = "source")
-        if (is.null(selected$key)) return (NULL)
-        keys <- as.vector(unlist(selected$key))
+        selGeneList <- event_data("plotly_selected", source = "source")
+        if (is.null(selGeneList$key)) return (NULL)
+        keys <- as.vector(unlist(selGeneList$key))
         filt_data[keys,]
     })
     
@@ -134,14 +138,12 @@ getMainPanelPlots <- function(filt_data = NULL,
         dat <- getSelected()
 
         shinyjs::onevent("mousemove", "vplot2", js$getHoverName())
-        shinyjs::onevent("click", "vplot2", js$getSelectedGenes())
-        
+        shinyjs::onevent("click", "vplot2", js$getHoverName("hoveredgenenamebyclick"))
+
         validate(need(dim(dat)[1]!=0, "Select an area in the main plot to draw the heatmap. 
                       Use either 'Box Select' or 'Lasso Select' options in 'Main Plot'!"))
        
-        p <- runHeatmap(dat[,cols], title = paste("Dataset:", input$dataset),
-                   clustering_method = input$clustering_method1,
-                   distance_method = input$distance_method1)
+        p <- runHeatmap(dat[,cols], input)
         p
     })
     hselGenes <- reactive({
@@ -153,12 +155,17 @@ getMainPanelPlots <- function(filt_data = NULL,
         if (is.null(input$hoveredgenename)) return("")
         input$hoveredgenename
     })
+    shgClicked <- reactive({
+        if (is.null(input$hoveredgenenamebyclick)) return("")
+        input$hoveredgenenamebyclick
+    })
+    
     output$vplot3 <- renderPlotly({
         vardata <- getVariationData()
         title <- paste(vardata$genename, " variation")
         p <- plot_ly(vardata, x = ~libs, y = ~count, 
            color=~conds, colors=getCondColors(), type = "bar") %>%
-           layout(title = title,
+           plotly::layout(title = title,
            xaxis = list(title = "Samples",categoryorder = "array", 
                categoryarray = vardata$libs),
            yaxis = list(title = "Read Count"),
@@ -172,7 +179,7 @@ getMainPanelPlots <- function(filt_data = NULL,
         p <- plot_ly(vardata, x = ~conds, y = ~count, 
             color=~conds, colors=getCondColors(),
             boxpoints = "all", type = "box") %>%
-            layout(title = title,
+            plotly::layout(title = title,
                xaxis = list(title = "Conditions"),
                yaxis = list(title = "Read Count"))
         p$elementId <- NULL
@@ -180,7 +187,10 @@ getMainPanelPlots <- function(filt_data = NULL,
     })
     
     output$heatmap_hover <- renderPrint({
-        shg()
+        if (shgClicked() != "")
+            return(paste0("Clicked: ",shgClicked()))
+        else
+            return(paste0("Hovered:", shg()))
     })
     output$heatmap_selected <- renderPrint({
         hselGenes()
