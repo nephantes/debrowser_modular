@@ -87,8 +87,9 @@ getMainPanelPlots <- function(filt_data = NULL,
         y <- "M"
     }
     
-    scatter_plot <- mainScatter(plot_data, x, y)
-    
+    scatter_plot <- reactive({
+            mainScatter(plot_data, x, y)
+    })
     selectedPoint <- reactive({
         key <- NULL
         if (shg() != "" || shgClicked()!= "" ) {
@@ -131,7 +132,7 @@ getMainPanelPlots <- function(filt_data = NULL,
     })
     
     output$vplot1 <- renderPlotly({
-        scatter_plot
+            scatter_plot()
     })
 
     output$vplot2 <- renderPlotly({
@@ -206,6 +207,5 @@ getMainPanelPlots <- function(filt_data = NULL,
         }
        return(ret)
     })
-    selected <- selectedGenes()
-    list( getSelected = isolate(selectedGenes()) )
+    return(selectedGenes)
 }

@@ -556,7 +556,7 @@ getDataForTables <- function(input = NULL, init_data = NULL,
             dat <- getSearchData(getDown(filt_data), input)
     }
     else if (input$dataset == "selected"){
-        dat <- getSearchData(selected$data$getSelected, input)
+        dat <- getSearchData(selected, input)
     }
     else if (input$dataset == "most-varied"){
         dat <- getSearchData(getMostVaried, input)

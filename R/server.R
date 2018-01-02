@@ -211,19 +211,13 @@ deServer <- function(input, output, session) {
         })
         output$downloadSection <- renderUI({
             choices <- c("most-varied", "alldetected", "selected")
-
+            defaultchoice <- NULL
             if (buttonValues$startDE)
-                if (input$methodtabs != "panel1"){
-                   choices <- c("up+down", "up", "down",
-                               "comparisons", "alldetected",
-                               "most-varied", "selected")
-                }
-                else{
-                   choices <- c("up+down", "up", "down",
-                                 "comparisons", "alldetected",
-                                 "most-varied")
-                }
-            getDownloadSection(TRUE, choices)
+                choices <- c("up+down", "up", "down",
+                             "comparisons", "alldetected",
+                             "most-varied", "selected")
+
+            getDownloadSection(TRUE, choices, defaultchoice)
         })
         output$preppanel <- renderUI({
             getDataPrepPanel(!is.null(init_data))
@@ -399,34 +393,38 @@ deServer <- function(input, output, session) {
                     isolate(conds()), input)
             }
         })
-        selected <- reactiveValues(data = NULL)
         observe({
             setFilterParams(session, input)
             startPlots()
             startQCPlots(Dataset(), datasetInput(), cols(), conds(), input, output)
         })
         condmsg <- reactiveValues(text = NULL)
+        selected <- reactiveValues(data = NULL)
         startPlots <- reactive({
             if (is.null(filt_data())) return(NULL)
-            compselect <- 1
+            compselect <- 1 
             if (!is.null(input$compselect) ) 
                 compselect <- as.integer(input$compselect)
             if (!is.null(isolate(filt_data())) && !is.null(input$padjtxt) && 
-                !is.null(input$foldChangetxt)) {
+                !is.null(input$foldChangetxt) && input$dataset != "selected") {
                 condmsg$text <- getCondMsg(dc(), input$compselect,
                     cols(), conds())
                 selected$data <- getMainPanelPlots(filt_data(), 
                     cols(), conds(), input, compselect, output)
             }
         })
-
+        
+        selectedData  <- reactive({
+            selected$data()
+        })
+        
         qcdata <- reactive({
             prepDataForQC(Dataset()[,input$samples], input)
         })
 
         datForTables <- reactive({
             dat <- getDataForTables(input, init_data(),
-                filt_data(), selected,
+                filt_data(), selectedData(),
                 getMostVaried(), mergedComp())
             return(dat)
         })
@@ -556,12 +554,12 @@ deServer <- function(input, output, session) {
                     mergedCompDat <- mergedComp()
                 }
                 tmpDat <- getSelectedDatasetInput(filt_data(), 
-                     selected$data$getSelected, getMostVaried(),
+                     selectedData(), getMostVaried(),
                      mergedCompDat, input)
             }
             else
                 tmpDat <- getSelectedDatasetInput(init_data(), 
-                     getSelected = selected$data$getSelected,
+                     getSelected = selectedData,
                      getMostVaried = getMostVaried(),
                      input = input)
             if(addIdFlag)
