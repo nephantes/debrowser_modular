@@ -61,7 +61,8 @@ Imports:
     R.rsp,
     testthat,
     GGally,
-    colourpicker
+    colourpicker,
+    pathview
 RoxygenNote: 6.0.1
 Suggests:
 VignetteBuilder: knitr,  R.rsp

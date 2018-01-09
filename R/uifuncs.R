@@ -135,7 +135,8 @@ getGOLeftMenu <- function() {
         animate = FALSE),
     textInput("pvaluetxt", "or p.adjust", value = "0.01" ),
         getOrganismBox(),
-        #actionButton("KeggPathway", "KeggPathway", style="text-align:center;color: #0000ff; font-size:120%"),
+        conditionalPanel( (condition <- "input.goplot=='enrichKEGG'"),
+        actionButton("KeggPathway", "KeggPathway")),
         conditionalPanel( ( condition <- "(input.goplot=='enrichGO' ||
             (input.goplot=='compare' && input.gofunc!='enrichDO' &&
             input.gofunc!='enrichKEGG'))" ),
@@ -207,13 +208,12 @@ getQCLeftMenu <- function( input = NULL) {
         shinydashboard::menuItem(" Select Columns", icon = getMenuIcon(), startExpanded=TRUE, 
             uiOutput("columnSelForQC")),
             shinydashboard::menuItem(" QC Options", icon = getMenuIcon(), startExpanded=FALSE,
+            getSizeControls("plot",640,640),
             conditionalPanel( (condition <- "(input.qcplot=='all2all')"),
-                getSizeControls("all2all",640,640),
                 sliderInput("cex", "point size",
                 min = 0.1, max = 4,
                 step = 0.1, value = 0.7)),
             conditionalPanel( (condition <- "input.qcplot=='heatmap'"),
-                getSizeControls("heatmap",500,640),
                 getHeatmapControls("2")
             ),
         conditionalPanel( (condition <- "input.qcplot=='pca'"),
@@ -985,6 +985,6 @@ a <- HTML(paste0("<a id=\"info_",name,"\" href=\"",link,"\" target=\"_blank\">",
 #'
 #' @export
 getKEGGModal<-function(){
-    a <- bsModal("modalExample", "KEGG Pathway", "KeggPathway", size = "large",
+    bsModal("modalExample", "KEGG Pathway", "KeggPathway", size = "large",
     div(style = "display:block;overflow-y:auto; overflow-x:auto;",imageOutput("KEGGPlot")))
 }

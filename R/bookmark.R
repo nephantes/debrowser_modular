@@ -1,3 +1,101 @@
+
+#' startBookmark
+#'
+#' bookmark the selection
+#'
+#' @param session, sessioin
+#' @param input, inputs
+#' @param Dataset, Dataset
+#' @param choicecounter, choicecounter
+#' @param buttonValues, buttonValues
+#' @param access_token, access_token
+#' @param output, output
+#' @examples
+#'     x <- startBookmark()
+#'
+#' @export
+#'
+#'
+startBookmark <- function(session = NULL, input = NULL, Dataset = NULL, 
+    choicecounter = NULL, buttonValues = NULL, access_token = NULL, output = NULL){
+
+    loadingJSON <- reactive({
+        getJsonObj(isolate(session), isolate(input), access_token)
+    })
+    callModule(bookmarkServer, "bm", loadingJSON = loadingJSON())
+    
+    lapply(1:20, function(i) {
+        shinyjs::onclick(paste0("bm-remove_bm", i),
+                         list(
+                             removeBookmark(i, loadingJSON()$username),
+                             shinyjs::hide(paste0("bm-remove_bm", i)),
+                             shinyjs::hide(paste0("bm-bookmark", i))
+                         )
+        )
+    })
+    
+    output$googleLoginButton <- renderUI({
+        conditionalPanel(condition = "!output.user_name",
+            googleAuthR::googleAuthUI("initial_google_button"))
+    })
+    # Save extra values in state$values when we bookmark...
+    onBookmark(function(state) {
+        # state$values can store data onBookmark to be restored later
+        state$values$input_save <- input
+        state$values$data <- Dataset
+        state$values$nc <- choicecounter$nc
+        state$values$samples <- input$samples
+    })
+    onRestored(function(state) {
+        #Write the functions after restored
+        shinyjs::js$showDropdown()
+        if(!is.null(state$values$data)){
+            #The file is uploaded, go to the next tab.
+            buttonValues$gotoanalysis <- TRUE
+        }
+        if(!is.null(state$values$nc)){
+            choicecounter$nc <- state$values$nc
+        }
+        if(choicecounter$nc > 0){
+            shinyjs::enable("startDE")
+        }
+    })
+    onBookmarked(function(url) {
+        username <- loadingJSON()$username
+        user_addition <- ""
+        startup_path <- "shiny_saves/startup.rds"
+        past_state_path <- "shiny_saves/past_state.txt"
+        if(!is.null(username) && (username != "") ){
+            user_addition <- paste0("&username=", username)
+            startup_path <- paste0("shiny_saves/", 
+                                   username ,"/startup.rds")
+            past_state_path <- paste0("shiny_saves/", 
+                                      username, "/past_state.txt")
+        }
+        updateQueryString(paste0(url, user_addition))
+        startup <- list()
+        if(file.exists(startup_path)){
+            startup <- readRDS(startup_path)
+        }
+        if(!file.exists("shiny_saves")){
+            dir.create("shiny_saves")
+        }
+        shiny_saves_dir <- paste0("shiny_saves/", username)
+        if(!file.exists(shiny_saves_dir)){
+            dir.create(shiny_saves_dir)
+        }
+        startup[['startup_bookmark']] <- get_state_id(url)
+        bookmark_dir_id <- startup[['startup_bookmark']]
+        write(bookmark_dir_id,file=past_state_path, append=FALSE)
+        
+        saveRDS(startup, startup_path)
+       
+        file.copy(isolate(input$file1$datapath), 
+                  paste0("shiny_bookmarks/", bookmark_dir_id, "/file1.tsv"))
+    })
+    return(loadingJSON()$username)
+}
+
 #' removeBookmark
 #'
 #' remove saved state 
@@ -42,6 +140,7 @@ get_state_id <- function(prev_url = NULL){
     query_string <- paste0("?", strsplit(prev_url, "?",
         fixed = TRUE)[[1]][2])
     query_list <- parseQueryString(query_string)
+    print(query_list[["_state_id_"]])
     return(query_list[["_state_id_"]])
 }
 
@@ -169,6 +268,43 @@ getJsonObj <- function(session = NULL, input = NULL,
         }
     }
     loadingJSON
+}
+
+#' Get the logged in user's email and other info
+#' 
+#' @param id ID of the person to get the profile data for. 'me' to get current user.
+#' 
+#' @return A People resource
+#' 
+#' https://developers.google.com/+/web/api/rest/latest/people#resource-representations
+#' 
+#' @seealso https://developers.google.com/+/web/api/rest/latest/people
+#' 
+#' @export
+#' 
+#' @examples 
+#' 
+#' \dontrun{
+#' options(googleAuthR.scopes.selected = 
+#'    c("https://www.googleapis.com/auth/userinfo.email",
+#'      "https://www.googleapis.com/auth/userinfo.profile"))
+#'                                         
+#' googleAuthR::gar_auth()
+#' 
+#' ## default is user logged in
+#' user <- get_user_info()
+#' }
+#' 
+get_user_info <- function(id = "me"){
+
+    url <- sprintf("https://www.googleapis.com/plus/v1/people/%s", id)
+    
+    g <- googleAuthR::gar_api_generator(url, "GET")
+    
+    req <- g()
+    
+    req$content
+    
 }
 
 

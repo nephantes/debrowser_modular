@@ -4,12 +4,14 @@
 \alias{getDownloadSection}
 \title{getDownloadSection}
 \usage{
-getDownloadSection(flag = FALSE, choices = NULL)
+getDownloadSection(flag = FALSE, choices = NULL, defaultSelected = NULL)
 }
 \arguments{
 \item{flag, }{to show the download selection}
 
 \item{choices, }{main vs. QC section}
+
+\item{defaultSelected, }{default selected item}
 }
 \value{
 the panel for download section in the menu;

@@ -5,7 +5,7 @@
 \title{getConditionSelectorFromMeta}
 \usage{
 getConditionSelectorFromMeta(input = NULL, index = 1, num = 0,
-  choices = NULL, selected = NULL, loadingJSON = NULL)
+  choices = NULL, selected = NULL, username = NULL)
 }
 \arguments{
 \item{input, }{input}
@@ -18,7 +18,7 @@ getConditionSelectorFromMeta(input = NULL, index = 1, num = 0,
 
 \item{selected, }{selected}
 
-\item{loadingJSON, }{loadingJSON}
+\item{username, }{username}
 }
 \description{
 Selects user input conditions to run in DESeq from metadata

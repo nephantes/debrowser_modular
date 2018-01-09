@@ -5,7 +5,7 @@
 \title{selectConditions}
 \usage{
 selectConditions(Dataset = NULL, choicecounter, input = NULL,
-  loadingJSON = NULL)
+  username = NULL)
 }
 \arguments{
 \item{Dataset, }{used dataset}
@@ -14,7 +14,7 @@ selectConditions(Dataset = NULL, choicecounter, input = NULL,
 
 \item{input, }{input params}
 
-\item{loadingJSON, }{loads from json}
+\item{username, }{loads from json}
 }
 \value{
 the panel for go plots;

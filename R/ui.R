@@ -38,8 +38,7 @@ deUI <- function() {
                     document.getElementsByClassName("shiny-plot-output")[0].getElementsByTagName("img")[0].style.display = "block";
         }
     '
-    heatmapJScode <-
-        '
+    heatmapJScode <-'
         shinyjs.getHoverName = function(params){
            var defaultParams = {
                controlname : "hoveredgenename"
@@ -130,8 +129,7 @@ enableBookmarking("server")
         dbHeader,
         shinydashboard::dashboardSidebar(
             width = menuWidth,
-            conditionalPanel(condition = "!output.user_name",
-                googleAuthR::googleAuthUI("initial_google_button")),
+            uiOutput('googleLoginButton'),
             conditionalPanel(condition = "output.user_name",
                 conditionalPanel(condition = "output.user_name != 'local'",
                 h6(" Logged in as: ", textOutput("user_name"))),
@@ -158,13 +156,12 @@ enableBookmarking("server")
                     tabPanel(title = "Data Prep", value = "panel0", id="panel0",
                             uiOutput("preppanel")),
                     tabPanel(title = "Main Plots", value = "panel1", id="panel1",
-                             box(collapsible = TRUE, title = "Main Plot", status = "primary", solidHeader = TRUE, width = NULL,
-                                 draggable = T, uiOutput("mainmsgs") ),
+                            uiOutput("mainmsgs"),
                             conditionalPanel(condition = "input.demo || output.dataready", uiOutput("mainpanel"))),
                     tabPanel(title = "QC Plots", value = "panel2", id="panel2",
                             uiOutput("qcpanel")),
-                    tabPanel(title = "GO Term", value = "panel3", id="panel3",
-                            uiOutput("gopanel")),
+                    tabPanel(title = "GO Term", value = "panel3", id="panel3", 
+                             uiOutput("gopanel")),
                     tabPanel(title = "Tables", value = "panel4", id="panel4",
                             DT::dataTableOutput("tables")))
         ),

@@ -35,11 +35,11 @@
 #'             autoplot theme_minimal theme element_blank geom_text
 #' @importFrom gplots heatmap.2 redblue
 #' @importFrom igraph layout.kamada.kawai  
-#' @importFrom grDevices dev.off pdf
+#' @importFrom grDevices dev.off pdf colorRampPalette
 #' @importFrom graphics barplot hist pairs par rect text plot
 #' @importFrom stats aggregate as.dist cor cor.test dist
 #'             hclust kmeans na.omit prcomp var sd model.matrix
-#'             p.adjust runif cov mahalanobis quantile
+#'             p.adjust runif cov mahalanobis quantile density
 #' @importFrom utils read.csv read.table write.table update.packages
 #'             download.file
 #' @importFrom DOSE enrichDO enrichMap gseaplot dotplot
@@ -68,6 +68,7 @@
 #'             exactTest estimateCommonDisp glmFit
 #' @importFrom limma lmFit voom eBayes topTable
 #' @importFrom sva ComBat
+#' @importFrom GGally ggpairs wrap
 #' @importFrom RCurl getURL
 #' @importFrom colourpicker colourInput
 #' @import org.Hs.eg.db
@@ -78,11 +79,12 @@
 #' @import plotly
 #' @import heatmaply
 #' @import googleAuthR
-#' @import GGally
+#' @import colourpicker
+#' @import pathview
 
 deServer <- function(input, output, session) {
-    #library(debrowser)
-    #library(googleAuthR)
+    library(debrowser)
+    library(googleAuthR)
     enableBookmarking("server")
     options(warn = -1)
     tryCatch(
@@ -93,6 +95,16 @@ deServer <- function(input, output, session) {
                      shiny.autoreload=TRUE)
             debrowser::loadpack(debrowser)
         }
+        
+        options(googleAuthR.scopes.selected = 
+                    c("https://www.googleapis.com/auth/userinfo.email",
+                      "https://www.googleapis.com/auth/userinfo.profile"))
+        options("googleAuthR.webapp.client_id" = 
+                    "186441708690-n65idoo8t19ghi7ieopat6mlqkht9jts.apps.googleusercontent.com")
+        options("googleAuthR.webapp.client_secret" = "ulK-sj8bhvduC9kLU4VQl5ih")
+        
+        access_token <- callModule(googleAuth, "initial_google_button")
+        
         shinyjs::hide("dropdown-toggle")
         shinyjs::js$setButtonHref()
         shinyjs::js$hideDropdown()
@@ -100,94 +112,14 @@ deServer <- function(input, output, session) {
             shinyjs::hide("logout")
         }
 
-        options(googleAuthR.scopes.selected = 
-            c("https://www.googleapis.com/auth/userinfo.email",
-            "https://www.googleapis.com/auth/userinfo.profile"))
-        options("googleAuthR.webapp.client_id" = 
-            "186441708690-n65idoo8t19ghi7ieopat6mlqkht9jts.apps.googleusercontent.com")
-        options("googleAuthR.webapp.client_secret" = "ulK-sj8bhvduC9kLU4VQl5ih")
-
-        access_token <- callModule(googleAuth, "initial_google_button")
         # To hide the panels from 1 to 4 and only show Data Prep
         togglePanels(0, c(0), session)
-        loadingJSON <- reactive({
-            getJsonObj(isolate(session), isolate(input), access_token())
-        })
-        output$user_name <- renderText({
-            if(exists(".startdebrowser.called")){
-                return("local")
-            }
-            loadingJSON()$username
-        })
-    
+
+
         choicecounter <- reactiveValues(nc = 0, qc = 0, 
             lastselecteddataset = "")
         
-        callModule(bookmarkServer, "bm", loadingJSON = loadingJSON())
-        
-        lapply(1:20, function(i) {
-            shinyjs::onclick(paste0("bm-remove_bm", i),
-                 list(
-                     removeBookmark(i, loadingJSON()$username),
-                     shinyjs::hide(paste0("bm-remove_bm", i)),
-                     shinyjs::hide(paste0("bm-bookmark", i))
-                 )
-            )
-        })
-        # Save extra values in state$values when we bookmark...
-        onBookmark(function(state) {
-            # state$values can store data onBookmark to be restored later
-            state$values$input_save <- input
-            state$values$data <- Dataset
-            state$values$nc <- choicecounter$nc
-            state$values$samples <- input$samples
-        })
-        onRestored(function(state) {
-            #Write the functions after restored
-            shinyjs::js$showDropdown()
-            if(!is.null(state$values$data)){
-                #The file is uploaded, go to the next tab.
-                buttonValues$gotoanalysis <- TRUE
-            }
-            if(!is.null(state$values$nc)){
-                choicecounter$nc <- state$values$nc
-            }
-            if(choicecounter$nc > 0){
-                shinyjs::enable("startDE")
-            }
-        })
-        onBookmarked(function(url) {
-            username <- loadingJSON()$username
-            user_addition <- ""
-            startup_path <- "shiny_saves/startup.rds"
-            past_state_path <- "shiny_saves/past_state.txt"
-            if(!is.null(username) && (username != "") ){
-                user_addition <- paste0("&username=", username)
-                startup_path <- paste0("shiny_saves/", 
-                    username ,"/startup.rds")
-                past_state_path <- paste0("shiny_saves/", 
-                    username, "/past_state.txt")
-            }
-            updateQueryString(paste0(url, user_addition))
-            startup <- list()
-            if(file.exists(startup_path)){
-                startup <- readRDS(startup_path)
-            }
-            if(!file.exists("shiny_saves")){
-                dir.create("shiny_saves")
-            }
-            shiny_saves_dir <- paste0("shiny_saves/", username)
-            if(!file.exists(shiny_saves_dir)){
-                dir.create(shiny_saves_dir)
-            }
-            startup[['startup_bookmark']] <- get_state_id(url)
-            write(startup[['startup_bookmark']],file=past_state_path, append=FALSE)
-            
-            saveRDS(startup, startup_path)
-            bookmark_dir_id <- get_state_id(url)
-            file.copy(isolate(input$file1$datapath), 
-                      paste0("shiny_bookmarks/", bookmark_dir_id, "/file1.tsv"))
-        })
+       
         observeEvent(input$stopApp, {
             stopApp(returnValue = invisible())
         })
@@ -335,7 +267,7 @@ deServer <- function(input, output, session) {
             }
         })
         output$conditionSelector <- renderUI({
-            selectConditions(Dataset(), choicecounter, input, loadingJSON())
+            selectConditions(Dataset(), choicecounter, input, loadingJSON$username)
         })
         dc <- reactive({
             dc <- NULL
@@ -393,11 +325,27 @@ deServer <- function(input, output, session) {
                     isolate(conds()), input)
             }
         })
+        output$user_name <- renderText({
+            if(exists(".startdebrowser.called")){
+                return("local")
+            }
+            loadingJSON$username
+        })
+        
+        loadingJSON <- reactiveValues(username = NULL)
         observe({
             setFilterParams(session, input)
+            loadingJSON$username = startBookmark(session, input, Dataset, choicecounter, buttonValues, access_token(), output)
             startPlots()
-            startQCPlots(Dataset(), datasetInput(), cols(), conds(), input, output)
+            startQCPlots(df_select(), cols(), conds(), input, output)
         })
+        
+        df_select <- reactive({
+            dat <- getSelectedCols(Dataset(), datasetInput(), input)
+            getNormalizedMatrix(dat, 
+                input$norm_method)
+        })
+        
         condmsg <- reactiveValues(text = NULL)
         selected <- reactiveValues(data = NULL)
         startPlots <- reactive({
@@ -413,7 +361,6 @@ deServer <- function(input, output, session) {
                     cols(), conds(), input, compselect, output)
             }
         })
-        
         selectedData  <- reactive({
             selected$data()
         })
@@ -421,14 +368,12 @@ deServer <- function(input, output, session) {
         qcdata <- reactive({
             prepDataForQC(Dataset()[,input$samples], input)
         })
-
         datForTables <- reactive({
             dat <- getDataForTables(input, init_data(),
                 filt_data(), selectedData(),
                 getMostVaried(), mergedComp())
             return(dat)
         })
-        
         goplots <- reactive({
             dat <- datForTables()
             tmpPlots <- getGOPlots(dat[[1]][, isolate(cols())], input)
@@ -452,10 +397,10 @@ deServer <- function(input, output, session) {
             dat <- datForTables()
             genedata <- getEntrezIds(dat[[1]], org)
             i <- input$gotable_rows_selected
-            #pv.out <- pathview::pathview(gene.data = genedata, 
-            #          pathway.id = inputGOstart()$table$ID[i],
-            #          species = substr(inputGOstart()$table$ID[i],0,3), 
-            #          out.suffix = "b.2layer", kegg.native = T)
+            pv.out <- pathview::pathview(gene.data = genedata, 
+                      pathway.id = inputGOstart()$table$ID[i],
+                      species = substr(inputGOstart()$table$ID[i],0,3), 
+                      out.suffix = "b.2layer", kegg.native = T)
             list(src = paste0(inputGOstart()$table$ID[i],".b.2layer.png"),
                  contentType = 'image/png')
         }, deleteFile = TRUE)
@@ -516,14 +461,8 @@ deServer <- function(input, output, session) {
             return(datDT)
         })
         getMostVaried <- reactive({
-            mostVaried <- NULL
-            if (choicecounter$qc == 0)
-                mostVaried <- filt_data()[filt_data()$Legend=="MV" | 
-                    filt_data()$Legend=="GS", ]
-            else
-                mostVaried <- getMostVariedList(data.frame(init_data()), 
+            getMostVariedList(data.frame(init_data()), 
                     c(input$samples), input)
-            mostVaried
         })
         output$gotable <- DT::renderDataTable({
             if (!is.null(inputGOstart()$table)){
@@ -535,17 +474,12 @@ deServer <- function(input, output, session) {
         })
         mergedComp <- reactive({
             dat <- applyFiltersToMergedComparison(
-                isolate(mergedCompInit()), choicecounter$nc, input)
-            ret <- dat[dat$Legend == "Sig", ]
-            #ret[ret$Legend == "Sig", ] <- NULL
-            ret
+                getMergedComparison(Dataset(), dc(), 
+            choicecounter$nc, input), choicecounter$nc, input)
+            dat[dat$Legend == "Sig", ]
         })
         
-        mergedCompInit <- reactive({
-            merged <- getMergedComparison(
-                isolate(Dataset()), isolate(dc()), choicecounter$nc, input)
-            merged
-        })
+
         datasetInput <- function(addIdFlag = FALSE){
             tmpDat <- NULL
             if (choicecounter$qc == 0 ) {

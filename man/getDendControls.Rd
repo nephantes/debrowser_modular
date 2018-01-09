@@ -4,10 +4,12 @@
 \alias{getDendControls}
 \title{getDendControls}
 \usage{
-getDendControls(dendtype = "Row")
+getDendControls(dendtype = "Row", num = 1)
 }
 \arguments{
 \item{dendtype, }{Row or Col}
+
+\item{num, }{control num}
 }
 \value{
 pals

@@ -4,12 +4,14 @@
 \alias{runHeatmap}
 \title{runHeatmap}
 \usage{
-runHeatmap(data = NULL, input)
+runHeatmap(data = NULL, input, num = 1)
 }
 \arguments{
 \item{data, }{a matrixthat includes expression values}
 
 \item{input, }{input varsiables}
+
+\item{num, }{the heatmap number}
 }
 \value{
 heatmap.2 plot

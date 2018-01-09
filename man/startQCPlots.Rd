@@ -4,13 +4,11 @@
 \alias{startQCPlots}
 \title{startQCPlots}
 \usage{
-startQCPlots(Dataset = NULL, datasetInput = NULL, cols = NULL,
-  conds = NULL, input = NULL, output = NULL)
+startQCPlots(df_select = NULL, cols = NULL, conds = NULL, input = NULL,
+  output = NULL)
 }
 \arguments{
-\item{Dataset, }{given data}
-
-\item{datasetInput, }{prepared input data}
+\item{df_select, }{given data}
 
 \item{cols, }{selected columns}
 

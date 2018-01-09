@@ -84,7 +84,7 @@ getConditionSelector<- function(num=0, choices = NULL, selected = NULL) {
 #' @param num, num
 #' @param choices, choices
 #' @param selected, selected
-#' @param loadingJSON, loadingJSON
+#' @param username, username
 #' 
 #' @examples
 #'     x <- getConditionSelectorFromMeta()
@@ -92,14 +92,14 @@ getConditionSelector<- function(num=0, choices = NULL, selected = NULL) {
 #' @export
 #'
 getConditionSelectorFromMeta <- function(input = NULL, index = 1, num=0, 
-    choices = NULL, selected = NULL, loadingJSON = NULL) {
+    choices = NULL, selected = NULL, username = NULL) {
     if(is.null(input)) return(NULL) 
     if (is.null(input$demethod1)) return(NULL) 
     startup_path <- "shiny_saves/startup.rds"     
-    if(!is.null(loadingJSON$username)){
-        startup_path <- paste0("shiny_saves/", loadingJSON$username ,"/startup.rds")
-        if(!file.exists(paste0("shiny_saves/", loadingJSON$username))){
-            dir.create(paste0("shiny_saves/", loadingJSON$username))
+    if(!is.null(username)){
+        startup_path <- paste0("shiny_saves/", username ,"/startup.rds")
+        if(!file.exists(paste0("shiny_saves/", username))){
+            dir.create(paste0("shiny_saves/", username))
         }
     }
     
@@ -237,7 +237,7 @@ getSelectInputBox <- function(id = NULL, name = NULL,
 #'
 #' @param Dataset, used dataset 
 #' @param choicecounter, total number of comparisons
-#' @param loadingJSON, loads from json
+#' @param username, loads from json
 #' @param input, input params
 #' @note \code{selectConditions}
 #' @return the panel for go plots;
@@ -248,7 +248,7 @@ getSelectInputBox <- function(id = NULL, name = NULL,
 #' @export
 #'
 selectConditions<-function(Dataset = NULL,
-                           choicecounter, input = NULL, loadingJSON = NULL) {
+                           choicecounter, input = NULL, username = NULL) {
     if (is.null(Dataset)) return(NULL)
     selectedSamples <- function(num){
         if (is.null(input[[paste0("condition", num)]]))
@@ -277,9 +277,9 @@ selectConditions<-function(Dataset = NULL,
             conditionalPanel((condition <- paste0("input.conditions_from_meta",
                                                     i," != 'No Selection'")),
                     getConditionSelectorFromMeta(input, i,
-                        (2 * i - 1), allsamples, selected1, loadingJSON),
+                        (2 * i - 1), allsamples, selected1, username),
                     getConditionSelectorFromMeta(input, i,
-                        (2 * i), allsamples, selected2, loadingJSON)
+                        (2 * i), allsamples, selected2, username)
              )
             ),
             
@@ -293,10 +293,10 @@ selectConditions<-function(Dataset = NULL,
             new_selection <- selectedInput("conditions_from_meta", i, NULL, 
                                            input)
             startup_path <- "shiny_saves/startup.rds"
-            if(!is.null(loadingJSON$username)){
-                startup_path <- paste0("shiny_saves/", loadingJSON$username ,"/startup.rds")
-                if(!file.exists(paste0("shiny_saves/", loadingJSON$username))){
-                    dir.create(paste0("shiny_saves/", loadingJSON$username))
+            if(!is.null(username)){
+                startup_path <- paste0("shiny_saves/", username ,"/startup.rds")
+                if(!file.exists(paste0("shiny_saves/", username))){
+                    dir.create(paste0("shiny_saves/", username))
                 }
             }
             startup <- list()

@@ -23,15 +23,14 @@ getQCPanel <- function(input = NULL) {
              column(12,
                 box(
                     collapsible = TRUE, title = "Plot1", status = "primary", solidHeader = TRUE, width = NULL,
-                    draggable = T, plotlyOutput("qcplot1") ),
+                    draggable = T, plotlyOutput("qcplot1", height= input$plotheight, width=input$plotwidth) ),
                 box(
                     collapsible = TRUE, title = "Plot2", status = "primary", solidHeader = TRUE, width = NULL,
-                    draggable = T,  plotlyOutput("qcplot2") )) ) ) 
+                    draggable = T,  plotlyOutput("qcplot2", height= input$plotheight, width=input$plotwidth) )) ) ) 
         ),
-        conditionalPanel(condition = "(input.qcplot == 'all2all')",
-            column(12,  plotlyOutput("plotly_all2all", height= input$all2allheight, width=input$all2allwidth))),
-        conditionalPanel(condition = "(input.qcplot == 'heatmap')",
-            column(12,  plotlyOutput("plotly_heatmap", height= input$heatmapheight, width=input$heatmapwidth)))
+        conditionalPanel(condition = "(input.qcplot == 'all2all' || input.qcplot == 'heatmap')", box(
+            collapsible = TRUE, title = "Plot1", status = "primary", solidHeader = TRUE, width = NULL,
+            draggable = T, column(12,  plotlyOutput("plotly_plot", height= input$plotheight, width=input$plotwidth))) )
        )
     return(qcPanel)
 }
@@ -280,8 +279,7 @@ getSelectedCols <- function(data = NULL, datasetInput = NULL, input=NULL){
 #'
 #' Gathers the QC plots to be used within the QC panel.
 #'
-#' @param Dataset, given data
-#' @param datasetInput, prepared input data
+#' @param df_select, given data
 #' @param cols, selected columns
 #' @param conds, seleced conditions
 #' @param input, input from ui
@@ -295,15 +293,14 @@ getSelectedCols <- function(data = NULL, datasetInput = NULL, input=NULL){
 #'     startQCPlots()
 #'
 #'
-startQCPlots <- function(Dataset = NULL, 
-    datasetInput = NULL,
+startQCPlots <- function(df_select = NULL, 
     cols = NULL, conds = NULL,
     input = NULL, output = NULL)
 {
-    if (is.null(Dataset)) return(NULL)
+    if (is.null(df_select)) return(NULL)
     qcplots <- reactive({
         qcp <- getQCReplot(cols, conds, 
-             df_select(), input)
+             df_select, input)
         return(qcp)
     })
     output$qcplot1 <- renderPlotly({
@@ -315,22 +312,17 @@ startQCPlots <- function(Dataset = NULL,
         qcplots()$plot2
     })
     
-    df_select <- reactive({
-        dat <- getSelectedCols(Dataset, datasetInput, input)
-        norm_dat <- getNormalizedMatrix(dat, 
-            input$norm_method)
-    })
-    output$plotly_heatmap <-renderPlotly({
-        if (is.null(df_select())) return(plotly_empty(type = "scatter"))
-        runHeatmap(df_select(), input, 2)
-    })
-    output$plotly_all2all <- renderPlotly({
-        if (is.null(df_select())) return(plotly_empty(type = "scatter"))
-        p <- all2all(df_select(), input)
-        if (is.null(p)) return(plotly_empty(type = "scatter"))
+
+    output$plotly_plot <-renderPlotly({
+        if (is.null(df_select)) return(plotly_empty(type = "scatter"))
+        p <- c()
+        if (input$qcplot == "heatmap")
+            p <- runHeatmap(df_select, input, 2)
+        else  if (input$qcplot == "all2all")
+            p <- all2all(df_select, input)
         p
     })
-    
+
     output$columnSelForQC <- renderUI({
         existing_cols <- input$samples
         if (!is.null(cols))
