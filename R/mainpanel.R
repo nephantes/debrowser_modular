@@ -17,20 +17,20 @@ getMainPanel <- function() {
          splitLayout(cellWidths = c("50%", "50%"),
                      box(
                          collapsible = TRUE, title = "Main Plot", status = "primary", solidHeader = TRUE, width = NULL,
-                         draggable = T, plotlyOutput("vplot1") ),
+                         draggable = TRUE, plotlyOutput("vplot1") ),
                      box(
                          collapsible = TRUE, title = "Heatmap", status = "primary", solidHeader = TRUE, width = NULL,
-                         draggable = T,  plotlyOutput("vplot2"), 
+                         draggable = TRUE,  plotlyOutput("vplot2"), 
                          verbatimTextOutput("heatmap_hover"),
                          verbatimTextOutput("heatmap_selected") )) ),
          column(12,
          splitLayout(cellWidths = c("50%", "50%"),
                      box(
                          collapsible = TRUE, title = "Biological Variation", status = "primary", solidHeader = TRUE, width = NULL,
-                         draggable = T,plotlyOutput("vplot3")) ,
+                         draggable = TRUE,plotlyOutput("vplot3")) ,
                      box(
                          collapsible = TRUE, title = "Box Plot", status = "primary", solidHeader = TRUE, width = NULL,
-                         draggable = T, plotlyOutput("vplot4") ) ) ) ) )
+                         draggable = TRUE, plotlyOutput("vplot4") ) ) ) ) )
 }
 
 #' getMainPanelPlots
@@ -207,5 +207,5 @@ getMainPanelPlots <- function(filt_data = NULL,
         }
        return(ret)
     })
-    return(selectedGenes)
+    list( getSelected = isolate(selectedGenes) )
 }

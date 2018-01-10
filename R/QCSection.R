@@ -23,14 +23,14 @@ getQCPanel <- function(input = NULL) {
              column(12,
                 box(
                     collapsible = TRUE, title = "Plot1", status = "primary", solidHeader = TRUE, width = NULL,
-                    draggable = T, plotlyOutput("qcplot1", height= input$plotheight, width=input$plotwidth) ),
+                    draggable = TRUE, plotlyOutput("qcplot1", height= input$plotheight, width=input$plotwidth) ),
                 box(
                     collapsible = TRUE, title = "Plot2", status = "primary", solidHeader = TRUE, width = NULL,
-                    draggable = T,  plotlyOutput("qcplot2", height= input$plotheight, width=input$plotwidth) )) ) ) 
+                    draggable = TRUE,  plotlyOutput("qcplot2", height= input$plotheight, width=input$plotwidth) )) ) ) 
         ),
         conditionalPanel(condition = "(input.qcplot == 'all2all' || input.qcplot == 'heatmap')", box(
             collapsible = TRUE, title = "Plot1", status = "primary", solidHeader = TRUE, width = NULL,
-            draggable = T, column(12,  plotlyOutput("plotly_plot", height= input$plotheight, width=input$plotwidth))) )
+            draggable = TRUE, column(12,  plotlyOutput("plotly_plot", height= input$plotheight, width=input$plotwidth))) )
        )
     return(qcPanel)
 }

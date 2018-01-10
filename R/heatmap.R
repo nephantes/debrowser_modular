@@ -86,8 +86,6 @@ runHeatmap <- function(data = NULL, input, num = 1){
 prepHeatData <- function(data) 
 {
     if(is.null(data)) return(NULL)
-    if (nrow(data)>5000)
-        data <- data[1:5000, ]
     ld <- log2(data + 0.1)
     cldt <- scale(t(ld), center = TRUE, scale = TRUE)
     cld <- t(cldt)

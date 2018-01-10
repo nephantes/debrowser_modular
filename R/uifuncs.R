@@ -135,6 +135,7 @@ getGOLeftMenu <- function() {
         animate = FALSE),
     textInput("pvaluetxt", "or p.adjust", value = "0.01" ),
         getOrganismBox(),
+        actionButton("GeneTableButton", "DE Genes"),
         conditionalPanel( (condition <- "input.goplot=='enrichKEGG'"),
         actionButton("KeggPathway", "KeggPathway")),
         conditionalPanel( ( condition <- "(input.goplot=='enrichGO' ||
@@ -987,4 +988,19 @@ a <- HTML(paste0("<a id=\"info_",name,"\" href=\"",link,"\" target=\"_blank\">",
 getKEGGModal<-function(){
     bsModal("modalExample", "KEGG Pathway", "KeggPathway", size = "large",
     div(style = "display:block;overflow-y:auto; overflow-x:auto;",imageOutput("KEGGPlot")))
+}
+
+#' getKEGGModal
+#' prepares a helpbutton for to go to a specific site in the documentation
+#'
+#' @return the info button
+#'
+#' @examples
+#'     x<- getKEGGModal()
+#'
+#' @export
+getTableModal<-function(){
+    bsModal("modalTable", "Genes in the category", "GeneTableButton", size = "large",
+            div(style = "display:block;overflow-y:auto; overflow-x:auto;",
+                wellPanel( DT::dataTableOutput("GOGeneTable"))))
 }

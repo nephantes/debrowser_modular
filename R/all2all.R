@@ -18,7 +18,7 @@ all2all <- function(data, input) {
         nr <- 1000
     dat <-data.frame(log10(data[1:nr,] + 0.1))
     pm <- ggpairs(dat, colour = "Legend", type="scatter",
-          lower = list(continuous = wrap("points", alpha = 0.3, size=input$cex)))
-    
+        lower = list(continuous =
+        wrap("points", alpha = 0.3, size=input$cex)))
     return(pm)
 }

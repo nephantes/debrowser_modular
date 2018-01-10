@@ -25,7 +25,8 @@
 #'             wellPanel checkboxInput br p checkboxGroupInput onRestore
 #'             reactiveValuesToList renderText onBookmark onBookmarked 
 #'             updateQueryString callModule enableBookmarking htmlOutput
-#'             onRestored NS
+#'             onRestored NS renderImage h6 selectizeInput div imageOutput
+#'             fluidRow splitLayout verbatimTextOutput renderPrint fluidRow
 #' @importFrom shinyjs show hide enable disable useShinyjs extendShinyjs
 #'             js inlineCSS onclick
 #' @importFrom DT datatable dataTableOutput renderDataTable formatStyle
@@ -83,8 +84,8 @@
 #' @import pathview
 
 deServer <- function(input, output, session) {
-    library(debrowser)
-    library(googleAuthR)
+    #library(debrowser)
+    #library(googleAuthR)
     enableBookmarking("server")
     options(warn = -1)
     tryCatch(
@@ -147,7 +148,7 @@ deServer <- function(input, output, session) {
             if (buttonValues$startDE)
                 choices <- c("up+down", "up", "down",
                              "comparisons", "alldetected",
-                             "most-varied", "selected")
+                             "most-varied", "category", "selected")
 
             getDownloadSection(TRUE, choices, defaultchoice)
         })
@@ -362,12 +363,13 @@ deServer <- function(input, output, session) {
             }
         })
         selectedData  <- reactive({
-            selected$data()
+            selected$data$getSelected()
         })
         
         qcdata <- reactive({
             prepDataForQC(Dataset()[,input$samples], input)
         })
+        
         datForTables <- reactive({
             dat <- getDataForTables(input, init_data(),
                 filt_data(), selectedData(),
@@ -376,16 +378,15 @@ deServer <- function(input, output, session) {
         })
         goplots <- reactive({
             dat <- datForTables()
-            tmpPlots <- getGOPlots(dat[[1]][, isolate(cols())], input)
-            return(tmpPlots)
+            getGOPlots(dat[[1]][, isolate(cols())], isolate(input))
         })
         inputGOstart <- reactive({
             if (input$startGO){
-                goplots()
+                isolate(goplots())
             }
         })
         observeEvent(input$startGO, {
-            inputGOstart()
+            isolate(inputGOstart())
         })
         output$GOPlots1 <- renderPlot({
             if (!is.null(inputGOstart()$p) && input$startGO){
@@ -393,18 +394,53 @@ deServer <- function(input, output, session) {
             }
         })
         output$KEGGPlot <- renderImage({
+            validate(need(!is.null(input$gotable_rows_selected), 
+            "Please select a category in the GO/KEGG table to be able 
+             to see the pathway diagram"))
+
             org <- input$organism
             dat <- datForTables()
             genedata <- getEntrezIds(dat[[1]], org)
             i <- input$gotable_rows_selected
+            pid <- inputGOstart()$table$ID[i]
             pv.out <- pathview::pathview(gene.data = genedata, 
-                      pathway.id = inputGOstart()$table$ID[i],
+                      pathway.id = pid,
                       species = substr(inputGOstart()$table$ID[i],0,3), 
-                      out.suffix = "b.2layer", kegg.native = T)
-            list(src = paste0(inputGOstart()$table$ID[i],".b.2layer.png"),
+                      out.suffix = "b.2layer", kegg.native = TRUE)
+            unlink(paste0(pid,".png"))
+            unlink(paste0(pid,".xml"))
+            list(src = paste0(pid,".b.2layer.png"),
                  contentType = 'image/png')
         }, deleteFile = TRUE)
+        
+        
+        getGOCatGenes <- reactive({
+            if(is.null(input$gotable_rows_selected)) return (NULL)
+            org <- input$organism
+            dat <- tabledat()
+            
+            i <- input$gotable_rows_selected
+            genedata <- getEntrezTable(inputGOstart()$enrich_p$geneID[i], 
+                dat[[1]], org)
 
+            #selected$data$getSelected <- reactiveVal(genedata)
+            dat[[1]] <- genedata
+            dat
+        })
+        output$GOGeneTable <- DT::renderDataTable({
+            validate(need(!is.null(input$gotable_rows_selected), 
+            "Please select a category in the GO/KEGG table to be able 
+            to see the gene list"))
+            dat <- getGOCatGenes()
+            if (!is.null(dat)){
+                DT::datatable(dat[[1]],
+                   list(lengthMenu = list(c(10, 25, 50, 100),
+                   c("10", "25", "50", "100")),
+                   pageLength = 25, paging = TRUE, searching = TRUE)) %>%
+                   getTableStyle(input, dat[[2]], dat[[3]], buttonValues$startDE)
+            }
+        })
+        
         output$getColumnsForTables <-  renderUI({
             if (is.null(table_col_names())) return (NULL)
             selected_list <- table_col_names()
@@ -425,7 +461,7 @@ deServer <- function(input, output, session) {
         tabledat <- reactive({
             dat <- datForTables()
             if (is.null(dat)) return (NULL)
-            dat2 <- removeCols(c("ID", "x", "y","Legend", "Size"), dat[[1]])
+            dat2 <- removeCols(c("ID", "x", "y","Legend", "Color"), dat[[1]])
             
             pcols <- c(names(dat2)[grep("^padj", names(dat2))], 
                        names(dat2)[grep("pvalue", names(dat2))])
@@ -493,7 +529,7 @@ deServer <- function(input, output, session) {
             }
             else
                 tmpDat <- getSelectedDatasetInput(init_data(), 
-                     getSelected = selectedData,
+                     getSelected = selectedData(),
                      getMostVaried = getMostVaried(),
                      input = input)
             if(addIdFlag)
