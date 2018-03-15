@@ -1,76 +1,253 @@
+debrowserheatmap <- function( input, output, session){
+    output$heatmap <- renderPlotly({
+        runHeatmap(input)
+    })
+}
+
 #' runHeatmap
 #'
-#' Creates a heatmap based on the user selected parameters within shiny.
-#'
-#' @param data, a matrixthat includes expression values
-#' @param input, input varsiables
-#' @param num, the heatmap number 
-#' @return heatmap.2 plot
+#' Creates a heatmap based on the user selected parameters within shiny.#'
+#' @param input, input variables
+#' @param output, output objects
+#' @param session, session 
+#' @param data, a matrix that includes expression values
+#' @return heatmapply plot
 #'
 #' @examples
-#'     x <- runHeatmap(mtcars)
+#'     x <- heatmaply(mtcars)
 #'
 #' @export
-#' @import gplots
-#' @import RColorBrewer
+#' @import heatmaply
 #'
-runHeatmap <- function(data = NULL, input, num = 1){
-    if(is.null(data) || nrow(data)<3) return(plotly_empty(type = "scatter"))
-    
+#'
+runHeatmap <- function(input){
+    data <- mtcars
     cld <- prepHeatData(data)
     
-    hclustfun_row <- function(x, ...) hclust(x, method = input[[paste0("hclustFun_Row", num)]])
-    hclustfun_col <- function(x, ...) hclust(x, method = input[[paste0("hclustFun_Col", num)]])
+    hclustfun_row <- function(x, ...) hclust(x, method = input$hclustFun_Row)
+    hclustfun_col <- function(x, ...) hclust(x, method = input$hclustFun_Col)
     distfun_row <- function(x, ...) {
-        if (input[[paste0("distFun_Row",num)]] != "cor") {
-            return(dist(x, method = input[[paste0("distFun_Row",num)]]))
+        if (input$distFun_Row != "cor") {
+            return(dist(x, method = input$distFun_Row))
         } else {
             return(as.dist(1 - cor(t(x))))
         }
     }
     distfun_col <- function(x, ...) {
-        if (input[[paste0("distFun_Col",num)]] != "cor") {
-            return(dist(x, method = input[[paste0("distFun_Col",num)]]))
+        if (input$distFun_Col != "cor") {
+            return(dist(x, method = input$distFun_Col))
         } else {
             return(as.dist(1 - cor(t(x))))
         }
     }
-
-    if (!input$customColors1 && !input$customColors2)    
-        heatmapColors <- eval(parse(text=paste0(input[[paste0("pal", num)]],
-            '(',input[[paste0("ncol", num)]],')')))
+    if (is.null(input$customColors1))    
+        heatmapColors <- eval(parse(text=paste0(input$pal,
+            '(',input$ncol,')')))
     else{
-        if (!is.null(input[[paste0("color1_", num)]]))
-            heatmapColors <- colorRampPalette(c(input[[paste0("color1_",num)]], 
-                input[[paste0("color2_",num)]], input[[paste0("color3_",num)]]))(n = 1000)
+        if (!is.null(input$color1))
+            heatmapColors <- colorRampPalette(c(input$color1, 
+                input$color2, input$color3))(n = 1000)
         #heatmapColors <- colorRampPalette(c("red", "white", "blue"))(n = 1000)
     }
     p <- heatmaply(cld,
-        main = input[[paste0("main", num)]],
-        xlab = input[[paste0("xlab", num)]],
-        ylab = input[[paste0("ylab", num)]],
-        row_text_angle = input[[paste0("row_text_angle", num)]],
-        column_text_angle = input[[paste0("column_text_angle", num)]],
-        dendrogram = input[[paste0("dendrogram", num)]],
-        branches_lwd = input[[paste0("branches_lwd", num)]],
-        seriate = input[[paste0("seriation", num)]],
+        main = input$main,
+        xlab = input$xlab,
+        ylab = input$ylab,
+        row_text_angle = input$row_text_angle,
+        column_text_angle = input$column_text_angle,
+        dendrogram = input$dendrogram,
+        branches_lwd = input$branches_lwd,
+        seriate = input$seriation,
         colors = heatmapColors,
         distfun_row =  distfun_row,
         hclustfun_row = hclustfun_row,
         distfun_col = distfun_col,
         hclustfun_col = hclustfun_col,
-        showticklabels = c(input[[paste0("labRow", num)]], input[[paste0("labCol", num)]]),
-        k_col = input[[paste0("k_Col", num)]], 
-        k_row = input[[paste0("k_Row", num)]]) %>% 
-    plotly::layout(margin = list(l = input[[paste0("left", num)]],
-        b = input[[paste0("bottom", num)]],
-        t = input[[paste0("top", num)]],
-        r = input[[paste0("right", num)]]
+        showticklabels = c(input$labRow, input$labCol),
+        k_col = input$k_Col, 
+        k_row = input$k_Row) %>% 
+    plotly::layout(margin = list(l = input$left,
+        b = input$bottom,
+        t = input$top,
+        r = input$right
         ))
     
     p$elementId <- NULL
     p
 }
+
+
+#' heatmapPlotlyUI
+#'
+#' Generates the plotly container
+#'
+#' @note \code{heatmapPlotlyUI}
+#' @param id, module ID
+#' @return HeatmapControls
+#' @examples
+#'     x <- heatmapPlotlyUI("heatmap")
+#' @export
+#'
+heatmapPlotlyUI <- function(id) {
+    ns <- NS(id)
+    plotlyOutput(ns("heatmap"))
+}
+
+#' heatmapControlsUI
+#'
+#' Generates the left menu to be used for heatmap plots
+#'
+#' @note \code{heatmapControlsUI}
+#' @param id, module ID
+#' @return HeatmapControls
+#' @examples
+#'     x <- heatmapControlsUI(1)
+#' @export
+#'
+heatmapControlsUI <- function(id) {
+    ns <- NS(id)
+    list(
+        dendControlsUI(id, "Row"),
+        dendControlsUI(id, "Col"),
+        shinydashboard::menuItem("Heatmap Colors",
+            conditionalPanel(paste0('!input.', r(ns('customColors'), "-")),
+            palUI(id),
+            sliderInput(ns("ncol"), "# of Colors", 
+                min = 1, max = 256, value = 256)),
+                customColorsUI(id)
+        ),
+        shinydashboard::menuItem("Heatmap Dendrogram",
+            selectInput(ns('dendrogram'),'Type',
+            choices = c("both", "row", "column", "none"),selected = 'both'),
+            selectizeInput(ns("seriation"), "Seriation", 
+            c(OLO="OLO", GW="GW", Mean="mean", None="none"),selected = 'OLO'),
+            sliderInput(ns('branches_lwd'),'Branch Width',
+            value = 0.6,min=0,max=5,step = 0.1)
+        ),
+        shinydashboard::menuItem("Heatmap Layout",
+            textInput(ns('main'),'Title',''),
+            textInput(ns('xlab'),'Sample label',''),
+            checkboxInput(ns('labRow'), 'Sample names', value = TRUE),
+            conditionalPanel(paste0('input.', ns('labRow')),
+            sliderInput(ns('row_text_angle'),'Sample Text Angle',
+                value = 0,min=0,max=180)),
+            textInput(ns('ylab'), 'Gene/Region label',''),
+            checkboxInput(ns('labCol'), 'Gene/Region names', value = TRUE),
+            conditionalPanel(paste0('input.', ns('labCol')),
+            sliderInput(ns('column_text_angle'),'Gene/Region Text Angle',
+                value = 45,min=0,max=180))
+    ))
+}
+
+#' dendControlsUI
+#'
+#' get distance metric parameters 
+#'
+#' @note \code{dendControlsUI}
+#' @param id, module ID
+#' @param dendtype, Row or Col
+#' @return pals
+#' @examples
+#'     x <- dendControlsUI("heatmap")
+#' @export
+#'
+dendControlsUI <- function(id, dendtype = "Row") {
+    ns <- NS(id)
+    shinydashboard::menuItem(paste0(dendtype, " dendrogram"),
+        selectizeInput(ns(paste0("distFun_", dendtype)), "Dist. method", 
+           distFunParamsUI(),
+        selected = 'euclidean'),
+        selectizeInput(ns(paste0("hclustFun_", dendtype)), "Clustering linkage",
+           clustFunParamsUI(), 
+        selected = 'complete'),
+        sliderInput(ns(paste0("k_", dendtype)), "# of Clusters", 
+            min = 1, max = 10, value = 2))
+}
+
+#' clustFunParamsUI
+#'
+#' get cluster function parameter control
+#'
+#' @note \code{clustFunParamsUI}
+#' @return cluster params
+#' @examples
+#'     x <- clustFunParamsUI()
+#' @export
+#'
+clustFunParamsUI <- function() {
+    c(Complete= "complete",Single= "single",Average= "average",
+      Mcquitty= "mcquitty",Median= "median",Centroid= "centroid",
+      Ward.D= "ward.D",Ward.D2= "ward.D2")
+}
+
+#' distFunParamsUI
+#'
+#' get distance metric parameters 
+#'
+#' @note \code{distFunParamsUI}
+#' @return funParams
+#' @examples
+#'     x <- distFunParamsUI()
+#' @export
+#'
+distFunParamsUI <- function() {
+    c(Cor="cor", Euclidean="euclidean",Maximum='maximum',
+      Manhattan='manhattan',Canberra='canberra',
+      Binary='binary',Minkowski='minkowski')
+}
+
+#' palUI
+#'
+#' get pallete 
+#'
+#' @note \code{palUI}
+#' @param id, module ID
+#' @return pals
+#' @examples
+#'     x <- palUI("heatmap")
+#' @export
+#'
+palUI <- function(id) {
+    ns <- NS(id)
+    colSel='RdBu'
+    selectizeInput(inputId = ns("pal"), 
+        label ="Select Color Palette",
+        choices = c('RdBu' = 'RdBu',
+        'BlueRed' = 'bluered',
+        'RedBlue' = 'redblue',
+        'RdYlBu' = 'RdYlBu',
+        'RdYlGn' = 'RdYlGn',
+        'BrBG' = 'BrBG',
+        'Spectral' = 'Spectral',
+        'BuGn' = 'BuGn',
+        'PuBuGn' = 'PuBuGn',
+        'YlOrRd' = 'YlOrRd',
+        'Heat' = 'heat.colors',
+        'Grey' = 'grey.colors'),
+    selected=colSel)
+}
+
+#' customColorsUI
+#'
+#' get Custom Color controls
+#'
+#' @note \code{getColRng}
+#' @param id, module ID
+#' @return color range
+#' @examples
+#'     x <- customColorsUI()
+#' @export
+#'
+customColorsUI <- function(id) {
+    ns <- NS(id)
+    list(
+        checkboxInput(r(ns('customColors'), "-"), 'Custom Colors', value = FALSE),
+        conditionalPanel(paste0('input.', r(ns('customColors'), "-")),
+        colourpicker::colourInput(ns("color1"), "Choose min colour", "blue"),
+        colourpicker::colourInput(ns("color2"), "Choose median colour", "white"),
+        colourpicker::colourInput(ns("color3"), "Choose max colour", "red")))
+}
+
 #' prepHeatData
 #'
 #' scales the data

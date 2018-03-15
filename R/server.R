@@ -34,6 +34,7 @@
 #' @importFrom ggplot2 aes aes_string geom_bar geom_point ggplot
 #'             labs scale_x_discrete scale_y_discrete ylab geom_density
 #'             autoplot theme_minimal theme element_blank geom_text
+#'             unit
 #' @importFrom gplots heatmap.2 redblue
 #' @importFrom igraph layout.kamada.kawai  
 #' @importFrom grDevices dev.off pdf colorRampPalette
@@ -84,8 +85,8 @@
 #' @import pathview
 
 deServer <- function(input, output, session) {
-    #library(debrowser)
-    #library(googleAuthR)
+    library(debrowser)
+    library(googleAuthR)
     enableBookmarking("server")
     options(warn = -1)
     tryCatch(

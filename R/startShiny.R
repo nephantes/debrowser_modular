@@ -10,6 +10,7 @@
 #'
 #' @export
 #'
+
 startDEBrowser <- function(){
     if (interactive()) {
         #the upload file size limit is 30MB
@@ -61,10 +62,11 @@ startDEBrowser <- function(){
         # to assign username as 'local' from startDEBrowser() call
         .GlobalEnv$.startdebrowser.called <- "1"
         on.exit(rm(.startdebrowser.called, envir=.GlobalEnv))
-            
+      
         app <- shinyApp( ui = shinyUI(deUI),
                     server = shinyServer(deServer), 
                     enableBookmarking = "server")
+  
         runApp(app)
     }
 }

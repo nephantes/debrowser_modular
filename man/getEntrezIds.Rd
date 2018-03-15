@@ -2,7 +2,7 @@
 % Please edit documentation in R/GOterm.R
 \name{getEntrezIds}
 \alias{getEntrezIds}
-\title{getGeneList}
+\title{getEntrezIds}
 \usage{
 getEntrezIds(genes = NULL, org = "org.Hs.eg.db")
 }
@@ -15,7 +15,7 @@ getEntrezIds(genes = NULL, org = "org.Hs.eg.db")
 ENTREZ ID list
 }
 \description{
-Gathers the gene list to use for GOTerm analysis.
+Gathers the entrezIds of the genes and their fold changes
 }
 \note{
 \code{GOTerm}

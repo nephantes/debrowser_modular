@@ -55,6 +55,15 @@ getQCPlots <- function(dataset = NULL, input = NULL,
     if (is.null(dataset)) return(NULL)
     qcPlots <- NULL
     if (nrow(dataset) > 0) {
+        unitInputs <- reactive({ 
+            m <- c(20,20,20,20)
+            if(!is.null(input[["left"]]))
+                m <- c(input[["left"]],
+                       input[["bottom"]],
+                       input[["top"]],
+                       input[["right"]])
+            m
+        })
         
         dat <- dataset
         if (input$qcplot == "pca") {
@@ -64,10 +73,12 @@ getQCPlots <- function(dataset = NULL, input = NULL,
                 size = 5, shape = sc$shape,
                 textonoff = sc$textonoff, 
                 legendSelect = sc$legendSelect, input = input )
-            qcPlots$plot1 <- pcaplot$plot1
-            qcPlots$plot2 <- pcaplot$plot2
+            qcPlots$plot1 <- pcaplot$plot1 +
+               theme( plot.margin = unit(unitInputs(), "pt"))
+            qcPlots$plot2 <- pcaplot$plot2 +
+               theme( plot.margin = unit(unitInputs(), "pt"))
         } else if (input$qcplot == "IQR" || input$qcplot == "Density" ) {
-            qcPlots <- prepAddQCPlots(dataset, input)
+            qcPlots <- prepAddQCPlots(dataset, unitInputs(), input)
         }
     }
     return(qcPlots)
@@ -152,6 +163,7 @@ getQCReplot <- function(cols = NULL, conds = NULL,
 #'
 #' @param data, count or normalized data
 #' @param cols, columns
+#' @param input, input
 #' @param title, title
 #'
 #' @export
@@ -159,7 +171,7 @@ getQCReplot <- function(cols = NULL, conds = NULL,
 #' @examples
 #'     getIQRPlot()
 #'
-getIQRPlot <- function(data=NULL, cols=NULL, title = ""){
+getIQRPlot <- function(data=NULL, cols=NULL, input=NULL, title = ""){
     if (is.null(data)) return(NULL)
     data <- as.data.frame(data)
     data[, cols] <- apply(data[, cols], 2,
@@ -174,7 +186,12 @@ getIQRPlot <- function(data=NULL, cols=NULL, title = ""){
                  color="steelblue", type = "box") %>%
         layout(title = title,
                xaxis = list(title = "samples"),
-               yaxis = list(title = "logcount"))
+               yaxis = list(title = "logcount")) %>% 
+        plotly::layout(margin = list(l = input[["left"]],
+            b = input[["bottom"]],
+            t = input[["top"]],
+            r = input[["right"]]
+        ))
     p$elementId <- NULL
     p
 }
@@ -206,6 +223,7 @@ getDensityPlot <- function(data=NULL, cols=NULL, title = ""){
         geom_density(aes(fill = samples), alpha = 0.5) +
         labs(x = "logcount", y = "man/getDensityPlot.Rd") +
         theme_minimal()
+        
     p$elementId <- NULL
     p
 }
@@ -215,6 +233,7 @@ getDensityPlot <- function(data=NULL, cols=NULL, title = ""){
 #' prepares IQR and density plots
 #'
 #' @param data, barplot data
+#' @param unitInputs, unit Inputs
 #' @param input, user input params 
 #'
 #' @export
@@ -223,21 +242,24 @@ getDensityPlot <- function(data=NULL, cols=NULL, title = ""){
 #'     prepAddQCPlots()
 #'
 #'
-prepAddQCPlots <- function(data=NULL, input=NULL){
+prepAddQCPlots <- function(data=NULL, unitInputs = NULL, input=NULL){
     if(is.null(data)) return(NULL)
     qcplot <- c()
     if(!is.null(input$qcplot)){
         if (input$qcplot == "IQR"){
-            qcplot$plot1 <- getIQRPlot(data, colnames(data), 
-                "IQR Plot(Before Normalization)")
+            qcplot$plot1 <- getIQRPlot(data, input, colnames(data), 
+                "IQR Plot(Before Normalization)") 
+               
             qcplot$plot2 <- getIQRPlot(getNormalizedMatrix(data, input$norm_method), 
                 colnames(data), "IQR Plot(After Normalization)")
         }
         else if (input$qcplot == "Density"){
             qcplot$plot1 <- getDensityPlot(data, colnames(data), 
-                "Density Plot(Before Normalization)") 
+                "Density Plot(Before Normalization)") +
+                theme( plot.margin = unit(unitInputs, "pt"))
             qcplot$plot2 <- getDensityPlot(getNormalizedMatrix(data, input$norm_method), 
-                colnames(data), "Density Plot(After Normalization)")
+                colnames(data), "Density Plot(After Normalization)")  +
+                theme( plot.margin = unit(unitInputs, "pt"))
         }
     }
     return(qcplot)
@@ -293,22 +315,29 @@ getSelectedCols <- function(data = NULL, datasetInput = NULL, input=NULL){
 #'     startQCPlots()
 #'
 #'
+
 startQCPlots <- function(df_select = NULL, 
     cols = NULL, conds = NULL,
     input = NULL, output = NULL)
 {
+    
     if (is.null(df_select)) return(NULL)
+
     qcplots <- reactive({
         qcp <- getQCReplot(cols, conds, 
              df_select, input)
         return(qcp)
     })
+
     output$qcplot1 <- renderPlotly({
         if (is.null(qcplots()$plot1)) return(plotly_empty(type = "scatter"))
+
         qcplots()$plot1
+            
     })
     output$qcplot2 <- renderPlotly({
         if (is.null(qcplots()$plot2)) return(plotly_empty(type = "scatter"))
+
         qcplots()$plot2
     })
     
@@ -334,4 +363,5 @@ startQCPlots <- function(df_select = NULL,
                                      selected=existing_cols)
         )
     })
+    
 }

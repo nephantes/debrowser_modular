@@ -4,12 +4,14 @@
 \alias{getIQRPlot}
 \title{getIQRPlot}
 \usage{
-getIQRPlot(data = NULL, cols = NULL, title = "")
+getIQRPlot(data = NULL, cols = NULL, input = NULL, title = "")
 }
 \arguments{
 \item{data, }{count or normalized data}
 
 \item{cols, }{columns}
+
+\item{input, }{input}
 
 \item{title, }{title}
 }

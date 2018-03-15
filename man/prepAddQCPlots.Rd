@@ -4,10 +4,12 @@
 \alias{prepAddQCPlots}
 \title{prepAddQCPlots}
 \usage{
-prepAddQCPlots(data = NULL, input = NULL)
+prepAddQCPlots(data = NULL, unitInputs = NULL, input = NULL)
 }
 \arguments{
 \item{data, }{barplot data}
+
+\item{unitInputs, }{unit Inputs}
 
 \item{input, }{user input params}
 }

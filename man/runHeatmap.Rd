@@ -4,22 +4,24 @@
 \alias{runHeatmap}
 \title{runHeatmap}
 \usage{
-runHeatmap(data = NULL, input, num = 1)
+runHeatmap(input, session, data = NULL)
 }
 \arguments{
-\item{data, }{a matrixthat includes expression values}
+\item{input, }{input variables}
 
-\item{input, }{input varsiables}
+\item{session, }{session}
 
-\item{num, }{the heatmap number}
+\item{data, }{a matrix that includes expression values}
+
+\item{output, }{output objects}
 }
 \value{
-heatmap.2 plot
+heatmapply plot
 }
 \description{
-Creates a heatmap based on the user selected parameters within shiny.
+Creates a heatmap based on the user selected parameters within shiny.#'
 }
 \examples{
-    x <- runHeatmap(mtcars)
+    x <- heatmaply(mtcars)
 
 }

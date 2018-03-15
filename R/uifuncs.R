@@ -127,7 +127,7 @@ getMenuIcon <- function() {
 #'
 getGOLeftMenu <- function() {
     list(
-    shinydashboard::menuItem(" Go Term Options", icon = getMenuIcon(), startExpanded=TRUE, 
+    shinydashboard::menuItem(" Go Term Options", icon = getMenuIcon(), startExpanded=FALSE, 
                                        
     tags$head(tags$script(HTML(logSliderJScode("gopvalue")))),
     sliderInput("gopvalue", "p.adjust cut off",
@@ -209,13 +209,13 @@ getQCLeftMenu <- function( input = NULL) {
         shinydashboard::menuItem(" Select Columns", icon = getMenuIcon(), startExpanded=TRUE, 
             uiOutput("columnSelForQC")),
             shinydashboard::menuItem(" QC Options", icon = getMenuIcon(), startExpanded=FALSE,
-            getSizeControls("plot",640,640),
             conditionalPanel( (condition <- "(input.qcplot=='all2all')"),
                 sliderInput("cex", "point size",
                 min = 0.1, max = 4,
                 step = 0.1, value = 0.7)),
-            conditionalPanel( (condition <- "input.qcplot=='heatmap'"),
-                getHeatmapControls("2")
+        conditionalPanel( (condition <- "input.qcplot=='heatmap'"),
+                plotSizeMarginsUI("heatmap"),
+                getHeatmapControls()
             ),
         conditionalPanel( (condition <- "input.qcplot=='pca'"),
             getPCselection(1, "x"),
@@ -226,177 +226,6 @@ getQCLeftMenu <- function( input = NULL) {
             getColorShapeSelection(input)
         ))
     )
-}
-
-#' getSizeControls
-#'
-#' Generates the size controls
-#'
-#' @note \code{getSizeControls}
-#' @param name, name of the size controls
-#' @param h, height
-#' @param w, width
-#' @return size controls
-#' @examples
-#'     x <- getSizeControls()
-#' @export
-#'
-getSizeControls <- function(name = "sizecontrol", h = 500, w = 640) {
-    list(
-    sliderInput(paste0(name, "width"), "width",
-                min = 100, max = 2000, step = 10, value = w),
-    sliderInput(paste0(name, "height"), "height",
-                min = 100, max = 2000, step = 10, value = h)
-    )
-    
-}
-#' getHeatmapControls
-#'
-#' Generates the left menu to be used for heatmap plots
-#'
-#' @note \code{getHeatmapControls}
-#' @param num, num for repetions of the controls
-#' @return HeatmapControls
-#' @examples
-#'     x <- getHeatmapControls(1)
-#' @export
-#'
-getHeatmapControls <- function(num) {
-    list(
-    getDendControls("Row", num),
-    getDendControls("Col", num),
-    shinydashboard::menuItem("Heatmap Colors", icon = getMenuIcon(),
-        getPal(num),
-        conditionalPanel(paste0('!input.customColors',num),
-           sliderInput(paste0("ncol",num), "# of Colors", min = 1, max = 256, value = 256)),
-        getCustomColors(num)
-    ),
-    shinydashboard::menuItem("Heatmap Dendrogram", icon = getMenuIcon(),
-        selectInput(paste0('dendrogram',num),'Type',choices = c("both", "row", "column", "none"),selected = 'both'),
-        selectizeInput(paste0("seriation",num), "Seriation", c(OLO="OLO", GW="GW", Mean="mean", None="none"),selected = 'OLO'),
-        sliderInput(paste0('branches_lwd',num),'Branch Width',value = 0.6,min=0,max=5,step = 0.1)
-    ),
-    shinydashboard::menuItem("Heatmap Layout", icon = getMenuIcon(),
-        textInput(paste0('main',num),'Title',''),
-        textInput(paste0('xlab',num),'Sample label',''),
-        checkboxInput(paste0('labRow',num), 'Sample names', value = TRUE),
-        conditionalPanel(paste0('input.labRow',num),
-        sliderInput(paste0('row_text_angle',num),'Sample Text Angle',value = 0,min=0,max=180)),
-        textInput(paste0('ylab',num), 'Gene/Region label',''),
-        checkboxInput(paste0('labCol',num), 'Gene/Region names', value = TRUE),
-        conditionalPanel(paste0('input.labCol',num),
-        sliderInput(paste0('column_text_angle',num),'Gene/Region Text Angle',value = 45,min=0,max=180)),
-        checkboxInput(paste0('margins',num), 'Margins', value = FALSE),
-        conditionalPanel(paste0('input.margins',num),
-        sliderInput(paste0("top",num), "Margin Top", min = 0, max = 200, value = 100),
-        sliderInput(paste0("bottom",num), "Margin Bottom", min = 0, max = 200, value = 100),
-        sliderInput(paste0("left",num), "Margin Left", min = 0, max = 200, value = 100),
-        sliderInput(paste0("right",num), "Margin Right", min = 0, max = 200, value = 100)))
-    )
-}
-
-#' getDendControls
-#'
-#' get distance metric parameters 
-#'
-#' @note \code{getDendControls}
-#' @param dendtype, Row or Col
-#' @param num, control num
-#' @return pals
-#' @examples
-#'     x <- getDendControls()
-#' @export
-#'
-getDendControls <- function(dendtype = "Row", num = 1) {
-    shinydashboard::menuItem(paste0(dendtype, " dendrogram"), icon = getMenuIcon(),
-    selectizeInput(paste0("distFun_", dendtype, num), "Dist. method", 
-                   getDistFunParams(),
-                   selected = 'euclidean'),
-    selectizeInput(paste0("hclustFun_", dendtype, num), "Clustering linkage",
-                   getClustFunParams(), 
-                   selected = 'complete'),
-    sliderInput(paste0("k_", dendtype, num), "# of Clusters", min = 1, max = 10, value = 2))
-}
-
-#' getClustFunParams
-#'
-#' get cluster function parameters 
-#'
-#' @note \code{getClustFunParams}
-#' @return cluster params
-#' @examples
-#'     x <- getClustFunParams()
-#' @export
-#'
-getClustFunParams <- function() {
-    c(Complete= "complete",Single= "single",Average= "average",
-      Mcquitty= "mcquitty",Median= "median",Centroid= "centroid",
-      Ward.D= "ward.D",Ward.D2= "ward.D2")
-}
-
-#' getDistFunParams
-#'
-#' get distance metric parameters 
-#'
-#' @note \code{getDistFunParams}
-#' @return pals
-#' @examples
-#'     x <- getDistFunParams()
-#' @export
-#'
-getDistFunParams <- function() {
-    c(Cor="cor", Euclidean="euclidean",Maximum='maximum',
-      Manhattan='manhattan',Canberra='canberra',
-      Binary='binary',Minkowski='minkowski')
-}
-
-#' getPal
-#'
-#' get pallete 
-#'
-#' @note \code{getPal}
-#' @param num, num for repetions of the controls
-#' @return pals
-#' @examples
-#'     x <- getPal()
-#' @export
-#'
-getPal <- function( num = 1) {
-    
-    colSel='RdBu'
-    
-    shiny::selectizeInput(inputId =paste0("pal",num), label ="Select Color Palette",
-                          choices = c('RdBu' = 'RdBu',
-                                      'BlueRed' = 'bluered',
-                                      'RedBlue' = 'redblue',
-                                      'RdYlBu' = 'RdYlBu',
-                                      'RdYlGn' = 'RdYlGn',
-                                      'BrBG' = 'BrBG',
-                                      'Spectral' = 'Spectral',
-                                      'BuGn' = 'BuGn',
-                                      'PuBuGn' = 'PuBuGn',
-                                      'YlOrRd' = 'YlOrRd',
-                                      'Heat' = 'heat.colors',
-                                      'Grey' = 'grey.colors'),
-                          selected=colSel)
-}
-#' getCustomColors
-#'
-#' get Custom Colors 
-#'
-#' @note \code{getColRng}
-#' @param num, num for repetions of the controls
-#' @return color range
-#' @examples
-#'     x <- getCustomColors()
-#' @export
-#'
-getCustomColors <- function(num = 1) {
-    list(checkboxInput(paste0('customColors',num),'Custom Colors', value = FALSE),
-    conditionalPanel(paste0('input.customColors',num), 
-    colourpicker::colourInput(paste0("color1_",num), "Choose min colour", "blue"),
-    colourpicker::colourInput(paste0("color2_",num), "Choose median colour", "white"),
-    colourpicker::colourInput(paste0("color3_",num), "Choose max colour", "red")))
 }
 
 #' logSliderJScode
