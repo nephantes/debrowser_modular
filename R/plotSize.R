@@ -11,8 +11,7 @@
 #'     x <- plotSizeMarginsUI("heatmap")
 #' @export
 #'
-plotSizeMarginsUI <- function(id, w=640, h=800, t=20, b=100, l=100, r=20) {
-    ns <- NS(id)
+plotSizeMarginsUI <- function(id, w=800, h=640, t=20, b=100, l=100, r=20) {
     shinydashboard::menuItem("Size & Margins",
     plotSizeUI(id, w, h),
     plotMarginsUI(id, t, b, l, r)
@@ -32,7 +31,7 @@ plotSizeMarginsUI <- function(id, w=640, h=800, t=20, b=100, l=100, r=20) {
 #'     x <- plotSizeUI("heatmap")
 #' @export
 #'
-plotSizeUI <- function(id, w=640, h=800){
+plotSizeUI <- function(id, w=800, h=600){
     ns <- NS(id)
     list(
     checkboxInput(r(ns('size'), "-"), 'Plot Size', value = FALSE),

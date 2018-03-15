@@ -17,17 +17,14 @@ ui <- fluidPage(
         shinydashboard::dashboardBody(
             mainPanel(
                 tags$head(tags$title("DEBrowser")),
-                fluidRow(column(10,
-                    heatmapPlotlyUI("heatmap") 
-                ))
+                heatmapPlotlyUI("heatmap") 
             )
         )
     )
 )
 
 server <- function(input, output, session) {
-    callModule(debrowserheatmap, "heatmap")
+    callModule(debrowserheatmap, "heatmap", "heatmap", mtcars)
 }
 
 shinyApp(ui, server)
-    
