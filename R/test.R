@@ -1,5 +1,6 @@
 library(shiny)
 library(heatmaply)
+library(shinyjs)
 source("plotSize.R")
 source("heatmap.R")
 
@@ -8,6 +9,7 @@ dbHeader$children[[2]]$children <- tags$a(style='color: white;',
         id="top_logo" , "DEBrowser")
 
 ui <- fluidPage(
+    getJSLine("heatmap"),
     shinydashboard::dashboardPage(
         dbHeader,
         shinydashboard::dashboardSidebar(
@@ -24,7 +26,7 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-    callModule(debrowserheatmap, "heatmap", "heatmap", mtcars)
+    callModule(debrowserheatmap, "heatmap", mtcars)
 }
 
 shinyApp(ui, server)

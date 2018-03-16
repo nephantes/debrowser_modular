@@ -1,12 +1,49 @@
-debrowserheatmap <- function( input, output, session, id, data){
+#' debrowserheatmap
+#'
+#' Heatmap module to create interactive heatmaps and get selected list from
+#' a heatmap
+#' @param input, input variables
+#' @param output, output objects
+#' @param session, session 
+#' @param data, a matrix that includes expression values
+#' @return heatmapply plot
+#'
+#' @examples
+#'     x <- heatmaply(mtcars)
+#'
+#' @export
+#' @import heatmaply
+#'
+#'
 
-    output$heatmapUI <- renderUI({
-        getHeatmapUI(id, input)
-    })
+debrowserheatmap <- function( input, output, session, data){
+
     output$heatmap <- renderPlotly({
+        shinyjs::onevent("mousemove", "heatmap", js$heatmapgetHoverName())
+        shinyjs::onevent("click", "heatmap", js$heatmapgetHoverName("hoveredgenenamebyclick"))
         runHeatmap(input, data)
     })
-
+    output$heatmap_hover <- renderPrint({
+        if (shgClicked() != "")
+            return(paste0("Clicked: ",shgClicked()))
+        else
+            return(paste0("Hovered:", shg()))
+    })
+    output$heatmap_selected <- renderPrint({
+        hselGenes()
+    })
+    hselGenes <- reactive({
+        if (is.null(input$selgenenames)) return("")
+        unlist(strsplit(input$selgenenames, split=","))
+    })
+    shg <- reactive({
+        if (is.null(input$hoveredgenename)) return("")
+        input$hoveredgenename
+    })
+    shgClicked <- reactive({
+        if (is.null(input$hoveredgenenamebyclick)) return("")
+        input$hoveredgenenamebyclick
+    })
 }
 
 #' runHeatmap
@@ -83,26 +120,14 @@ runHeatmap <- function(input, data){
 }
 
 
-#' heatmapPlotlyUI
-#'
-#' Generates the plotly container
-#'
-#' @note \code{heatmapPlotlyUI}
-#' @param id, module ID
-#' @return HeatmapControls
-#' @examples
-#'     x <- heatmapPlotlyUI("heatmap")
-#' @export
-#'
-heatmapPlotlyUI <- function(id) {
-    ns <- NS(id)
-    uiOutput(ns("heatmapUI"))
-}
-
 getHeatmapUI <- function(id) {
     ns <- NS(id)
-    fluidRow(column(10,
+    fluidRow(column(8,
         plotlyOutput(ns("heatmap"))
+    ),
+    column(4,
+    verbatimTextOutput(ns("heatmap_hover")),
+    verbatimTextOutput(ns("heatmap_selected"))
     ))
 }
 
@@ -140,15 +165,11 @@ heatmapControlsUI <- function(id) {
         shinydashboard::menuItem("Heatmap Layout",
             textInput(ns('main'),'Title',''),
             textInput(ns('xlab'),'Sample label',''),
-            checkboxInput(ns('labRow'), 'Sample names', value = TRUE),
-            conditionalPanel(paste0('input.', ns('labRow')),
             sliderInput(ns('row_text_angle'),'Sample Text Angle',
-                value = 0,min=0,max=180)),
+                value = 0,min=0,max=180),
             textInput(ns('ylab'), 'Gene/Region label',''),
-            checkboxInput(ns('labCol'), 'Gene/Region names', value = TRUE),
-            conditionalPanel(paste0('input.', ns('labCol')),
             sliderInput(ns('column_text_angle'),'Gene/Region Text Angle',
-                value = 45,min=0,max=180))
+                value = 45,min=0,max=180)
     ))
 }
 
@@ -317,4 +338,69 @@ getSelHeat <- function(data=NULL, input = NULL) {
         selectedData <- data[unlist(strsplit(input, ",")), ]
     })
     list( getSelected = isolate(getSelected) )
+}
+
+
+#' heatmapJScode
+#'
+#' heatmap JS code for selection functionality
+#'
+#' @param id
+#' @return JS Code
+#' @export
+#'
+#' @examples
+#'     x <- heatmapJScode()
+#'
+heatmapJScode <- function(id) {        
+        ns <- NS(id)
+        'shinyjs.getHoverName = function(params){
+           var defaultParams = {
+               controlname : "hoveredgenename"
+           };
+           params = shinyjs.getParams(params, defaultParams);
+           var out = ""
+           if (typeof document.getElementsByClassName("nums")[0] != "undefined"){
+                out = document.getElementsByClassName("nums")[0].innerHTML.match("row: (.*)</tspan>")[1]
+           }
+           Shiny.onInputChange(params.controlname, out);
+        }
+
+        shinyjs.getSelectedGenes = function(params){
+            var defaultParams = {
+               plotId : "heatmap",
+               controlname : "selgenenames"
+            };
+            params = shinyjs.getParams(params, defaultParams);
+            var count = document.getElementById(params.plotId).querySelectorAll("g.y2tick").length
+            var start = 0
+            var out = ""
+            
+            for (i = start; i < count; i++)
+            {
+                if (typeof document.getElementById(params.plotId).querySelectorAll("g.y2tick")[i] != "undefined"){
+                  out += document.getElementById(params.plotId).querySelectorAll("g.y2tick")[i].innerHTML.match(">(.*)</text>")[1]  + ","
+                }
+            }
+            Shiny.onInputChange(params.controlname, out);
+        }
+        '
+}
+
+#' heatmapJScode
+#'
+#' heatmap JS code for selection functionality
+#'
+#' @param id
+#' @return JS Code
+#' @export
+#'
+#' @examples
+#'     x <- heatmapJScode()
+#'
+getJSLine <-function(id)
+{        
+  ns <- NS(id)
+  list(shinyjs::useShinyjs(),
+  shinyjs::extendShinyjs(text = heatmapJScode(id), functions = c("getHoverName", "getSelectedGenes")))
 }
