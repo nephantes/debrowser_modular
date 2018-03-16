@@ -17,7 +17,7 @@ ui <- fluidPage(
         shinydashboard::dashboardBody(
             mainPanel(
                 tags$head(tags$title("DEBrowser")),
-                heatmapPlotlyUI("heatmap") 
+                getHeatmapUI("heatmap") 
             )
         )
     )

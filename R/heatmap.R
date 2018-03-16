@@ -1,8 +1,6 @@
 debrowserheatmap <- function( input, output, session, id, data){
 
     output$heatmapUI <- renderUI({
-        print(input$width)
-        print(input$height)
         getHeatmapUI(id, input)
     })
     output$heatmap <- renderPlotly({
@@ -71,13 +69,15 @@ runHeatmap <- function(input, data){
         hclustfun_col = hclustfun_col,
         showticklabels = c(input$labRow, input$labCol),
         k_col = input$k_Col, 
-        k_row = input$k_Row) %>% 
-    plotly::layout(margin = list(l = input$left,
+        k_row = input$k_Row
+        ) %>% 
+    plotly::layout(
+        width=input$width, height=input$height,
+        margin = list(l = input$left,
         b = input$bottom,
         t = input$top,
         r = input$right
         ))
-    
     p$elementId <- NULL
     p
 }
@@ -99,14 +99,10 @@ heatmapPlotlyUI <- function(id) {
     uiOutput(ns("heatmapUI"))
 }
 
-getHeatmapUI <- function(id, input) {
+getHeatmapUI <- function(id) {
     ns <- NS(id)
-
     fluidRow(column(10,
-        #shinydashboard::box(
-        #collapsible = TRUE, title = "Plot1", status = "primary", solidHeader = TRUE, width = NULL,             
-        plotlyOutput(ns("heatmap"), width = input$width, height = input$height)
-        #)
+        plotlyOutput(ns("heatmap"))
     ))
 }
 
