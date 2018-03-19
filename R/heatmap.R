@@ -20,7 +20,8 @@ debrowserheatmap <- function( input, output, session, data){
 
     output$heatmap <- renderPlotly({
         shinyjs::onevent("mousemove", "heatmap", js$getHoverName(session$ns("hoveredgenename")))
-        shinyjs::onevent("click", "heatmap", js$getHoverName(session$ns("hoveredgenenamebyclick")))
+        shinyjs::onevent("click", "heatmap", js$getHoverName(session$ns("hoveredgenename1")))
+        #shinyjs::onclick( "heatmap", js$getHoverName(session$ns("hoveredgenename1")))
         runHeatmap(input, data)
     })
 
@@ -34,9 +35,8 @@ debrowserheatmap <- function( input, output, session, data){
         input$hoveredgenename
     })
     shgClicked <- reactive({
-        if (is.null(input$hoveredgenenamebyclick)) return("")
-        print(input$hoveredgenenamebyclick)
-        input$hoveredgenenamebyclick
+        if (is.null(input$hoveredgenename1)) return("")
+        input$hoveredgenename1
     })
     list( shg = (shg), shgClicked=(shgClicked), hselGenes=(hselGenes))
 }
@@ -350,13 +350,16 @@ heatmapJScode <- function() {
                controlname : "hoveredgenename"
            };
            params = shinyjs.getParams(params, defaultParams);
+           console.log(params.controlname)
            var out = ""
+         
            if (typeof  document.getElementsByClassName("nums")[0] != "undefined"){
            if (typeof  document.getElementsByClassName("nums")[0].querySelectorAll("tspan.line")[0] != "undefined"){
                 out = document.getElementsByClassName("nums")[0].querySelectorAll("tspan.line")[0].innerHTML.match("row: (.*)")[1]
+                $("#heatmap-heatmap").attr("gname", out)
            }
            }
-           Shiny.onInputChange(params.controlname, out);
+           Shiny.onInputChange(params.controlname, $("#heatmap-heatmap").attr("gname"));
         }
 
         shinyjs.getSelectedGenes = function(params){
