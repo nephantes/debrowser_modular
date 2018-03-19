@@ -19,31 +19,26 @@
 debrowserheatmap <- function( input, output, session, data){
 
     output$heatmap <- renderPlotly({
-        shinyjs::onevent("mousemove", "heatmap", js$heatmapgetHoverName())
-        shinyjs::onevent("click", "heatmap", js$heatmapgetHoverName("hoveredgenenamebyclick"))
+        shinyjs::onevent("mousemove", "heatmap", js$getHoverName(session$ns("hoveredgenename")))
+        shinyjs::onevent("click", "heatmap", js$getHoverName(session$ns("hoveredgenenamebyclick")))
         runHeatmap(input, data)
     })
-    output$heatmap_hover <- renderPrint({
-        if (shgClicked() != "")
-            return(paste0("Clicked: ",shgClicked()))
-        else
-            return(paste0("Hovered:", shg()))
-    })
-    output$heatmap_selected <- renderPrint({
-        hselGenes()
-    })
+
     hselGenes <- reactive({
         if (is.null(input$selgenenames)) return("")
         unlist(strsplit(input$selgenenames, split=","))
     })
     shg <- reactive({
         if (is.null(input$hoveredgenename)) return("")
+        js$getSelectedGenes(session$ns("heatmap"), session$ns("selgenenames"))
         input$hoveredgenename
     })
     shgClicked <- reactive({
         if (is.null(input$hoveredgenenamebyclick)) return("")
+        print(input$hoveredgenenamebyclick)
         input$hoveredgenenamebyclick
     })
+    list( shg = (shg), shgClicked=(shgClicked), hselGenes=(hselGenes))
 }
 
 #' runHeatmap
@@ -124,10 +119,6 @@ getHeatmapUI <- function(id) {
     ns <- NS(id)
     fluidRow(column(8,
         plotlyOutput(ns("heatmap"))
-    ),
-    column(4,
-    verbatimTextOutput(ns("heatmap_hover")),
-    verbatimTextOutput(ns("heatmap_selected"))
     ))
 }
 
@@ -352,16 +343,18 @@ getSelHeat <- function(data=NULL, input = NULL) {
 #' @examples
 #'     x <- heatmapJScode()
 #'
-heatmapJScode <- function(id) {        
-        ns <- NS(id)
+heatmapJScode <- function() {        
         'shinyjs.getHoverName = function(params){
+            
            var defaultParams = {
                controlname : "hoveredgenename"
            };
            params = shinyjs.getParams(params, defaultParams);
            var out = ""
-           if (typeof document.getElementsByClassName("nums")[0] != "undefined"){
-                out = document.getElementsByClassName("nums")[0].innerHTML.match("row: (.*)</tspan>")[1]
+           if (typeof  document.getElementsByClassName("nums")[0] != "undefined"){
+           if (typeof  document.getElementsByClassName("nums")[0].querySelectorAll("tspan.line")[0] != "undefined"){
+                out = document.getElementsByClassName("nums")[0].querySelectorAll("tspan.line")[0].innerHTML.match("row: (.*)")[1]
+           }
            }
            Shiny.onInputChange(params.controlname, out);
         }
@@ -387,7 +380,7 @@ heatmapJScode <- function(id) {
         '
 }
 
-#' heatmapJScode
+#' getJSLine
 #'
 #' heatmap JS code for selection functionality
 #'
@@ -396,11 +389,10 @@ heatmapJScode <- function(id) {
 #' @export
 #'
 #' @examples
-#'     x <- heatmapJScode()
+#'     x <- getJSLine()
 #'
-getJSLine <-function(id)
+getJSLine <-function()
 {        
-  ns <- NS(id)
   list(shinyjs::useShinyjs(),
-  shinyjs::extendShinyjs(text = heatmapJScode(id), functions = c("getHoverName", "getSelectedGenes")))
+  shinyjs::extendShinyjs(text = heatmapJScode(), functions = c("getHoverName", "getSelectedGenes")))
 }
