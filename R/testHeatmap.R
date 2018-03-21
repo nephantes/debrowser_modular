@@ -30,7 +30,7 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-    selected <- callModule(debrowserheatmap, "heatmap", merged)
+    selected <- callModule(debrowserheatmap, "heatmap", mtcars)
     
     output$heatmap_hover <- renderPrint({
         if (selected$shgClicked() != "")
@@ -40,8 +40,9 @@ server <- function(input, output, session) {
     })
 
     output$heatmap_selected <- renderPrint({
-         selected$hselGenes()
+         selected$selGenes()
     })
+
 
 }
 

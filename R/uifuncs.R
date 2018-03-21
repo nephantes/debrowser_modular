@@ -80,25 +80,6 @@ if (is.null(input)) return(NULL)
     )
    return(leftMenu)
 }
-#' getMainPlotsLeftMenu
-#'
-#' Generates the Main PLots Left menu to be displayed within the DEBrowser.
-#'
-#' @note \code{getMainPlotsLeftMenu}
-#' @return returns the left menu according to the selected tab;
-#' @examples
-#'     x <- getMainPlotsLeftMenu()
-#' @export
-#'
-getMainPlotsLeftMenu <- function() {
-    mainPlotsLeftMenu <- list(
-        shinydashboard::menuItem("Main Options", icon = getMenuIcon(),
-        sliderInput("backperc", "Background Data(%):",
-            min=10, max=100, value=10, sep = "",
-            animate = FALSE),
-        getHeatmapControls("1")))
-    return(mainPlotsLeftMenu)
-}
 
 #' getMenuIcon
 #'
