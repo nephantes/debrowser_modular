@@ -15,16 +15,13 @@
 #' @import heatmaply
 #'
 #'
-
 debrowserheatmap <- function( input, output, session, data){
-
     output$heatmap <- renderPlotly({
         shinyjs::onevent("mousemove", "heatmap", js$getHoverName(session$ns("hoveredgenename")))
-        shinyjs::onevent("click", "heatmap", js$getHoverName(session$ns("hoveredgenename1")))
+        shinyjs::onevent("click", "heatmap", js$getHoverName(session$ns("hoveredgenenameclick")))
         #shinyjs::onclick( "heatmap", js$getHoverName(session$ns("hoveredgenename1")))
         runHeatmap(input, data)
     })
-
     hselGenes <- reactive({
         if (is.null(input$selgenenames)) return("")
         unlist(strsplit(input$selgenenames, split=","))
@@ -34,11 +31,13 @@ debrowserheatmap <- function( input, output, session, data){
         js$getSelectedGenes(session$ns("heatmap"), session$ns("selgenenames"))
         input$hoveredgenename
     })
+
     shgClicked <- reactive({
-        if (is.null(input$hoveredgenename1)) return("")
-        input$hoveredgenename1
+        if (is.null(input$hoveredgenenameclick)) return("")
+        input$hoveredgenenameclick
     })
-    list( shg = (shg), shgClicked=(shgClicked), hselGenes=(hselGenes))
+    
+    list( shg = (shg), shgClicked=(shgClicked), selGenes=(hselGenes))
 }
 
 #' runHeatmap
