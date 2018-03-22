@@ -84,29 +84,7 @@ getQCPlots <- function(dataset = NULL, input = NULL,
     return(qcPlots)
 }
 
-#' getShapeColor
-#'
-#' Generates the fill and shape selection boxes for PCA plots.
-#' metadata file has to be loaded in this case
-#'
-#' @param input, input values
-#' @return Color and shape from selection boxes or defaults
-#' @examples
-#'     x <- getShapeColor()
-#' @export
-#'
-getShapeColor <- function(input = NULL) {
-    if (is.null(input)) return (NULL)
-    sc <-  c()
-    if (!is.null(input$color_pca))
-        sc$color <- input$color_pca
-    if (!is.null(input$shape_pca))
-        sc$shape <- input$shape_pca
-    
-    sc$textonoff = input$textonoff
-    sc$legendSelect = input$legendSelect
-    return(sc)
-}
+
 
 #' getQCReplot
 #'

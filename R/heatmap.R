@@ -22,6 +22,18 @@ debrowserheatmap <- function( input, output, session, data){
         #shinyjs::onclick( "heatmap", js$getHoverName(session$ns("hoveredgenename1")))
         runHeatmap(input, data)
     })
+    
+    output$heatmapUI <- renderUI({
+        list(fluidRow(
+        column(12,
+        shinydashboard::box(
+        collapsible = TRUE, title = "Heatmap", status = "primary", 
+        solidHeader = TRUE,width=NULL,
+        draggable = TRUE, plotlyOutput(session$ns("heatmap"),
+        height=input$plotheight, width=input$plotwidth)
+        ))))
+    })
+    
     hselGenes <- reactive({
         if (is.null(input$selgenenames)) return("")
         unlist(strsplit(input$selgenenames, split=","))
@@ -103,7 +115,7 @@ runHeatmap <- function(input, data){
         k_row = input$k_Row
         ) %>% 
     plotly::layout(
-        width=input$width, height=input$height,
+        width=input$width - 100, height=input$height,
         margin = list(l = input$left,
         b = input$bottom,
         t = input$top,
@@ -116,9 +128,7 @@ runHeatmap <- function(input, data){
 
 getHeatmapUI <- function(id) {
     ns <- NS(id)
-    fluidRow(column(8,
-        plotlyOutput(ns("heatmap"))
-    ))
+    uiOutput(ns("heatmapUI"))
 }
 
 #' heatmapControlsUI
