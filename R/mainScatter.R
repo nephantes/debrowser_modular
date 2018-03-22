@@ -12,9 +12,7 @@
 #'
 getMainPlotUI <- function(id) {
     ns <- NS(id)
-    fluidRow(column(8,
-        plotlyOutput(ns("main"))
-    ))
+    uiOutput(ns("mainplot"))
 }
 
 #' debrowsermainplot
@@ -44,7 +42,16 @@ debrowsermainplot <- function(input, output, session, data = NULL) {
     plotdata <-  reactive({ 
         plotData(data, input)
     })
-    
+    output$mainplot <- renderUI({
+        list(fluidRow(
+            column(12,
+            shinydashboard::box(
+            collapsible = TRUE, title = "Main Plots", status = "primary", 
+            solidHeader = TRUE,width = NULL,
+            draggable = TRUE, plotlyOutput(session$ns("main"), 
+            height=input$plotheight, width=input$plotwidth)
+            ))))
+    })
     selectedPoint <- reactive({
         eventdata <- event_data("plotly_click", source = session$ns("source"))
         if (is.null(eventdata)){
@@ -99,6 +106,7 @@ mainScatter <- function(input = NULL, data = NULL, source = NULL,
     p <- plot_ly(source = source, data=data, x=~x, y=~y, key=~key,
         color=~Legend, colors=c("grey", "blue", "red"), 
         type="scatter", mode = "markers",
+        width=input$width - 100, height=input$height,
         text=~paste("<b>", ID, "</b><br>",
         "<br>", "padj=", format.pval(padj, digits = 2), " ",
         "-log10padj=", round(log10padj, digits = 2),
@@ -108,7 +116,6 @@ mainScatter <- function(input = NULL, data = NULL, source = NULL,
         layout(xaxis = list(title = x),
         yaxis = list(title = y)) %>% 
         plotly::layout(
-            width=input$width, height=input$height,
             margin = list(l = input$left,
                           b = input$bottom,
                           t = input$top,

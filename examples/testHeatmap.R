@@ -1,8 +1,8 @@
 library(shiny)
 library(heatmaply)
 library(shinyjs)
-source("plotSize.R")
-source("heatmap.R")
+source("../R/plotSize.R")
+source("../R/heatmap.R")
 
 dbHeader <- shinydashboard::dashboardHeader()
 dbHeader$children[[2]]$children <- tags$a(style='color: white;',

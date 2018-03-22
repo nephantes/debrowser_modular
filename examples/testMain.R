@@ -1,8 +1,6 @@
-library(shiny)
-library(heatmaply)
-library(shinyjs)
-source("plotSize.R")
-source("mainScatter.R")
+library(debrowser)
+source("../R/plotSize.R")
+source("../R/mainScatter.R")
 
 dbHeader <- shinydashboard::dashboardHeader()
 dbHeader$children[[2]]$children <- tags$a(style='color: white;',
