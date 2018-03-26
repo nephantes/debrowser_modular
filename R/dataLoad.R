@@ -17,6 +17,49 @@ debrowserdataload <- function(input, output, session) {
     
     ldata <- reactiveValues(count=NULL, meta=NULL)
 
+    
+    observe({
+        query <- parseQueryString(session$clientData$url_search)
+        jsonobj<-query$jsonobject
+        # To test json load;
+        # It accepts three parameters:
+        # 1. jsonobject=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2F%0D%0Aadvanced_demo.tsv%26format%3DJSON
+        # 2. meta=meta=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2Fsimple_meta.tsv%26format%3DJSON
+        # 3. title=no
+        # The finished product of the link will look like this without metadata:
+        # 
+        # https://127.0.0.1:3427/debrowser/R/?jsonobject=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2F%0D%0Aadvanced_demo.tsv%26format%3DJSON&title=no
+        #        
+        #  With metadata
+        #
+        #http://127.0.0.1:3427/?jsonobject=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2Fsimple_demo.tsv%26format%3DJSON&meta=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2Fsimple_meta.tsv%26format%3DJSON
+        #
+        #
+        
+        if (!is.null(jsonobj))
+        {
+            raw <- RCurl::getURL(jsonobj, .opts = list(ssl.verifypeer = FALSE),
+                 crlf = TRUE)
+            jsondata<-data.frame(fromJSON(raw, simplifyDataFrame = TRUE),
+                                 stringsAsFactors = TRUE)
+            rownames(jsondata)<-jsondata[, 1]
+            jsondata<-jsondata[,c(3:ncol(jsondata))]
+            jsondata[,c(1:ncol(jsondata))] <- sapply(
+                jsondata[,c(1:ncol(jsondata))], as.numeric)
+            metadatatable <- NULL
+            jsonmet <-query$meta
+            if(!is.null(jsonmet)){
+                raw <- RCurl::getURL(jsonmet, .opts = list(ssl.verifypeer = FALSE),
+                    crlf = TRUE)
+                metadatatable<-data.frame(fromJSON(raw, simplifyDataFrame = TRUE),
+                    stringsAsFactors = TRUE)
+                print(head(metadatatable))
+                
+            }
+            ldata$meta <- metadatatable
+            ldata$count <- jsondata
+        }
+    })
     observeEvent(input$demo, {
         load(system.file("extdata", "demo", "demodata.Rda",
                          package = "debrowser"))
@@ -54,8 +97,7 @@ debrowserdataload <- function(input, output, session) {
         return(ret)
     })
     output$uploadSummary <- renderTable({ 
-    if (is.null(ldata$count)) return(NULL)
-    if(input$uploadFile | input$demo)
+    if (!is.null(ldata$count))
     {
         countdata <-  loaadeddata()$count
         samplenums <- length(colnames(countdata))
@@ -68,8 +110,7 @@ debrowserdataload <- function(input, output, session) {
   },digits=0, rownames = TRUE, align="lc")
 
   output$sampleGroup <- DT::renderDataTable({ 
-      if (is.null(ldata$count)) return(NULL)
-      if(input$uploadFile | input$demo)
+      if (!is.null(ldata$count))
       {
         dat <- colSums(loaadeddata()$count)
         dat <- cbind(names(dat), dat)
