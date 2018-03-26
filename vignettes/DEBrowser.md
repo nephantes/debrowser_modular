@@ -143,23 +143,28 @@ http%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttp%3A%2F%2Fbioi
 .umassmed.edu%2Fpub%2Fdebrowser%2Fadvanced_demo.tsv%26format%3DJSON
 ```
 
-Now this link can be be used in debrowser as:
+Now this link can be be used in debrowser as (Please change the port according to your run):
 
 ```
-https://debrowser.umassmed.edu:444/debrowser/R/
+https://127.0.0.1:3427/debrowser/R/
 ```
 
-It accepts two parameters:
+It accepts three parameters:
 
-	1. jsonobject=http%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttp%3A%2F%2F
-	   bioinfo.umassmed.edu%2Fpub%2Fdebrowser%2Fadvanced_demo.tsv%26format%3DJSON
-	2. title=no
+	1. jsonobject=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2F%0D%0Aadvanced_demo.tsv%26format%3DJSON
+	2. meta=meta=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2Fsimple_meta.tsv%26format%3DJSON
+	3. title=no
 
-The finished product of the link will look like this:
+The finished product of the link will look like this without metadata:
 
 ```
-https://debrowser.umassmed.edu:444/debrowser/R/?jsonobject=https://dolphin.umassmed.edu/public/
-api/?source=https://bioinfo.umassmed.edu/pub/debrowser/advanced_demo.tsv&format=JSON&title=no
+https://127.0.0.1:3427/?jsonobject=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2F%0D%0Aadvanced_demo.tsv%26format%3DJSON&title=no
+```
+
+With metadata
+
+```
+http://127.0.0.1:3427/?jsonobject=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2Fsimple_demo.tsv%26format%3DJSON&meta=https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fbioinfo.umassmed.edu%2Fpub%2Fdebrowser%2Fsimple_meta.tsv%26format%3DJSON
 ```
 
 Entering this URL into your web browser will automatically load in your data as a JSON
