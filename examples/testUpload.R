@@ -16,7 +16,11 @@ ui <- fluidPage(
         ),
         shinydashboard::dashboardBody(
             mainPanel(
-                dataLoadUI("load")
+                dataLoadUI("load"),
+                column(4,
+                       verbatimTextOutput("counttable"),
+                       verbatimTextOutput("metadatatable")
+                )
             )
         )
     )
@@ -24,6 +28,13 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
     data <- callModule(debrowserdataload, "load")
+
+    output$counttable <- renderPrint({
+        head( data$load()$count )
+    })
+    output$metadatatable <- renderPrint({
+        head( data$load()$meta)
+    })
 }
 
 shinyApp(ui, server)

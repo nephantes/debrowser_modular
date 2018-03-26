@@ -14,50 +14,71 @@
 #'     x <- debrowserdataload()
 #'
 debrowserdataload <- function(input, output, session) {
-    loadeddata <- reactiveValues( counttable = "", metadatatable = "")
-    dataUpload <- eventReactive(input$dataSubmit, {
+    
+    ldata <- reactiveValues(count=NULL, meta=NULL)
+
+    observeEvent(input$demo, {
+        load(system.file("extdata", "demo", "demodata.Rda",
+                         package = "debrowser"))
+        metadatatable <- NULL
+        
+        demodata <- demodata[,sapply(demodata, is.numeric)]
+        ldata$count <- demodata
+        ldata$meta <- metadatatable
+    })
+    
+    observeEvent(input$uploadFile, {
         if (is.null(input$countdata)) return (NULL)
-        loadeddata$counttable <-as.data.frame(
+        counttable <-as.data.frame(
             try(
                 read.delim(input$countdata$datapath, 
                 header=T, sep=input$countdataSep, 
             row.names=1 ), T))
-        loadeddata$metadatatable <- c()
+        metadatatable <- c()
         if (!is.null(input$metadata$datapath)){
-        loadeddata$metadatatable <- as.data.frame(
+        metadatatable <- as.data.frame(
             try(
                 read.delim(input$metadata$datapath, 
                 header=T, sep=input$metadataSep), T))
         }
-        if (is.null(loadeddata$counttable)) 
+        if (is.null(counttable)) 
             {stop("Please upload the count file!")}
-        list(count=loadeddata$counttable, meta=loadeddata$metadatatable)
+        ldata$count <- counttable
+        ldata$meta <- metadatatable
     })
-
+    loaadeddata <- reactive({
+        ret <- NULL
+        if(!is.null(ldata$count)){
+            ret <- list(count = ldata$count, meta = ldata$meta)
+        }
+        return(ret)
+    })
     output$uploadSummary <- renderTable({ 
-    if(input$dataSubmit)
-      isolate({
-        countdata <- dataUpload()$count
+    if (is.null(ldata$count)) return(NULL)
+    if(input$uploadFile | input$demo)
+    {
+        countdata <-  loaadeddata()$count
         samplenums <- length(colnames(countdata))
         rownums <- dim(countdata)[1]
         result <- rbind(samplenums, rownums)
         rownames(result) <- c("# of samples", "# of rows (genes/regions)")
         colnames(result) <- "Value"
         result
-      })
+      }
   },digits=0, rownames = TRUE, align="lc")
 
   output$sampleGroup <- DT::renderDataTable({ 
-    if(input$dataSubmit)
-      isolate({
-        dat <- colSums(dataUpload()$count)
+      if (is.null(ldata$count)) return(NULL)
+      if(input$uploadFile | input$demo)
+      {
+        dat <- colSums(loaadeddata()$count)
         dat <- cbind(names(dat), dat)
         dat[, c("dat")] <-  format(
           round( as.numeric( dat[,  c("dat")], digits = 2)),
           big.mark=",",scientific=FALSE)
 
-        if (!is.null(dataUpload()$meta)){
-            met <- dataUpload()$meta
+        if (!is.null(loaadeddata()$meta)){
+            met <- loaadeddata()$meta
             dat <- cbind(met, dat[,"dat"])
             rownames(dat) <- NULL
             colnames(dat)[ncol(dat)] <- "read counts"
@@ -66,9 +87,9 @@ debrowserdataload <- function(input, output, session) {
             colnames(dat) <- c("samples", "read counts")
         }
         dat
-      })
+    }
   })
-  loadeddata
+  list(load=loaadeddata)
 }
 
 
@@ -84,11 +105,16 @@ debrowserdataload <- function(input, output, session) {
 #'
 dataLoadUI<- function (id) {
   ns <- NS(id)
-  list(fluidRow(
+  list(
+
+        fluidRow(
              fileUploadBox(id, "countdata", "Count Data"),
              fileUploadBox(id, "metadata", "Metadata")
         ),
-        actionButton(ns("dataSubmit"), label = "Upload"),
+        fluidRow(column(12,
+        actionButton(ns("uploadFile"), label = "Upload"), 
+        actionButton(ns("demo"),  label = "Load Demo!"))
+        ),
   fluidRow(
     shinydashboard::box(title = "Upload Summary",
         solidHeader = T, status = "info",
