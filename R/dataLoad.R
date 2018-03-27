@@ -17,7 +17,6 @@ debrowserdataload <- function(input, output, session) {
     
     ldata <- reactiveValues(count=NULL, meta=NULL)
 
-    
     observe({
         query <- parseQueryString(session$clientData$url_search)
         jsonobj<-query$jsonobject
@@ -53,7 +52,6 @@ debrowserdataload <- function(input, output, session) {
                     crlf = TRUE)
                 metadatatable<-data.frame(fromJSON(raw, simplifyDataFrame = TRUE),
                     stringsAsFactors = TRUE)
-                print(head(metadatatable))
                 
             }
             ldata$meta <- metadatatable
@@ -63,9 +61,7 @@ debrowserdataload <- function(input, output, session) {
     observeEvent(input$demo, {
         load(system.file("extdata", "demo", "demodata.Rda",
                          package = "debrowser"))
-        metadatatable <- NULL
-        
-        demodata <- demodata[,sapply(demodata, is.numeric)]
+
         ldata$count <- demodata
         ldata$meta <- metadatatable
     })
@@ -89,56 +85,25 @@ debrowserdataload <- function(input, output, session) {
         ldata$count <- counttable
         ldata$meta <- metadatatable
     })
-    loaadeddata <- reactive({
+    loadeddata <- reactive({
         ret <- NULL
         if(!is.null(ldata$count)){
             ret <- list(count = ldata$count, meta = ldata$meta)
         }
         return(ret)
     })
-    output$uploadSummary <- renderTable({ 
-    if (!is.null(ldata$count))
-    {
-        countdata <-  loaadeddata()$count
-        samplenums <- length(colnames(countdata))
-        rownums <- dim(countdata)[1]
-        result <- rbind(samplenums, rownums)
-        rownames(result) <- c("# of samples", "# of rows (genes/regions)")
-        colnames(result) <- "Value"
-        result
-      }
-  },digits=0, rownames = TRUE, align="lc")
-
-  output$sampleGroup <- DT::renderDataTable({ 
-      if (!is.null(ldata$count))
-      {
-        dat <- colSums(loaadeddata()$count)
-        dat <- cbind(names(dat), dat)
-        dat[, c("dat")] <-  format(
-          round( as.numeric( dat[,  c("dat")], digits = 2)),
-          big.mark=",",scientific=FALSE)
-
-        if (!is.null(loaadeddata()$meta)){
-            met <- loaadeddata()$meta
-            dat <- cbind(met, dat[,"dat"])
-            rownames(dat) <- NULL
-            colnames(dat)[ncol(dat)] <- "read counts"
-        }else{
-            rownames(dat) <- NULL
-            colnames(dat) <- c("samples", "read counts")
-        }
-        dat
-    }
-  })
-  list(load=loaadeddata)
+    observe({
+        getSampleDetails(output, "uploadSummary", "sampleDetails", loadeddata())
+    })
+  list(load=loadeddata)
 }
 
-
-#' Creates a more detailed plot using the PCA results from
-#' the selected dataset.
+#' dataLoadUI
+#' 
+#' Creates a panel to upload the data
 #'
-#' @param explainedData, selected data
-#' @return explained plot
+#' @param id, namespace id
+#' @return panel
 #' @examples
 #'     x <- dataLoadUI()
 #'
@@ -166,7 +131,7 @@ dataLoadUI<- function (id) {
           )),
         fluidRow(
           column(12,div(style = 'overflow: scroll', 
-              DT::dataTableOutput(ns("sampleGroup")))
+              DT::dataTableOutput(ns("sampleDetails")))
           )
         )
     )
