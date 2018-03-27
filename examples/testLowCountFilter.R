@@ -1,9 +1,7 @@
 library(debrowser)
 source("../R/plotSize.R")
 source("../R/funcs.R")
-source("../R/dataLoad.R")
-
-options(shiny.maxRequestSize = 30*1024^2)
+source("../R/lowcountfilter.R")
 
 dbHeader <- shinydashboard::dashboardHeader()
 dbHeader$children[[2]]$children <- tags$a(style='color: white;',
@@ -13,14 +11,13 @@ ui <- fluidPage(
     shinydashboard::dashboardPage(
         dbHeader,
         shinydashboard::dashboardSidebar(
-            #dataLoadControlsUI("load")
+            #dataLCFControlsUI("lcf")
         ),
         shinydashboard::dashboardBody(
             mainPanel(
-                dataLoadUI("load"),
+                dataLCFUI("lcf"),
                 column(4,
-                       verbatimTextOutput("counttable"),
-                       verbatimTextOutput("metadatatable")
+                    verbatimTextOutput("filtertable")
                 )
             )
         )
@@ -28,15 +25,18 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-    data <- callModule(debrowserdataload, "load")
-
-    output$counttable <- renderPrint({
-        head( data$load()$count )
-    })
-    output$metadatatable <- renderPrint({
-        head( data$load()$meta)
-    })
+    load(system.file("extdata", "demo", "demodata.Rda",
+                     package = "debrowser"))
     
+    ldata <- reactiveValues(count=NULL, meta=NULL)
+    ldata$count <- demodata
+    ldata$meta <- metadatatable
+    
+    data <- callModule(debrowserlowcountfilter, "lcf", ldata)
+
+    output$filtertable <- renderPrint({
+        head( data$filter()$count )
+    })
 }
 
 shinyApp(ui, server)
