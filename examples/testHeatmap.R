@@ -27,7 +27,7 @@ body <- dashboardBody(
 ui <- dashboardPage(header, sidebar, body, skin = "blue")
 
 server <- function(input, output, session) {
-    selected <- callModule(debrowserheatmap, "heatmap", hdata)
+    selected <- callModule(debrowserheatmap, "heatmap", mtcars)
     
     output$heatmap_hover <- renderPrint({
         if (selected$shgClicked() != "")

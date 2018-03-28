@@ -32,7 +32,7 @@ ui <- dashboardPage(header, sidebar, body, skin = "blue")
 server <- function(input, output, session) {
     load(system.file("extdata", "demo", "demodata.Rda",
                      package = "debrowser"))
-    selected <- callModule(debrowserpcaplot, "pca", demodata, metadatatable)
+    selected <- callModule(debrowserpcaplot, "pca", demodata)
     
     #output$main_hover <- renderPrint({
     #    selected$shgClicked()

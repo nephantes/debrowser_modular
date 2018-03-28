@@ -223,13 +223,10 @@ prepPCADat <- function(pca_data = NULL, metadata = NULL, input = NULL, pcx = 1, 
     # Prepare data frame to pass to ggplot
     xaxis <- paste0("PC", pcx)
     yaxis <- paste0("PC", pcy)
-    print(metadata)
     if (!is.null(metadata)) {
         samples <- rownames(plot_data)
         color  <- rownames(plot_data)
         shape <- "Conds"
-        print(paste0("Color:", input$color_pca))
-        print(paste0("Shape:", input$shape_pca))
         if (!is.null(input$color_pca) && input$color_pca != "None")
             color <- as.character(metadata[samples, input$color_pca])
         if (!is.null(input$shape_pca) && input$shape_pca != "None")
@@ -245,7 +242,6 @@ prepPCADat <- function(pca_data = NULL, metadata = NULL, input = NULL, pcx = 1, 
         p_data <- cbind( plot_data[,c(xaxis, yaxis)], samples, color, shape)
     }
     colnames(p_data) <- c("x", "y", "samples", "color", "shape")
-    print(p_data)
     p_data
 }
 #' getPCAexplained
