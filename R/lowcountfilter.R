@@ -78,10 +78,9 @@ dataLCFUI<- function (id) {
   list(
     fluidRow(
       shinydashboard::box(title = "Low Count Filtering",
-                          solidHeader = T, status = "info",
-                          width = 12,
+                          solidHeader = T, status = "info",  width = 12, 
                           fluidRow(
-                            column(5,div(style = 'overflow: scroll',
+                            column(6,div(style = 'overflow: scroll',
                                 tableOutput(ns("uploadSummary")),
                                 DT::dataTableOutput(ns("sampleDetails")))
                             ),
@@ -94,7 +93,7 @@ dataLCFUI<- function (id) {
                                        actionButton(ns("submitLCF"), label = "Filter")
                                    )
                             ),
-                            column(5,div(style = 'overflow: scroll', 
+                            column(6,div(style = 'overflow: scroll', 
                                          tableOutput(ns("filteredSummary")),
                                          DT::dataTableOutput(ns("filteredDetails")))
                             )

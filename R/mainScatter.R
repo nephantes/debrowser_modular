@@ -224,29 +224,28 @@ getMainPlotsLeftMenu <- function(id) {
 #' @return testData
 #'
 #' @examples
-#'     x <- generateTestData()
+#'     x <- generateTestData(data)
 #'
 #' @export
 #'
-generateTestData <- function() {
-    load(system.file("extdata", "demo", "demodata.Rda",
-                     package = "debrowser"))
-    columns <- c("exper_rep1", "exper_rep2", "exper_rep3",
-                 "control_rep1", "control_rep2", "control_rep3")
-    conds <- factor( c("Control", "Control", "Control",
-                       "Treat", "Treat", "Treat") )
-    data <- data.frame(demodata[, columns])
+generateTestData <- function(dat) {
     
     ##################################################
+    columns <- dat$columns
+    conds <- dat$conds
+    data <- dat$data
     deseqrun <- runDESeq(data, columns, conds)
+    
+    met <- as.data.frame(cbind(as.vector(conds), columns))
+    colnames(met) <- c("conds", "columns")
+    cols1 <- as.vector(met[met$conds==as.character(unique(met$conds)[1]), "columns"])
+    cols2 <- as.vector(met[met$conds==as.character(unique(met$conds)[2]), "columns"])
     
     de_res <- data.frame(deseqrun)
     norm_data <- getNormalizedMatrix(data[, columns])
     rdata <- cbind(rownames(de_res), norm_data[rownames(de_res), columns],
-       log10(rowMeans(norm_data[rownames(de_res),
-       paste(c("exper_rep1", "exper_rep2", "exper_rep3"))])
-       + 0.1), log10( rowMeans( norm_data[ rownames( de_res ),
-       paste(c("control_rep1", "control_rep2", "control_rep3"))])
+       log10(rowMeans(norm_data[rownames(de_res),cols1])
+       + 0.1), log10( rowMeans( norm_data[ rownames( de_res ), cols2])
        + 0.1), de_res[rownames(de_res),
        c("padj", "log2FoldChange")], 2 ^ de_res[rownames(de_res),
                                                                                                 "log2FoldChange"], -1 *

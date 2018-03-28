@@ -4,33 +4,30 @@ library(shinyjs)
 source("../R/plotSize.R")
 source("../R/heatmap.R")
 
-dbHeader <- shinydashboard::dashboardHeader()
-dbHeader$children[[2]]$children <- tags$a(style='color: white;',
-        id="top_logo" , "DEBrowser")
+header <- dashboardHeader(
+    title = "DEBrowser Heatmap"
+)
+sidebar <- dashboardSidebar(  getJSLine(), sidebarMenu(id="DataAssessment",
+           menuItem("Heatmap", tabName = "Heatmap"),
+           plotSizeMarginsUI("heatmap"),
+           heatmapControlsUI("heatmap")))
 
-ui <- fluidPage(
-    getJSLine(),
-    shinydashboard::dashboardPage(
-        
-        dbHeader,
-        shinydashboard::dashboardSidebar(
-            plotSizeMarginsUI("heatmap"),
-            heatmapControlsUI("heatmap")
-        ),
-        shinydashboard::dashboardBody(
-            mainPanel(
-                getHeatmapUI("heatmap"),
+body <- dashboardBody(
+    tabItems(
+        #########################################
+        ## Introduction tab panel
+        tabItem(tabName="Heatmap",  getHeatmapUI("heatmap"),
                 column(4,
                        verbatimTextOutput("heatmap_hover"),
                        verbatimTextOutput("heatmap_selected")
                 )
-            )
         )
-    )
-)
+    ))
+
+ui <- dashboardPage(header, sidebar, body, skin = "blue")
 
 server <- function(input, output, session) {
-    selected <- callModule(debrowserheatmap, "heatmap", mtcars)
+    selected <- callModule(debrowserheatmap, "heatmap", hdata)
     
     output$heatmap_hover <- renderPrint({
         if (selected$shgClicked() != "")

@@ -2,31 +2,52 @@ library(debrowser)
 source("../R/plotSize.R")
 source("../R/mainScatter.R")
 
-dbHeader <- shinydashboard::dashboardHeader()
-dbHeader$children[[2]]$children <- tags$a(style='color: white;',
-        id="top_logo" , "DEBrowser")
+header <- dashboardHeader(
+    title = "DEBrowser Main Plots"
+)
+sidebar <- dashboardSidebar(  sidebarMenu(id="DEAnalysis",
+    menuItem("Main", tabName = "Main"),
+    mainPlotControlsUI("main"),
+    plotSizeMarginsUI("main")))
 
-ui <- fluidPage(
-    shinydashboard::dashboardPage(
-        dbHeader,
-        shinydashboard::dashboardSidebar(
-            mainPlotControlsUI("main"),
-            plotSizeMarginsUI("main")
-        ),
-        shinydashboard::dashboardBody(
-            mainPanel(
-                getMainPlotUI("main"),
+body <- dashboardBody(
+    tabItems(
+        #########################################
+        ## Introduction tab panel
+        tabItem(tabName="Main", getMainPlotUI("main"),
                 column(4,
                        verbatimTextOutput("main_hover"),
                        verbatimTextOutput("main_selected")
                 )
-            )
         )
-    )
-)
+    ))
+
+ui <- dashboardPage(header, sidebar, body, skin = "blue")
 
 server <- function(input, output, session) {
-    #xdata <- generateTestData()
+    #Example usage with demodata
+    load(system.file("extdata", "demo", "demodata.Rda",
+                     package = "debrowser"))
+    dat <-c()
+    dat$columns <- c("exper_rep1", "exper_rep2", "exper_rep3",
+                 "control_rep1", "control_rep2", "control_rep3")
+    dat$conds <- factor( c("Control", "Control", "Control",
+                       "Treat", "Treat", "Treat") )
+    dat$data <- data.frame(demodata[, dat$columns])
+    
+    # You can also use your dataset by reading your data from a file like below;
+    # The data in this commented out exampele is not supplied but these lines 
+    # can give you an idea about how to read the data from a file;
+    #
+    # data  <- read.table("~/Downloads/shKRAS.tsv", header=T, row.names=1, sep="\t")
+    # dat$columns <- c("CNT.2", "CNT.3", "CNT.4", 
+    #               "shKRAS_T1", "shKRAS_T2", "shKRAS_T3")
+    # dat$conds <- factor( c("Control", "Control", "Control",
+    #                        "shKRAS", "shKRAS", "shKRAS") )
+    # dat$data <- data.frame(data[, dat$columns])
+    #
+    
+    xdata <- generateTestData(dat)
     selected <- callModule(debrowsermainplot, "main", xdata)
     
     output$main_hover <- renderPrint({
