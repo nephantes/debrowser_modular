@@ -68,6 +68,27 @@ selectGroupInfo <- function(metadata = NULL, input = NULL,
                 selected = 1)
 }
 
+
+#' addID
+#'
+#' Adds an id to the data frame being used.
+#'
+#' @param data, loaded dataset
+#' @return data
+#' @export
+#'
+#' @examples
+#'     x <- addID()
+#'
+addID <- function(data = NULL) {
+    if (is.null(data)) return (NULL)
+    dat1 <- data.frame(data)
+    dat1 <- cbind(rownames(data), data)
+    colnames(dat1) <- c("ID", colnames(data))
+    dat1
+}
+
+
 #' push
 #'
 #' Push an object to the list.

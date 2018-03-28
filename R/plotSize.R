@@ -12,7 +12,7 @@
 #' @export
 #'
 plotSizeMarginsUI <- function(id, w=800, h=640, t=20, b=100, l=100, r=20) {
-    shinydashboard::menuItem("Size & Margins",
+    shinydashboard::menuItem(paste0(id, " - Size & Margins"),
     plotSizeUI(id, w, h),
     plotMarginsUI(id, t, b, l, r)
     )
@@ -34,7 +34,7 @@ plotSizeMarginsUI <- function(id, w=800, h=640, t=20, b=100, l=100, r=20) {
 plotSizeUI <- function(id, w=800, h=600){
     ns <- NS(id)
     list(
-    checkboxInput(r(ns('size'), "-"), 'Plot Size', value = FALSE),
+    checkboxInput(r(ns('size'), "-"), paste0('Plot Size'), value = FALSE),
     conditionalPanel(paste0('input.', r(ns('size'), "-")),
     sliderInput(ns("width"), "width",
     min = 100, max = 2000, step = 10, value = w),

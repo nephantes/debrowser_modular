@@ -135,76 +135,7 @@ getQCReplot <- function(cols = NULL, conds = NULL,
         getQCPlots(dataset, input, metadata)
 }
 
-#' getIQRPlot
-#'
-#' Makes IQR boxplot plot
-#'
-#' @param data, count or normalized data
-#' @param cols, columns
-#' @param input, input
-#' @param title, title
-#'
-#' @export
-#'
-#' @examples
-#'     getIQRPlot()
-#'
-getIQRPlot <- function(data=NULL, cols=NULL, input=NULL, title = ""){
-    if (is.null(data)) return(NULL)
-    data <- as.data.frame(data)
-    data[, cols] <- apply(data[, cols], 2,
-        function(x) log10(as.integer(x) + 1))
-    
-    data <- addID(data)
-    mdata <- melt(as.data.frame(data[,c("ID", cols)]),"ID")
-    colnames(mdata)<-c("ID", "samples", "logcount")
-    ypos <- -5 * max(nchar(as.vector(mdata$samples)))
-    
-    p <- plot_ly(mdata, x = ~samples, y = ~logcount, 
-                 color="steelblue", type = "box") %>%
-        layout(title = title,
-               xaxis = list(title = "samples"),
-               yaxis = list(title = "logcount")) %>% 
-        plotly::layout(margin = list(l = input[["left"]],
-            b = input[["bottom"]],
-            t = input[["top"]],
-            r = input[["right"]]
-        ))
-    p$elementId <- NULL
-    p
-}
 
-#' getDensityPlot
-#'
-#' Makes Density plots
-#'
-#' @param data, count or normalized data
-#' @param cols, columns
-#' @param title, title
-#'
-#' @export
-#'
-#' @examples
-#'     getDensityPlot()
-#'
-getDensityPlot <- function(data=NULL, cols=NULL, title = ""){
-    if (is.null(data)) return(NULL)
-    data <- as.data.frame(data)
-    data[, cols] <- apply(data[, cols], 2,
-          function(x) log10(as.integer(x) + 1))
-    
-    data <- addID(data)
-    mdata <- melt(as.data.frame(data[,c("ID", cols)]),"ID")
-    colnames(mdata)<-c("ID", "samples", "density")
-    
-    p <- ggplot(data=mdata, aes(x=density)) +
-        geom_density(aes(fill = samples), alpha = 0.5) +
-        labs(x = "logcount", y = "man/getDensityPlot.Rd") +
-        theme_minimal()
-        
-    p$elementId <- NULL
-    p
-}
 
 #' prepAddQCPlots
 #'

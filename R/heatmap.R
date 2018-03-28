@@ -125,7 +125,17 @@ runHeatmap <- function(input, data){
     p
 }
 
-
+#' getHeatmapUI
+#'
+#' Generates the left menu to be used for heatmap plots
+#'
+#' @note \code{getHeatmapUI}
+#' @param id, module ID
+#' @return heatmap plot area
+#' @examples
+#'     x <- getHeatmapUI("heatmap")
+#' @export
+#'
 getHeatmapUI <- function(id) {
     ns <- NS(id)
     uiOutput(ns("heatmapUI"))
