@@ -45,6 +45,28 @@ getSampleDetails<- function (output, summary, details, data) {
     })
 }
 
+#' selectGroupInfo
+#'
+#' Group info column selection. This can be used in batch effect
+#' or coloring the groups in the plots.
+#'
+#' @param input, input values
+#' @param selectname, name of the select box
+#' @param label, label of the select box
+#' @note \code{selectGroupInfo}
+#' @examples
+#'     x <- selectGroupInfo()
+#' @export
+#'
+selectGroupInfo <- function(metadata = NULL, input = NULL,
+                              selectname = "groupselect",
+                              label = "Group info") {
+    if (is.null(metadata)) return (NULL)
+    lst.choices <- as.list(c("None", colnames(metadata)))
+    selectInput(selectname, label = label,
+                choices = lst.choices,
+                selected = 1)
+}
 
 #' push
 #'
