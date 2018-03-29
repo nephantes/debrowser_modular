@@ -5,6 +5,8 @@ source("../R/plotSize.R")
 source("../R/funcs.R")
 source("../R/density.R")
 
+options(warn =-1)
+
 header <- dashboardHeader(
   title = "DEBrowser Density Plots"
 )
