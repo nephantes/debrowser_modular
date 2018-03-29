@@ -135,8 +135,6 @@ getQCReplot <- function(cols = NULL, conds = NULL,
         getQCPlots(dataset, input, metadata)
 }
 
-
-
 #' prepAddQCPlots
 #'
 #' prepares IQR and density plots

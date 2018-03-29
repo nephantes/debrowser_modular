@@ -88,6 +88,33 @@ addID <- function(data = NULL) {
     dat1
 }
 
+#' getVariationData
+#'
+#' Adds an id to the data frame being used.
+#'
+#' @param inputdata, dataset 
+#' @param cols, columns
+#' @param conds, conditions
+#' @param key, gene or region name
+#' @return plotdata
+#' @export
+#'
+#' @examples
+#'     x <- getVariationData()
+#'
+getVariationData <- function(inputdata = NULL, 
+    cols = NULL, conds = NULL, key = NULL) {
+    # Pick out the gene with this ID
+    vardata <- inputdata[key, ]
+    bardata <- as.data.frame(cbind(key, cols,
+         t(vardata[, cols]), conds) )
+    colnames(bardata) <- c("genename", "libs", "count", "conds")
+    bardata$count <- as.numeric(as.character(bardata$count))
+    data <- rbind(bardata[bardata$conds == levels(bardata$conds)[1], ],
+                  bardata[bardata$conds == levels(bardata$conds)[2], ])
+    data$conds  <- factor(data$conds, levels = unique(data$conds))
+    data
+}
 
 #' push
 #'
