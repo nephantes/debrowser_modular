@@ -55,9 +55,18 @@ debrowserlowcountfilter <- function(input, output, session, ldata) {
     return(ret)
   })
   
+  #output$filteredTableModal <- renderUI({
+  #    list(actionButton("showfiltered", "Show Filtered Data", styleclass = "primary", icon="show"),
+  #    getBSTableModal(  session$ns("filteredtable"), "Show Data", "showfiltered"))
+  #})
+  
+
   observe({
     getSampleDetails(output, "uploadSummary", "sampleDetails", ldata)
     getSampleDetails(output, "filteredSummary", "filteredDetails", filtereddata())
+    getTableDetails(output, "loadedtable", session$ns("loadedtable"), ldata$count)
+    if ( !is.null(filtereddata()$count ) && nrow(filtereddata()$count)>2 )
+        getTableDetails(output, "filteredtable",  session$ns("filteredtable"), data = filtereddata()$count)
   })
   
   list(filter=filtereddata)
@@ -80,9 +89,10 @@ dataLCFUI<- function (id) {
       shinydashboard::box(title = "Low Count Filtering",
                           solidHeader = T, status = "info",  width = 12, 
                           fluidRow(
-                            column(6,div(style = 'overflow: scroll',
+                            column(5,div(style = 'overflow: scroll',
                                 tableOutput(ns("uploadSummary")),
-                                DT::dataTableOutput(ns("sampleDetails")))
+                                DT::dataTableOutput(ns("sampleDetails"))),
+                                uiOutput(ns("loadedtableModal"))
                             ),
                             column(2,
                                    shinydashboard::box(title = "Filtering Methods",
@@ -90,12 +100,15 @@ dataLCFUI<- function (id) {
                                        width = 12, 
                                        lcfMetRadio(id),
                                        uiOutput(ns("cutoffLCFMet")),
-                                       actionButton(ns("submitLCF"), label = "Filter")
+                                       actionButton(ns("submitLCF"), label = "Filter", styleclass = "primary")
                                    )
                             ),
-                            column(6,div(style = 'overflow: scroll', 
-                                         tableOutput(ns("filteredSummary")),
-                                         DT::dataTableOutput(ns("filteredDetails")))
+                            column(5,div(style = 'overflow: scroll', 
+                                         
+                                 tableOutput(ns("filteredSummary")),
+                                 DT::dataTableOutput(ns("filteredDetails"))),
+                                 uiOutput(ns("filteredtableModal"))
+
                             )
                           )
       )

@@ -116,6 +116,67 @@ getVariationData <- function(inputdata = NULL,
     data
 }
 
+
+#' getBSTableModal
+#' prepares a Modal to put a table
+#'
+#' @return the modal
+#'
+#' @examples
+#'     x<- getBSTableModal()
+#'
+#' @export
+getBSTableModal<-function(name,  label, trigger, size="large"){
+    shinyBS::bsModal(name, label, trigger, size = size,
+        div(style = "display:block;overflow-y:auto; overflow-x:auto;",
+        wellPanel( DT::dataTableOutput(name))))
+}
+
+#' getTableDetails
+#' 
+#' get table details
+#'
+#' @param output, output
+#' @param tablename, table name
+#' @param data, data 
+#' @return panel
+#' @examples
+#'     x <- getTableDetails()
+#'
+#' @export
+#'
+getTableDetails <- function(output, tablename, modelname, data = NULL, downbut = NULL){
+    if (is.null(data)) return(NULL)
+    output[[paste0(tablename,"Modal")]] <- renderUI({
+        ret <- list(actionButton(paste0("show",tablename), "Show Data", styleclass = "primary", icon="show"),
+             getBSTableModal( modelname, "Show Data", paste0("show",tablename)))
+    })
+    
+    observe({
+             callModule(debrowserdownload, "downfiltered", data)
+    })
+    
+    output[[tablename]] <- DT::renderDataTable({
+        if (!is.null(data)){
+            DT::datatable(data, , extensions = 'Buttons'
+                          , options = list( server = TRUE,
+                              dom = "Blfrtip"
+                              , buttons = 
+                                  list("copy", list(
+                                      extend = "collection"
+                                      , buttons = c("csv", "excel", "pdf")
+                                      , text = "Download"
+                                  ) ) # end of buttons customization
+                              
+                              # customize the length menu
+                              , lengthMenu = list( c(10, 20,  50, -1) # declare values
+                                                   , c(10, 20, 50, "All") # declare titles
+                              ) # end of lengthMenu customization
+                              , pageLength = 10))
+        }
+    })
+}
+
 #' push
 #'
 #' Push an object to the list.
@@ -146,5 +207,49 @@ round_vals <- function(l) {
     parse(text = l)
 }
 
-
+#' Buttons including Action Buttons and Event Buttons
+#'
+#' Creates an action button whose value is initially zero, and increments by one
+#' each time it is pressed.
+#'
+#' @param inputId Specifies the input slot that will be used to access the
+#'   value.
+#' @param label The contents of the button--usually a text label, but you could
+#'   also use any other HTML, like an image.
+#' @param styleclass The Bootstrap styling class of the button--options are
+#'   primary, info, success, warning, danger, inverse, link or blank
+#' @param size The size of the button--options are large, small, mini
+#' @param block Whehter the button should fill the block
+#' @param icon Display an icon for the button
+#' @param css.class Any additional CSS class one wishes to add to the action
+#'   button
+#' @param ... Other argument to feed into shiny::actionButton
+#'
+#' @export
+#'
+#' @examples
+#'     actionButton("goDE", "Go to DE Analysis!")
+#'
+actionButton <- function(inputId, label, styleclass = "", size = "",
+                         block = FALSE, icon = NULL, css.class = "", ...) {
+    if (styleclass %in% c("primary", "info", "success", "warning",
+                          "danger", "inverse", "link")) {
+        btn.css.class <- paste("btn", styleclass, sep = "-")
+    } else btn.css.class = ""
+    
+    if (size %in% c("large", "small", "mini")) {
+        btn.size.class <- paste("btn", size, sep = "-")
+    } else btn.size.class = ""
+    
+    if (block) {
+        btn.block = "btn-block"
+    } else btn.block = ""
+    
+    if (!is.null(icon)) {
+        icon.code <- HTML(paste0("<i class='fa fa-", icon, "'></i>"))
+    } else icon.code = ""
+    tags$button(id = inputId, type = "button", class = paste("btn action-button",
+                                                             btn.css.class, btn.size.class, btn.block, css.class, collapse = " "),
+                icon.code, label, ...)
+}
 
