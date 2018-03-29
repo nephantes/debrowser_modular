@@ -1,48 +1,27 @@
 library(shiny)
-library(heatmaply)
-library(shinyjs)
-source("plotSize.R")
-source("heatmap.R")
-
-dbHeader <- shinydashboard::dashboardHeader()
-dbHeader$children[[2]]$children <- tags$a(style='color: white;',
-        id="top_logo" , "DEBrowser")
+library(shinyBS)
+source("../R/funcs.R")
 
 ui <- fluidPage(
-    getJSLine(),
-    shinydashboard::dashboardPage(
-        
-        dbHeader,
-        shinydashboard::dashboardSidebar(
-            plotSizeMarginsUI("heatmap"),
-            heatmapControlsUI("heatmap")
-        ),
-        shinydashboard::dashboardBody(
-            mainPanel(
-                getHeatmapUI("heatmap"),
-                column(4,
-                       verbatimTextOutput("heatmap_hover"),
-                       verbatimTextOutput("heatmap_selected")
-                )
-            )
-        )
-    )
+  mainPanel(
+    getBSTableModal('startupModal', 'Dum Dum', 'start'),
+    actionButton("start", "Start"),
+    width = 12
+  )
 )
 
 server <- function(input, output, session) {
-    selected <- callModule(debrowserheatmap, "heatmap", merged)
-    
-    output$heatmap_hover <- renderPrint({
-        if (selected$shgClicked() != "")
-            return(paste0("Clicked: ",selected$shgClicked()))
-        else
-            return(paste0("Hovered:", selected$shg()))
-    })
 
-    output$heatmap_selected <- renderPrint({
-         selected$hselGenes()
-    })
-
+  output$startupModal <- DT::renderDataTable({
+    load(system.file("extdata", "demo", "demodata.Rda",
+                     package = "debrowser"))
+    if (!is.null(demodata)){
+      DT::datatable(demodata,
+                    list(lengthMenu = list(c(10, 25, 50, 100),
+                                           c("10", "25", "50", "100")),
+                         pageLength = 25, paging = TRUE, searching = TRUE))
+    }
+  })
 }
 
-shinyApp(ui, server)
+shinyApp(ui = ui, server = server)
