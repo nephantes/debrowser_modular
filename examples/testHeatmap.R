@@ -27,9 +27,12 @@ body <- dashboardBody(
 ui <- dashboardPage(header, sidebar, body, skin = "blue")
 
 server <- function(input, output, session) {
-    selected <- callModule(debrowserheatmap, "heatmap", mtcars)
+    withProgress(message = 'Creating plot', style = "notification", value = 0.1, {
+        selected <- callModule(debrowserheatmap, "heatmap", mtcars)
+    })
     
     output$heatmap_hover <- renderPrint({
+       
         if (selected$shgClicked() != "")
             return(paste0("Clicked: ",selected$shgClicked()))
         else
@@ -39,8 +42,6 @@ server <- function(input, output, session) {
     output$heatmap_selected <- renderPrint({
          selected$selGenes()
     })
-
-
 }
 
 shinyApp(ui, server)
