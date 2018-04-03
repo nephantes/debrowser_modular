@@ -152,9 +152,6 @@ getTableDetails <- function(output, tablename, modelname, data = NULL, downbut =
              getBSTableModal( modelname, "Show Data", paste0("show",tablename)))
     })
     
-    observe({
-             callModule(debrowserdownload, "downfiltered", data)
-    })
     
     output[[tablename]] <- DT::renderDataTable({
         if (!is.null(data)){
