@@ -6,6 +6,7 @@ library(shinydashboard)
 source("../R/plotSize.R")
 source("../R/funcs.R")
 source("../R/batcheffect.R")
+source("../R/IQR.R")
 
 header <- dashboardHeader(
     title = "DEBrowser Batch Effect"
@@ -33,7 +34,7 @@ server <- function(input, output, session) {
     ldata <- reactiveValues(count=NULL, meta=NULL)
     ldata$count <- demodata
     ldata$meta <- metadatatable
-    data <- callModule(debrowserbatcheffect, "lcf", ldata)
+    data <- callModule(debrowserbatcheffect, "batcheffect", ldata)
     observe({
         output$batcheffecttable <- renderPrint({
             head( data$BatchEffect()$count )

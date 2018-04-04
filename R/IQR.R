@@ -93,8 +93,9 @@ getIQRPlot <- function(data=NULL, input=NULL, title = ""){
                                          outlierwidth = 2))) %>%
     layout(title = title,
            xaxis = list(title = "samples"),
-           yaxis = list(title = "logcount")) %>% 
-    plotly::layout(margin = list(l = input$left,
+           yaxis = list(title = "logcount")) 
+    if (!is.null(input$left))
+        p <- p %>% plotly::layout(margin = list(l = input$left,
                                  b = input$bottom,
                                  t = input$top,
                                  r = input$right
