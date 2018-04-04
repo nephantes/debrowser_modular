@@ -1,3 +1,64 @@
+#' debrowsercondselect
+#'
+#' Condition selection
+#' This is not a module. Module construction didn't used here, just use it 
+#' as functions not in a module.
+#' 
+#' @param input, input variables
+#' @param output, output objects
+#' @param session, session 
+#' @param data, count data
+#' @param metadata, metadata
+#' @return main plot
+#'
+#' @return panel
+#' @export
+#'
+#' @examples
+#'     x <- debrowsercondselect()
+#'
+debrowsercondselect <- function(input, output, session, data, metadata=NULL) {
+
+    choicecounter <- reactiveValues(nc = 0)
+    
+    output$conditionSelector <- renderUI({
+        selectConditions(Dataset = data,
+                         metadata = metadata,
+                         choicecounter = choicecounter,
+                         input = input,
+                         session = session)
+    })
+    observeEvent(input$add_btn, {
+        choicecounter$nc <- choicecounter$nc + 1
+    })
+    observeEvent(input$rm_btn, {
+        if (choicecounter$nc > 0) 
+            choicecounter$nc <- choicecounter$nc - 1
+    })
+
+}
+
+#' condSelectUI
+#' Creates a panel to select samples for each condition
+#'
+#' @param id, namespace id
+#' @return panel
+#' @examples
+#'     x <- condSelectUI()
+#'
+#' @export
+#'
+condSelectUI<- function () {
+list(
+    fluidRow(
+        helpText( "Please add new comparisons for DE analysis!" ),
+        uiOutput("conditionSelector"),
+        column(12,actionButton("add_btn", "Add New Comparison"),
+               actionButton("rm_btn", "Remove"),
+               getHelpButton("method", "http://debrowser.readthedocs.io/en/develop/deseq/deseq.html"))
+    )
+)
+}
 #getMethodDetails
 #'
 #' get the detail boxes after DE method selected 
@@ -49,9 +110,6 @@ getMethodDetails <- function(num = 0, input = NULL) {
                         c("none", "scale", "quantile", "cyclicloess",
                         "Aquantile", "Gquantile", "Rquantile","Tquantile"),
                         selectedInput("normBetween", num, "none", input))),
-            column(2,textInput(paste0("rowsumfilter", num), "row.sum filter", 
-                            value = isolate(selectedInput("rowsumfilter", num,
-                            "10", input) ))),
             br())
 }
 
@@ -70,96 +128,49 @@ getMethodDetails <- function(num = 0, input = NULL) {
 getConditionSelector<- function(num=0, choices = NULL, selected = NULL) {
     if (!is.null(choices))
         a <- list(column(6, selectInput(paste0("condition", num),
-                                        label = paste0("Condition ", num),
-                                        choices = choices, multiple = TRUE,
-                                        selected = selected)))
+            label = paste0("Condition ", num),
+            choices = choices, multiple = TRUE,
+            selected = selected)))
 }
 
 #' getConditionSelectorFromMeta
 #'
 #' Selects user input conditions to run in DESeq from metadata
 #'
+#' @param metadata, meta data table
 #' @param input, input
 #' @param index, index
 #' @param num, num
 #' @param choices, choices
 #' @param selected, selected
-#' @param username, username
 #' 
 #' @examples
 #'     x <- getConditionSelectorFromMeta()
 #'
 #' @export
 #'
-getConditionSelectorFromMeta <- function(input = NULL, index = 1, num=0, 
-    choices = NULL, selected = NULL, username = NULL) {
-    if(is.null(input)) return(NULL) 
-    if (is.null(input$demethod1)) return(NULL) 
-    startup_path <- "shiny_saves/startup.rds"     
-    if(!is.null(username)){
-        startup_path <- paste0("shiny_saves/", username ,"/startup.rds")
-        if(!file.exists(paste0("shiny_saves/", username))){
-            dir.create(paste0("shiny_saves/", username))
-        }
-    }
-    
-    startup <- list()
-    if(file.exists(startup_path)){
-        startup <- readRDS(startup_path)
-    }
-
-    if(is.null(startup[['bookmark_counter']])){
-        startup[['bookmark_counter']] <- 3
-    }
-    
-    # startup[['bookmark_counter']] = 2 when Restoring from Bookmark
-    if(startup[['bookmark_counter']] == 2){
-        path_to_read <- paste0("shiny_bookmarks/", 
-            startup[['startup_bookmark']] , "/input_save.rds")
-        restored_input <- list()
-        if(file.exists(path_to_read)){
-            restored_input <- readRDS(path_to_read)
-        }
-
-        selected <- restored_input[[paste0("condition", num)]]
-        if(is.null(restored_input[[paste0("condition", num + 1)]])){
-            startup[['bookmark_counter']] <- 3
-            saveRDS(startup, startup_path)
-        }
-    } 
-    if (is.null(input$file2)){
-        a <- list(column(6, selectInput(paste0("condition", num),
+getConditionSelectorFromMeta <- function(metadata = NULL, input = NULL, index = 1, num=0, 
+    choices = NULL, selected = NULL) {
+     a <- list(column(6, selectInput(paste0("condition", num),
             label = paste0("Condition ", num),
             choices = choices, multiple = TRUE,
             selected = selected)))
-        return(a)
-    }
-    
-    selected_meta <- selectedInput("conditions_from_meta", index, NULL, 
-        input)
-    meta_rds_path <- paste0('shiny_bookmarks/',
-        startup[['startup_bookmark']] , '/meta_selections.rds')
-    
-    if(file.exists(meta_rds_path)){
-        meta_selections <- readRDS(meta_rds_path)
-        current_meta_condition <- paste0("conditions_from_meta", index)
-        old_selection <- meta_selections[[current_meta_condition]]
-    }
-    if(is.null(old_selection)){
-        old_selection <- ""
-    }
-    if (is.null(selected_meta)) selected_meta <- "No Selection"
 
-    if(is.null(startup[['bookmark_counter']])){
-        startup[['bookmark_counter']] <- 3
-    }
-    if(startup[['bookmark_counter']] != 2) {
+     if (!is.null(metadata)){
+        selected_meta <- selectedInput("conditions_from_meta", 
+            index, NULL, input)
+        
+        if (is.null(selected_meta)) selected_meta <- "No Selection"
+    
+        if (selected_meta != "No Selection"){
+            old_selection <- ""
+            
         if(!is.null(input[[paste0("condition", num)]])){
             selected <- input[[paste0("condition", num)]]
         } 
         meta_choices_all <- NULL
         if (!is.null(selected_meta))
-            meta_choices_all <- get_conditions_given_selection(input,
+            meta_choices_all <- get_conditions_given_selection(metadata,
                                         selected_meta)
         if(old_selection != selected_meta){
             if(typeof(meta_choices_all) == "character"){
@@ -170,13 +181,14 @@ getConditionSelectorFromMeta <- function(input = NULL, index = 1, num=0,
             }
             selected <- meta_choices
         }
+    
+        a <- list(column(6, selectInput(paste0("condition", num),
+            label = paste0("Condition ", num),
+            choices = choices, multiple = TRUE,
+            selected = selected)))
+        }
     }
-
-    a <- list(column(6, selectInput(paste0("condition", num),
-                                    label = paste0("Condition ", num),
-                                    choices = choices
-                                    , multiple = TRUE,
-                                    selected = selected)))
+    return(a)
 }
 
 #' selectedInput
@@ -236,8 +248,8 @@ getSelectInputBox <- function(id = NULL, name = NULL,
 #' used in DESeq.
 #'
 #' @param Dataset, used dataset 
-#' @param choicecounter, total number of comparisons
-#' @param username, loads from json
+#' @param metadata, metadatatable to select from metadata
+#' @param choicecounter, choicecounter to add multiple comparisons
 #' @param input, input params
 #' @note \code{selectConditions}
 #' @return the panel for go plots;
@@ -248,39 +260,37 @@ getSelectInputBox <- function(id = NULL, name = NULL,
 #' @export
 #'
 selectConditions<-function(Dataset = NULL,
-                           choicecounter, input = NULL, username = NULL) {
+                           metadata = NULL,
+                           choicecounter = NULL,
+                           input = NULL,
+                           session = NULL) {
     if (is.null(Dataset)) return(NULL)
+    
     selectedSamples <- function(num){
         if (is.null(input[[paste0("condition", num)]]))
-            getSampleNames(input$samples, num %% 2 )
+            getSampleNames(colnames(Dataset), num %% 2 )
         else
             input[[paste0("condition", num)]]
     }
     nc <- choicecounter$nc
-
+    
     if (nc >= 0) {
         if(!exists("all_selections")){
             all_selections <- ""
         }
-        allsamples <- getSampleNames( input$samples, "all" )
+        allsamples <- getSampleNames( colnames(Dataset), "all" )
+        
         lapply(seq_len(nc), function(i) {
-            if(typeof(input$file2) == "NULL"){
-                current_selection <- 'No Selection'
-            } else {
-                current_selection <- input[[paste0("conditions_from_meta", i)]]
-            }
             selected1 <- selectedSamples(2 * i - 1)
             selected2 <- selectedSamples( 2 * i )
+           
+            to_return <- list(column(12, getMetaSelector(metadata = metadata, input=input, n = i),
             
-            to_return <- list(column(12, getMetaSelector(input = input, n = i),
-
-            conditionalPanel((condition <- paste0("input.conditions_from_meta",
-                                                    i," != 'No Selection'")),
-                    getConditionSelectorFromMeta(input, i,
-                        (2 * i - 1), allsamples, selected1, username),
-                    getConditionSelectorFromMeta(input, i,
-                        (2 * i), allsamples, selected2, username)
-             )
+                    getConditionSelectorFromMeta(metadata, input, i,
+                        (2 * i - 1), allsamples, selected1),
+                    getConditionSelectorFromMeta(metadata, input, i,
+                        (2 * i), allsamples, selected2)
+    
             ),
             
             column(12, 
@@ -289,47 +299,28 @@ selectConditions<-function(Dataset = NULL,
                         c("DESeq2", "EdgeR", "Limma"),
                         selectedInput("demethod", i, "DESeq2", input)),
                    getMethodDetails(i, input)))
-            
-            new_selection <- selectedInput("conditions_from_meta", i, NULL, 
-                                           input)
-            startup_path <- "shiny_saves/startup.rds"
-            if(!is.null(username)){
-                startup_path <- paste0("shiny_saves/", username ,"/startup.rds")
-                if(!file.exists(paste0("shiny_saves/", username))){
-                    dir.create(paste0("shiny_saves/", username))
-                }
-            }
-            startup <- list()
-            if(file.exists(startup_path)){
-                startup <- readRDS(startup_path)
-            }
-
-            meta_rds_path <- paste0('shiny_bookmarks/',
-                startup[['startup_bookmark']] , '/meta_selections.rds')
-            
-            if(!file.exists(meta_rds_path)){
-                if(!file.exists(paste0('shiny_bookmarks/', startup[['startup_bookmark']]))){
-                    dir.create(paste0('shiny_bookmarks/', startup[['startup_bookmark']]))
-                }
-                saveRDS(list(), meta_rds_path)
-            }
-            meta_selections <- readRDS(meta_rds_path)
-            
-            current_meta_condition <- paste0("conditions_from_meta", i)
-            meta_selections[[current_meta_condition]] <- new_selection
-            
-            saveRDS(meta_selections, meta_rds_path)
-
+           
             return(to_return)
         })
     }
 }
 
-
-getMetaSelector <- function(input = NULL, n = 0){		
-    metaFile <- input$file2		
-    if(!is.null(metaFile)){		
-        df <- read.csv(metaFile$datapath, sep = "\t", header=TRUE)
+#' getMetaSelector
+#'
+#' Return the sample selection box using meta data table
+#'
+#' @param metadata, meta data table
+#' @param input, input params
+#' @param n, the box number
+#' @return meta select box
+#'
+#' @examples
+#'     x<-getMetaSelector()
+#' @export
+#'
+getMetaSelector <- function(metadata = NULL, input = NULL, n = 0){		
+    if(!is.null(metadata)){		
+        df <- metadata
         col_count <- length(colnames(df))		
 
         list(HTML('<hr style="color: white; border:solid 1px white;">'),
@@ -343,12 +334,22 @@ getMetaSelector <- function(input = NULL, n = 0){
     }
 }
 
-
-# Return the two set of conditions given the selection of meta select box		
-get_conditions_given_selection <- function(input = NULL, selection){		
-    metaFile <- input$file2		
-    if(!is.null(metaFile)){		
-        df <- read.csv(metaFile$datapath, sep = "\t", header=TRUE)		
+#' get_conditions_given_selection
+#'
+#' Return the two set of conditions given the selection of meta select box
+#'
+#' @param metadata, meta data table
+#' @param selection, selection
+#' @return meta select box
+#'
+#' @examples
+#'     x<-get_conditions_given_selection()
+#' @export
+#'
+get_conditions_given_selection <- function(metadata = NULL, selection){		
+	
+    if(!is.null(metadata)){		
+        df <- metadata	
         if(selection == "No Selection"){		
             return(NULL)		
         }		
@@ -376,8 +377,36 @@ get_conditions_given_selection <- function(input = NULL, selection){
             both_groups <- list(a, b)
             return(both_groups)		
         }		
-    } else {		
-        print("Meta file does not exist. Please start over and upload.")
-        return(NULL)		
     }		
+}
+
+#' getSampleNames
+#'
+#' Prepares initial samples to fill condition boxes.  
+#' it reads the sample names from the data and splits into two. 
+#'
+#' @param cnames, sample names in the header of a dataset
+#' @param part, c(1,2). 1=first half and 2= second half
+#' @return sample names.
+#'
+#' @examples
+#'     x<-getSampleNames()
+#' @export
+#'
+getSampleNames <- function(cnames = NULL, part = 1) {
+    if (is.null(cnames)) return(NULL)
+    
+    startpos <- 1
+    endpos <- length(cnames)
+    if (part == 1)
+        endpos <- floor(endpos / 2) 
+    else if (part == 0)
+        startpos <- floor(endpos / 2) + 1
+    
+    cn <- cnames[startpos:endpos]
+    m <- as.list(NULL)
+    for (i in seq(cn)) {
+        m[[i]] <- cn[i]
+    }
+    m
 }

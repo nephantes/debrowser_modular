@@ -19,17 +19,19 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
   
   observeEvent(input$submitBatchEffect, {
     if (is.null(ldata$count)) return (NULL)
-
-    if (input$batchmethod == "Combat")
-       batchdata$count <- correctCombat(input, ldata$count, ldata$metadata)
-    else
-       batchdata$count <- correctHarman(input, ldata$count, ldata$metadata)
+    if (input$batchmethod == "Combat"){
+       batchdata$count <- correctCombat(input, ldata$count, ldata$meta)
+    }
+    else{
+       batchdata$count <- correctHarman(input, ldata$count, ldata$meta)
+    }
     batchdata$meta <- ldata$meta
   })
   
-  output$batchFields<- renderUI({
-    list(selectGroupInfo( ldata$metadata, input, session$ns("treatment"), "Treatment"),
-         selectGroupInfo( ldata$metadata, input, session$ns("batch"), "Batch"))
+  output$batchfields <- renderUI({
+    if (!is.null(ldata$meta))
+        list(selectGroupInfo( ldata$meta, input, session$ns("treatment"), "Treatment"),
+        selectGroupInfo( ldata$meta, input, session$ns("batch"), "Batch"))
   })
   
   batcheffectdata <- reactive({
@@ -44,8 +46,11 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
     getSampleDetails(output, "uploadSummary", "sampleDetails", ldata)
     getSampleDetails(output, "filteredSummary", "filteredDetails", batcheffectdata())
     getTableDetails(output, "loadedtable", session$ns("loadedtable"), ldata$count)
-    if ( !is.null(batcheffectdata()$count ) && nrow(batcheffectdata()$count)>2 )
-      getTableDetails(output, "batcheffecttable",  session$ns("filteredtable"), data = batcheffectdata()$count)
+    callModule(debrowserIQRplot, "beforeCorrection",  ldata$count)
+    if ( !is.null(batcheffectdata()$count ) && nrow(batcheffectdata()$count)>2 ){
+       getTableDetails(output, "batcheffecttable",  session$ns("filteredtable"), data = batcheffectdata()$count)
+       callModule(debrowserIQRplot, "afterCorrection",  batcheffectdata()$count)
+    }
   })
   
   list(BatchEffect=batcheffectdata)
@@ -79,8 +84,8 @@ batchEffectUI<- function (id) {
                                    solidHeader = T, status = "info",
                                    width = 12, 
                                    batchMethodRadio(id),
-                                   uiOutput(ns("batchFields")),
-                                   actionButton(ns("submitBatchEffect"), label = "Correct Batch Effect", styleclass = "primary")
+                                   uiOutput(ns("batchfields")),
+                                   actionButton(ns("submitBatchEffect"), label = "Submit", styleclass = "primary")
                              )
                             ),
                             column(5,div(style = 'overflow: scroll', 
@@ -90,6 +95,13 @@ batchEffectUI<- function (id) {
                                    uiOutput(ns("filteredtableModal"))
                                    
                             )
+                          ),
+                          fluidRow(
+                              column(5,
+                                     getIQRPlotUI(ns("beforeCorrection"))),
+                              column(2, div()),
+                              column(5,
+                                     getIQRPlotUI(ns("afterCorrection")))
                           )
       )
     ))
@@ -112,10 +124,10 @@ batchMethodRadio <- function(id) {
   ns <- NS(id)
   radioButtons(inputId=ns("batchmethod"), 
                label="Correction method:",
-               choices=c(ComBat='ComBat',
+               choices=c(Combat='Combat',
                          Harman='Harman'
                ),
-               selected='ComBat'
+               selected='Combat'
   )
 }
 
@@ -131,11 +143,11 @@ batchMethodRadio <- function(id) {
 #' @examples
 #'     x<-correctCombat ()
 correctCombat <- function (input = NULL, idata = NULL, metadata = NULL) {
-  if (is.null(idata)) return(NULL)
+  if (is.null(idata) || input$batch == "None") return(NULL)
   batch <- metadata[, input$batch]
-  columns <- rownames(metadata)
-  meta <- data.frame(cbind(columns, batch))
-  
+  treatment <- metadata[, input$treatment]
+  columns <- colnames(idata)
+  meta <- data.frame(cbind(columns, treatment, batch))
   datacor <- data.frame(idata[, columns])
   datacor[, columns] <- apply(datacor[, columns], 2,
                               function(x) as.integer(x))
@@ -151,7 +163,7 @@ correctCombat <- function (input = NULL, idata = NULL, metadata = NULL) {
   
   a[, columns] <- apply(a[, columns], 2, function(x) ifelse(x<0, 0, x))
   colnames(a[, 1]) <- colnames(idata[, 1])
-  a
+  a[,columns]
 }
 
 #' Correct Batch Effect using Harman

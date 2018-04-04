@@ -59,7 +59,6 @@ debrowserlowcountfilter <- function(input, output, session, ldata) {
   #    list(actionButton("showfiltered", "Show Filtered Data", styleclass = "primary", icon="show"),
   #    getBSTableModal(  session$ns("filteredtable"), "Show Data", "showfiltered"))
   #})
-  
 
   observe({
     getSampleDetails(output, "uploadSummary", "sampleDetails", ldata)
