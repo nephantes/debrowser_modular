@@ -72,37 +72,37 @@ batchEffectUI<- function (id) {
   list(
     fluidRow(
       shinydashboard::box(title = "Batch Effect Correction",
-                          solidHeader = T, status = "info",  width = 12, 
-                          fluidRow(
-                            column(5,div(style = 'overflow: scroll',
-                                         tableOutput(ns("uploadSummary")),
-                                         DT::dataTableOutput(ns("sampleDetails"))),
-                                   uiOutput(ns("loadedtableModal"))
-                            ),
-                            column(2,
-                               shinydashboard::box(title = "Correction Methods",
-                                   solidHeader = T, status = "info",
-                                   width = 12, 
-                                   batchMethodRadio(id),
-                                   uiOutput(ns("batchfields")),
-                                   actionButton(ns("submitBatchEffect"), label = "Submit", styleclass = "primary")
-                             )
-                            ),
-                            column(5,div(style = 'overflow: scroll', 
-                                         
-                                         tableOutput(ns("filteredSummary")),
-                                         DT::dataTableOutput(ns("filteredDetails"))),
-                                   uiOutput(ns("filteredtableModal"))
-                                   
-                            )
-                          ),
-                          fluidRow(
-                              column(5,
-                                     getIQRPlotUI(ns("beforeCorrection"))),
-                              column(2, div()),
-                              column(5,
-                                     getIQRPlotUI(ns("afterCorrection")))
-                          )
+        solidHeader = T, status = "info",  width = 12, 
+        fluidRow(
+          column(5,div(style = 'overflow: scroll',
+                       tableOutput(ns("uploadSummary")),
+                       DT::dataTableOutput(ns("sampleDetails"))),
+                 uiOutput(ns("loadedtableModal"))
+          ),
+          column(2,
+             shinydashboard::box(title = "Correction Methods",
+                 solidHeader = T, status = "info",
+                 width = 12, 
+                 batchMethodRadio(id),
+                 uiOutput(ns("batchfields")),
+                 actionButton(ns("submitBatchEffect"), label = "Submit", styleclass = "primary")
+           )
+          ),
+          column(5,div(style = 'overflow: scroll', 
+                       
+                       tableOutput(ns("filteredSummary")),
+                       DT::dataTableOutput(ns("filteredDetails"))),
+                 uiOutput(ns("filteredtableModal"))
+                 
+          )
+        ),
+        fluidRow(
+            column(5,
+                   getIQRPlotUI(ns("beforeCorrection"))),
+            column(2, div()),
+            column(5,
+                   getIQRPlotUI(ns("afterCorrection")))
+        )
       )
     ))
 }
