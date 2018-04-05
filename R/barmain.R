@@ -1,24 +1,7 @@
-#' getBarMainPlotUI
+#' debrowserbarmainplot
 #'
-#' main bar plots UI.  
-#'
-#' @note \code{getBarMainPlotUI}
-#' @return the panel for Density plots;
-#'
-#' @examples
-#'     x <- getBarMainPlotUI()
-#'
-#' @export
-#'
-getBarMainPlotUI <- function(id) {
-  ns <- NS(id)
-  uiOutput(ns("BarMainUI"))
-}
-
-#' debrowserdensityplot
-#'
-#' Module for a density plot that can be used in data prep and 
-#' low count removal modules
+#' Module for a bar plot that can be used in data prep, main plots 
+#' low count removal modules or any desired module
 #' 
 #' @param input, input variables
 #' @param output, output objects
@@ -28,7 +11,7 @@ getBarMainPlotUI <- function(id) {
 #' @export
 #'
 #' @examples
-#'     x <- debrowserdensityplot(data = data)
+#'     x <- debrowserbarmainplot(data = data)
 #'
 debrowserbarmainplot <- function(input, output, session, data = NULL,
                                  conds=NULL, cols = NULL, key=NULL) {
@@ -43,6 +26,24 @@ debrowserbarmainplot <- function(input, output, session, data = NULL,
              width = input$width, height=input$height))
     })
 }
+
+#' getBarMainPlotUI
+#'
+#' main bar plots UI.  
+#'
+#' @note \code{getBarMainPlotUI}
+#' @return the panel for Density plots;
+#'
+#' @examples
+#'     x <- getBarMainPlotUI()
+#'
+#' @export
+#'
+getBarMainPlotUI <- function(id) {
+    ns <- NS(id)
+    uiOutput(ns("BarMainUI"))
+}
+
 
 #' barMainPlotControlsUI
 #'
