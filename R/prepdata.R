@@ -1,26 +1,3 @@
-#' getSamples
-#'
-#' Gathers the sample names to be used within DEBrowser.
-#'
-#' @param cnames, names of the  samples
-#' @param index, starting column in a tab separated file
-#' @return choices
-#' @export
-#'
-#' @examples
-#'     x <- getSamples()
-#'
-getSamples <- function (cnames = NULL, index = 1) { 
-    m <- NULL
-    if (!is.null(cnames)) {
-        cn <- cnames[index:length(cnames)]
-        m <- as.list(NULL)
-        for (i in seq(cn)) {
-            m[i] <- cn[i]
-        }
-    }
-    m
-}
 
 #' prepDataContainer
 #'

@@ -1,5 +1,5 @@
 library(shiny)
-library(heatmaply)
+library(plotly)
 library(shinyjs)
 source("../R/plotSize.R")
 source("../R/funcs.R")

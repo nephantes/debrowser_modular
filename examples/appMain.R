@@ -12,8 +12,6 @@ sidebar <- dashboardSidebar(  sidebarMenu(id="DEAnalysis",
 
 body <- dashboardBody(
     tabItems(
-        #########################################
-        ## Introduction tab panel
         tabItem(tabName="Main", getMainPlotUI("main"),
                 column(4,
                        verbatimTextOutput("main_hover"),
