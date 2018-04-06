@@ -14,8 +14,6 @@ sidebar <- dashboardSidebar(  getJSLine(), sidebarMenu(id="DataAssessment",
 
 body <- dashboardBody(
     tabItems(
-        #########################################
-        ## Introduction tab panel
         tabItem(tabName="Heatmap",  getHeatmapUI("heatmap"),
                 column(4,
                        verbatimTextOutput("heatmap_hover"),

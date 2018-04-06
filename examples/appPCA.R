@@ -16,8 +16,6 @@ sidebar <- dashboardSidebar(  sidebarMenu(id="DataAssessment",
 
 body <- dashboardBody(
     tabItems(
-        #########################################
-        ## Introduction tab panel
         tabItem(tabName="PCA", getPCAPlotUI("pca"),
                 column(4,
                        verbatimTextOutput("pca_hover"),

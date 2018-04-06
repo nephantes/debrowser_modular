@@ -16,8 +16,6 @@ sidebar <- dashboardSidebar(  sidebarMenu(id="DataPrep",
 
 body <- dashboardBody(
     tabItems(
-        #########################################
-        ## Introduction tab panel
         tabItem(tabName="BatchEffect", batchEffectUI("batcheffect"),
                 column(4,
                        verbatimTextOutput("batcheffecttable")

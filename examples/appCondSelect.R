@@ -12,8 +12,6 @@ sidebar <- dashboardSidebar(  sidebarMenu(id="DataPrep",
 
 body <- dashboardBody(
   tabItems(
-    #########################################
-    ## Introduction tab panel
     tabItem(tabName="CondSelect", 
     condSelectUI())
 ))

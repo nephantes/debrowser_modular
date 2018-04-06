@@ -69,7 +69,7 @@ runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL,
     fitType = c("parametric", "local", "mean"),
     betaPrior = 0,
     testType = c("Wald", "LRT"),
-    rowsum.filter = 10) {
+    rowsum.filter = NULL) {
     if (is.null(data)) return (NULL)
     data <- data[, columns]
 
@@ -82,7 +82,9 @@ runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL,
     coldata <- cbind(coldata, conds)
     colnames(coldata) <- c("libname", "group")
     # Filtering non expressed genes
-    filtd <- subset(data, rowSums(data) > rowsum.filter)
+    filtd <- data
+    if (!is.null(rowsum.filter))
+        filtd <- subset(data, rowSums(data) > rowsum.filter)
 
     # DESeq data structure is going to be prepared
     dds <- DESeqDataSetFromMatrix(countData = as.matrix(filtd),
@@ -134,15 +136,16 @@ runEdgeR<- function(data = NULL, columns = NULL, conds = NULL,
     normfact = c("TMM","RLE","upperquartile","none"),
     dispersion = 0,
     testType = c("glmLRT", "exactTest"),
-    rowsum.filter = 10) {
+    rowsum.filter = NULL) {
     if (is.null(data)) return (NULL)
     data <- data[, columns]
     data[, columns] <- apply(data[, columns], 2,
-                             function(x) as.integer(x))
+        function(x) as.integer(x))
     dispersion <- as.numeric(dispersion)
     conds <- factor(conds)
-    
-    filtd <- subset(data, rowSums(data) > rowsum.filter)
+    filtd <- data
+    if (!is.null(rowsum.filter))
+        filtd <- subset(data, rowSums(data) > rowsum.filter)
     
     d<- edgeR::DGEList(counts = filtd, group=conds)
     d <- edgeR::calcNormFactors(d, method = normfact)
@@ -209,7 +212,7 @@ runLimma<- function(data = NULL, columns = NULL, conds = NULL,
     fitType = c("ls", "robust"),
     normBet = c("none", "scale", "quantile", "cyclicloess",
         "Aquantile", "Gquantile", "Rquantile","Tquantile"),
-    rowsum.filter = 10) {
+    rowsum.filter = NULL) {
     if (is.null(data)) return (NULL)
     data <- data[, columns]
     data[, columns] <- apply(data[, columns], 2,
@@ -218,8 +221,10 @@ runLimma<- function(data = NULL, columns = NULL, conds = NULL,
     
     cnum = summary(conds)[levels(conds)[1]]
     tnum = summary(conds)[levels(conds)[2]]
+    filtd <- data
+    if (!is.null(rowsum.filter))
+         filtd <- as.matrix(subset(data, rowSums(data) > rowsum.filter))
     
-    filtd <- as.matrix(subset(data, rowSums(data) > rowsum.filter))
     des <- factor(c(rep(levels(conds)[1], cnum),rep(levels(conds)[2], tnum)))
     names(filtd) <- des
     design <- cbind(Grp1=1,Grp2vs1=des)
@@ -263,7 +268,7 @@ runLimma<- function(data = NULL, columns = NULL, conds = NULL,
 #'     x <- runBayseq()
 #'
 runBayseq<- function(data = NULL, columns = NULL, conds=NULL,
-                     rowsum.filter = 10) {
+                     rowsum.filter = NULL) {
     if ( is.null(data) ) return(NULL)
     data <- data[, columns]
     data[, columns] <- apply(data[, columns], 2,
@@ -273,7 +278,9 @@ runBayseq<- function(data = NULL, columns = NULL, conds=NULL,
     cnum = summary(conds)[levels(conds)[1]]
     tnum = summary(conds)[levels(conds)[2]]
     cname <- rownames(filtd)
-    filtd <- as.matrix(subset(data, rowSums(data) > rowsum.filter))
+    filtd <- data
+    if (!is.null(rowsum.filter))
+        filtd <- as.matrix(subset(data, rowSums(data) > rowsum.filter))
     des <- c(rep(1, cnum),rep(2, tnum))
 
     CD <- new("countData", data = filtd,
