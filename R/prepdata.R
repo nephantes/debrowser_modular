@@ -72,32 +72,7 @@ prepDataContainer <- function(data = NULL, counter=NULL,
     return(dclist)
 }
 
-#' getMean
-#'
-#' Gathers the mean for selected condition.
-#'
-#' @param norm_data, loaded dataset
-#' @param de_res, de results
-#' @param inputconds, input parameters
-#' @param colnum, colnum
-#' @return data
-#' @export
-#'
-#' @examples
-#'     x <- getMean()
-#'
-getMean<-function(norm_data = NULL, de_res = NULL, 
-    inputconds = NULL, colnum = NULL) {
-    if (is.null(norm_data)) return (NULL)
-    mean_cond<-NULL
-    if (length(inputconds$conds[[colnum]]) > 1)
-        mean_cond <-list(rowMeans( norm_data[ rownames( de_res ),
-            paste( inputconds$conds[[colnum]] )] ))
-    else
-        mean_cond <-list(norm_data[ rownames( de_res ),
-            paste( inputconds$conds[[colnum]] )])
-    mean_cond
-}
+
 
 #' setFilterParams
 #'
@@ -164,47 +139,7 @@ prepDEOutput <- function(data = NULL, cols = NULL,
     de_res <- data.frame(de_res)
 }
 
-#' addDataCols
-#'
-#' add aditional data columns to de results
-#'
-#' @param data, loaded dataset
-#' @param de_res, de results
-#' @param cols, columns
-#' @param inputconds, inputconds
-#' @param i, selected comparison number
-#' @param input, input
-#' @return data
-#' @export
-#'
-#' @examples
-#'     x <- addDataCols()
-#'
-addDataCols <- function(data = NULL, de_res = NULL, cols = NULL, 
-    inputconds=NULL, i=NULL, input = NULL) {
-    if (is.null(data) || is.null(de_res)) return (NULL)
-    norm_data <- getNormalizedMatrix(data[, cols], input$norm_method)
-    mean_cond <- c()
-    mean_cond_first <- getMean(norm_data, de_res,
-        inputconds, 2*i-1)
-    mean_cond_second <- getMean(norm_data, de_res, 
-        inputconds, 2*i)
-    m <- cbind(rownames(de_res), norm_data[rownames(de_res), cols],
-       log10(unlist(mean_cond_second) + 0.1),
-       log10(unlist(mean_cond_first) + 0.1),
-       de_res[rownames(de_res),
-           c("padj", "log2FoldChange", "pvalue")], 
-       2 ^ de_res[rownames(de_res),
-          "log2FoldChange"],
-       -1 * log10(de_res[rownames(de_res), "padj"]))
-    colnames(m) <- c("ID", cols, "x", "y",
-                     "padj", "log2FoldChange", "pvalue",
-                     "foldChange", "log10padj")
-    m <- as.data.frame(m)
-    m$padj[is.na(m[paste0("padj")])] <- 1
-    m$pvalue[is.na(m[paste0("pvalue")])] <- 1
-    m
-}
+
 
 #' applyFilters
 #'

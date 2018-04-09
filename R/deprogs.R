@@ -1,4 +1,3 @@
-
 #' debrowserdeanalysis
 #'
 #' Module to perform and visualize DE results.
@@ -13,9 +12,16 @@
 #' @examples
 #'     x <- debrowserdeanalysis(data = data)
 #'
-debrowserdeanalysis <- function(input, output, session, data = NULL) {
+debrowserdeanalysis <- function(input, output, session, data = NULL, columns = NULL, conds = NULL, params = NULL) {
+    deres <- reactive({
+        runDE(data, columns, conds, params)
+    })
+    
+    prepDat <- reactive({
+        addDataCols(data, deres(), columns, conds)
+    })
     observe({
-        getTableDetails(output, session, "data", data, modal=FALSE)
+        getTableDetails(output, session, "DEResults", prepDat(), modal=FALSE)
     })
 }
 #' getDEResultsUI
@@ -30,17 +36,17 @@ debrowserdeanalysis <- function(input, output, session, data = NULL) {
 #'
 getDEResultsUI<- function (id) {
     ns <- NS(id)
-  #  list(
-  #      fluidRow(
-  #          shinydashboard::box(title = "Batch Effect Correction",
-  #          solidHeader = T, status = "info",  width = 12, 
-  #          fluidRow(
-  #              column(12,
-                uiOutput(ns("data"))
-  #              ))
-  #          )
-  #      )
-  #      )
+    list(
+        fluidRow(
+            shinydashboard::box(title = "DE Results",
+            solidHeader = T, status = "info",  width = 12, 
+            fluidRow(
+                column(12,
+                uiOutput(ns("DEResults"))
+                ))
+            )
+        )
+        )
 }
 
 #' runDE
@@ -65,14 +71,14 @@ getDEResultsUI<- function (id) {
 runDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL) {
     if (is.null(data)) return(NULL)
     de_res <- NULL
-    pars <- unlist(strsplit(pars, ","))
+
     if (params[1] == "DESeq2")     
         de_res <- runDESeq2(data, columns, conds, params)
     else if (params[1]  == "EdgeR")     
         de_res <- runEdgeR(data, columns, conds, params)
     else if (params[1] == "Limma")
         de_res <- runLimma(data, columns, conds, params)
-    de_res
+    data.frame(de_res)
 }
 
 #' runDESeq2
@@ -111,23 +117,20 @@ runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL, params) {
     fitType <- if (!is.null(params[2])) params[2]
     betaPrior <-  if (!is.null(params[3])) params[3]
     testType <- if (!is.null(params[4])) params[4]
-    rowsum.filter <-  if (!is.null(params[5])) params[5]
+    rowsum.filter <-  if (!is.null(params[5])) as.integer(params[5])
+
     if (is.null(data)) return (NULL)
     data <- data[, columns]
 
     data[, columns] <- apply(data[, columns], 2,
         function(x) as.integer(x))
 
-    conds <- factor(conds)
-
-    coldata <- data.frame(colnames(data))
-    coldata <- cbind(coldata, conds)
-    colnames(coldata) <- c("libname", "group")
+    coldata <- prepGroup(conds, cols)
     # Filtering non expressed genes
     filtd <- data
-    if (!is.null(rowsum.filter))
+    if (is.numeric(rowsum.filter) && !is.na(rowsum.filter))
         filtd <- subset(data, rowSums(data) > rowsum.filter)
-
+    
     # DESeq data structure is going to be prepared
     dds <- DESeqDataSetFromMatrix(countData = as.matrix(filtd),
         colData = coldata, design = ~group)
@@ -288,62 +291,83 @@ runLimma<- function(data = NULL, columns = NULL, conds = NULL){
     return(res)
 }
 
-#' runBayseq
+#' prepGroup
 #'
-#' Run Bayseq algorithm on the selected conditions.  Output is
-#' to be used for the interactive display.
+#' prepare group table
 #'
-#' @param data, A matrix that includes all the expression raw counts,
-#'     rownames has to be the gene, isoform or region names/IDs
-#' @param columns, is a vector that includes the columns that are going
-#'     to be analyzed. These columns has to match with the given data.
-#' @param conds, experimental conditions. The order has to match
-#'     with the column order
-#' @param rowsum.filter, regions/genes/isoforms with total count 
-#'     (across all samples) below this value will be filtered out
-#' @return BaySeq results
-#'
+#' @param cols, columns
+#' @param conds, inputconds
+#' @return data
 #' @export
 #'
 #' @examples
-#'     x <- runBayseq()
+#'     x <- prepGroup()
 #'
-runBayseq<- function(data = NULL, columns = NULL, conds=NULL,
-                     rowsum.filter = NULL) {
-    if ( is.null(data) ) return(NULL)
-    data <- data[, columns]
-    data[, columns] <- apply(data[, columns], 2,
-                             function(x) as.integer(x))
-    conds <- factor(conds)
-    
-    cnum = summary(conds)[levels(conds)[1]]
-    tnum = summary(conds)[levels(conds)[2]]
-    cname <- rownames(filtd)
-    filtd <- data
-    if (!is.null(rowsum.filter))
-        filtd <- as.matrix(subset(data, rowSums(data) > rowsum.filter))
-    des <- c(rep(1, cnum),rep(2, tnum))
-
-    CD <- new("countData", data = filtd,
-               replicates = conds,
-               groups = list(NDE = c(rep(1, cnum+tnum)),
-               DE = des))
-    CD@annotation <- as.data.frame(cname)
-    cl <- NULL
-    libsizes(CD) <- getLibsizes(CD)
-    densityFunction(CD) <- nbinomDensity
-    CD <- getPriors(CD, cl = cl)
-    CD <- getLikelihoods(CD, cl = cl)
-    CDP.NBML <- getPriors.NB(CD, samplesize = 1000, estimation = "QL", cl = cl)
-    CDPost.NBML <- getLikelihoods.NB(CDP.NBML, pET = 'BIC', cl = cl)
-    CDPost.NBML@estProps
-    
-    options(digits=4)
-    tab <- topTable(fit,coef=2,number=dim(fit)[1],genelist=fit$genes$NAME)
-    res <-data.frame(cbind(tab$logFC/log(2), tab$P.Value, tab$adj.P.Val))
-    
-    colnames(res) <- c("log2FoldChange", "pvalue", "padj")
-    rownames(res) <- rownames(tab)
-    return(res)
+prepGroup <- function(conds = NULL, cols = NULL) {
+    coldata <- data.frame(cbind(cols, conds))
+    coldata$conds <- factor(coldata$conds)
+    colnames(coldata) <- c("libname", "group")
+    coldata
 }
 
+#' addDataCols
+#'
+#' add aditional data columns to de results
+#'
+#' @param data, loaded dataset
+#' @param de_res, de results
+#' @param cols, columns
+#' @param conds, inputconds
+#' @return data
+#' @export
+#'
+#' @examples
+#'     x <- addDataCols()
+#'
+addDataCols <- function(data = NULL, de_res = NULL, cols = NULL, conds = NULL) {
+    if (is.null(data) || is.null(de_res)) return (NULL)
+    norm_data <- getNormalizedMatrix(data[, cols])
+    
+    coldata <- prepGroup(conds, cols)
+    
+    mean_cond_first <- getMean(norm_data, as.vector(coldata[coldata$group==levels(coldata$group)[1], "libname"]))
+    mean_cond_second <- getMean(norm_data, as.vector(coldata[coldata$group==levels(coldata$group)[2], "libname"]))
+    
+    m <- cbind(rownames(de_res), norm_data[rownames(de_res), cols],
+               log10(unlist(mean_cond_second) + 0.1),
+               log10(unlist(mean_cond_first) + 0.1),
+               de_res[rownames(de_res),
+                      c("padj", "log2FoldChange", "pvalue")], 
+               2 ^ de_res[rownames(de_res),
+                          "log2FoldChange"],
+               -1 * log10(de_res[rownames(de_res), "padj"]))
+    colnames(m) <- c("ID", cols, "x", "y",
+                     "padj", "log2FoldChange", "pvalue",
+                     "foldChange", "log10padj")
+    m <- as.data.frame(m)
+    m$padj[is.na(m[paste0("padj")])] <- 1
+    m$pvalue[is.na(m[paste0("pvalue")])] <- 1
+    m
+}
+
+#' getMean
+#'
+#' Gathers the mean for selected condition.
+#'
+#' @param data, dataset
+#' @param selcols, input cols
+#' @return data
+#' @export
+#'
+#' @examples
+#'     x <- getMean()
+#'
+getMean<-function(data = NULL, selcols=NULL) {
+    if (is.null(data)) return (NULL)
+    mean_cond<-NULL
+    if (length(selcols) > 1)
+        mean_cond <-list(rowMeans( data[, selcols]))
+    else
+        mean_cond <-list(norm_data[selcols])
+    mean_cond
+}

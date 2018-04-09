@@ -136,7 +136,12 @@ getBSTableUI<-function(name,  label, trigger, size="large", modal = NULL){
 #' getTableDetails
 #' 
 #' get table details
-#'
+#' To be able to put a table into two lines are necessary;
+#' into the server part;
+#' getTableDetails(output, session, "dataname", data, modal=TRUE)
+#' into the ui part;
+#' uiOutput(ns("dataname"))
+#'   
 #' @param output, output
 #' @param session, session
 #' @param tablename, table name
@@ -254,4 +259,36 @@ actionButton <- function(inputId, label, styleclass = "", size = "",
                                                              btn.css.class, btn.size.class, btn.block, css.class, collapse = " "),
                 icon.code, label, ...)
 }
+
+
+#' getNormalizedMatrix
+#'
+#' Normalizes the matrix passed to be used within various methods
+#' within DEBrowser.  Requires edgeR package
+#'
+#' @note \code{getNormalizedMatrix}
+#' @param M, numeric matrix
+#' @param method, normalization method for edgeR. default is TMM
+#' @return normalized matrix
+#'
+#' @examples
+#'     x <- getNormalizedMatrix(mtcars)
+#'
+#' @export
+#'
+getNormalizedMatrix <- function(M = NULL, method = "TMM") {
+    if (is.null(M) ) return (NULL)
+    
+    M[is.na(M)] <- 0
+    norm <- M
+    if (method != "none"){
+        M <- M[rowSums(M)>0, ]
+        if (is.null(M) ) return (NULL)
+        norm.factors <- edgeR::calcNormFactors(M, method = method)
+        norm <- edgeR::equalizeLibSizes(edgeR::DGEList(M,
+                                                       norm.factors = norm.factors))$pseudo.counts
+    }
+    return(norm)
+}
+
 
