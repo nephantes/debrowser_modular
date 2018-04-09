@@ -18,8 +18,6 @@ sidebar <- dashboardSidebar(  sidebarMenu(id="DataAssessment",
 
 body <- dashboardBody(
   tabItems(
-    #########################################
-    ## Introduction tab panel
     tabItem(tabName="IQR", 
     fluidRow(
         column(5,
