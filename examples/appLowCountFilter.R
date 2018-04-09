@@ -26,7 +26,6 @@ ui <- dashboardPage(header, sidebar, body, skin = "blue")
 server <- function(input, output, session) {
     load(system.file("extdata", "demo", "demodata.Rda",
                      package = "debrowser"))
-    
     ldata <- reactiveValues(count=NULL, meta=NULL)
     ldata$count <- demodata
     ldata$meta <- metadatatable

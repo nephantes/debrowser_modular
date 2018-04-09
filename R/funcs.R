@@ -116,7 +116,6 @@ getVariationData <- function(inputdata = NULL,
     data
 }
 
-
 #' getBSTableModal
 #' prepares a Modal to put a table
 #'
@@ -126,10 +125,12 @@ getVariationData <- function(inputdata = NULL,
 #'     x<- getBSTableModal()
 #'
 #' @export
-getBSTableModal<-function(name,  label, trigger, size="large"){
-    shinyBS::bsModal(name, label, trigger, size = size,
-        div(style = "display:block;overflow-y:auto; overflow-x:auto;",
-        wellPanel( DT::dataTableOutput(name))))
+getBSTableUI<-function(name,  label, trigger, size="large", modal = NULL){
+    ret <- div(style = "display:block;overflow-y:auto; overflow-x:auto;",
+               wellPanel( DT::dataTableOutput(name)))
+    if (!is.null(modal) && modal)
+        ret <- shinyBS::bsModal(name, label, trigger, size = size, ret)
+    ret
 }
 
 #' getTableDetails
@@ -137,23 +138,27 @@ getBSTableModal<-function(name,  label, trigger, size="large"){
 #' get table details
 #'
 #' @param output, output
+#' @param session, session
 #' @param tablename, table name
-#' @param data, data 
+#' @param data, matrix data
+#' @param modal, if it is true, the matrix is going to be in a modal
 #' @return panel
 #' @examples
 #'     x <- getTableDetails()
 #'
 #' @export
 #'
-getTableDetails <- function(output, tablename, modelname, data = NULL, downbut = NULL){
+getTableDetails <- function(output, session, tablename, data = NULL, modal = NULL){
     if (is.null(data)) return(NULL)
-    output[[paste0(tablename,"Modal")]] <- renderUI({
-        ret <- list(actionButton(paste0("show",tablename), "Show Data", styleclass = "primary", icon="show"),
-             getBSTableModal( modelname, "Show Data", paste0("show",tablename)))
+    tablenameUI <-  paste0(tablename,"Table")
+    output[[tablename]] <- renderUI({
+        ret <- getBSTableUI( session$ns(tablenameUI), "Show Data", paste0("show",tablename), modal = modal) 
+        if (!is.null(modal) && modal)
+           ret <- list(actionButton(paste0("show",tablename), "Show Data", styleclass = "primary", icon="show"), ret)
+        ret    
     })
     
-    
-    output[[tablename]] <- DT::renderDataTable({
+    output[[tablenameUI]] <- DT::renderDataTable({
         if (!is.null(data)){
             DT::datatable(data, , extensions = 'Buttons'
                           , options = list( server = TRUE,

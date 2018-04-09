@@ -42,7 +42,7 @@ debrowserlowcountfilter <- function(input, output, session, ldata) {
     }
     else if (input$lcfmethod == "CPM"){
       ret <- list(textInput(session$ns("CPMCutoff"), "Filter features where CPM <", value = "1" ),
-                  textInput(session$ns("numSample"), "at least # of samples", value = toString(ncol(ldata$count)-1) ))
+         textInput(session$ns("numSample"), "at least # of samples", value = toString(ncol(ldata$count)-1) ))
     }
     ret
   })
@@ -54,18 +54,13 @@ debrowserlowcountfilter <- function(input, output, session, ldata) {
     }
     return(ret)
   })
-  
-  #output$filteredTableModal <- renderUI({
-  #    list(actionButton("showfiltered", "Show Filtered Data", styleclass = "primary", icon="show"),
-  #    getBSTableModal(  session$ns("filteredtable"), "Show Data", "showfiltered"))
-  #})
-
+ 
   observe({
     getSampleDetails(output, "uploadSummary", "sampleDetails", ldata)
     getSampleDetails(output, "filteredSummary", "filteredDetails", filtereddata())
-    getTableDetails(output, "loadedtable", session$ns("loadedtable"), ldata$count)
+    getTableDetails(output, session, "loadedtable",  data = ldata$count,  modal = TRUE)
     if ( !is.null(filtereddata()$count ) && nrow(filtereddata()$count)>2 )
-        getTableDetails(output, "filteredtable",  session$ns("filteredtable"), data = filtereddata()$count)
+        getTableDetails(output, session, "filteredtable",  data = filtereddata()$count, modal = TRUE)
   })
   
   list(filter=filtereddata)
@@ -91,7 +86,7 @@ dataLCFUI<- function (id) {
                             column(5,div(style = 'overflow: scroll',
                                 tableOutput(ns("uploadSummary")),
                                 DT::dataTableOutput(ns("sampleDetails"))),
-                                uiOutput(ns("loadedtableModal"))
+                                uiOutput(ns("loadedtable"))
                             ),
                             column(2,
                                    shinydashboard::box(title = "Filtering Methods",
@@ -106,7 +101,7 @@ dataLCFUI<- function (id) {
                                          
                                  tableOutput(ns("filteredSummary")),
                                  DT::dataTableOutput(ns("filteredDetails"))),
-                                 uiOutput(ns("filteredtableModal"))
+                                 uiOutput(ns("filteredtable"))
 
                             )
                           )

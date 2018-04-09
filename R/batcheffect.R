@@ -19,12 +19,14 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
   
   observeEvent(input$submitBatchEffect, {
     if (is.null(ldata$count)) return (NULL)
+    withProgress(message = 'Batch Effect Correction', detail = "Adjusting the Data", value = NULL, {
     if (input$batchmethod == "Combat"){
        batchdata$count <- correctCombat(input, ldata$count, ldata$meta)
     }
     else{
        batchdata$count <- correctHarman(input, ldata$count, ldata$meta)
     }
+    })
     batchdata$meta <- ldata$meta
   })
   
@@ -45,11 +47,13 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
   observe({
     getSampleDetails(output, "uploadSummary", "sampleDetails", ldata)
     getSampleDetails(output, "filteredSummary", "filteredDetails", batcheffectdata())
-    getTableDetails(output, "loadedtable", session$ns("loadedtable"), ldata$count)
+    getTableDetails(output, session, "loadedtable", ldata$count, modal=TRUE)
     callModule(debrowserIQRplot, "beforeCorrection",  ldata$count)
     if ( !is.null(batcheffectdata()$count ) && nrow(batcheffectdata()$count)>2 ){
-       getTableDetails(output, "batcheffecttable",  session$ns("filteredtable"), data = batcheffectdata()$count)
+      withProgress(message = 'Drawing the plot', detail = "Preparing!", value = NULL, {
+       getTableDetails(output, session, "batcheffecttable", batcheffectdata()$count, modal=TRUE)
        callModule(debrowserIQRplot, "afterCorrection",  batcheffectdata()$count)
+      })
     }
   })
   
@@ -77,7 +81,7 @@ batchEffectUI<- function (id) {
           column(5,div(style = 'overflow: scroll',
                        tableOutput(ns("uploadSummary")),
                        DT::dataTableOutput(ns("sampleDetails"))),
-                 uiOutput(ns("loadedtableModal"))
+                 uiOutput(ns("loadedtable"))
           ),
           column(2,
              shinydashboard::box(title = "Correction Methods",
@@ -92,7 +96,7 @@ batchEffectUI<- function (id) {
                        
                        tableOutput(ns("filteredSummary")),
                        DT::dataTableOutput(ns("filteredDetails"))),
-                 uiOutput(ns("filteredtableModal"))
+                 uiOutput(ns("filteredtable"))
                  
           )
         ),
