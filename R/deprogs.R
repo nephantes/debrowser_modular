@@ -1,3 +1,48 @@
+
+#' debrowserdeanalysis
+#'
+#' Module to perform and visualize DE results.
+#' 
+#' @param input, input variables
+#' @param output, output objects
+#' @param session, session 
+#' @param data, a matrix that includes expression values
+#' @return DE panel 
+#' @export
+#'
+#' @examples
+#'     x <- debrowserdeanalysis(data = data)
+#'
+debrowserdeanalysis <- function(input, output, session, data = NULL) {
+    observe({
+        getTableDetails(output, session, "data", data, modal=FALSE)
+    })
+}
+#' getDEResultsUI
+#' Creates a panel to visualize DE results
+#'
+#' @param id, namespace id
+#' @return panel
+#' @examples
+#'     x <- getDEResultsUI("batcheffect")
+#'
+#' @export
+#'
+getDEResultsUI<- function (id) {
+    ns <- NS(id)
+  #  list(
+  #      fluidRow(
+  #          shinydashboard::box(title = "Batch Effect Correction",
+  #          solidHeader = T, status = "info",  width = 12, 
+  #          fluidRow(
+  #              column(12,
+                uiOutput(ns("data"))
+  #              ))
+  #          )
+  #      )
+  #      )
+}
+
 #' runDE
 #'
 #' Run DE algorithms on the selected parameters.  Output is
@@ -9,7 +54,7 @@
 #'     to be analyzed. These columns has to match with the given data.
 #' @param conds, experimental conditions. The order has to match
 #'     with the column order
-#' @param pars, all params for the de methods
+#' @param params, all params for the DE methods
 #' @return de results
 #'
 #' @export
@@ -17,19 +62,16 @@
 #' @examples
 #'     x <- runDE()
 #'
-runDE <- function(data = NULL, columns = NULL, conds = NULL, pars = NULL) {
+runDE <- function(data = NULL, columns = NULL, conds = NULL, params = NULL) {
     if (is.null(data)) return(NULL)
     de_res <- NULL
     pars <- unlist(strsplit(pars, ","))
-    if (pars[1] == "DESeq2")     
-        de_res <- runDESeq2(data, columns, conds, pars[2], pars[3], pars[4], 
-            as.numeric(as.integer(pars[5])))
-    else if (pars[1]  == "EdgeR")     
-        de_res <- runEdgeR(data, columns, conds, pars[2], pars[3], pars[4], 
-            as.numeric(as.integer(pars[5])))
-    else if (pars[1] == "Limma")
-        de_res <- runLimma(data, columns, conds, pars[2], pars[3], pars[4],
-            as.numeric(as.integer(pars[5])))
+    if (params[1] == "DESeq2")     
+        de_res <- runDESeq2(data, columns, conds, params)
+    else if (params[1]  == "EdgeR")     
+        de_res <- runEdgeR(data, columns, conds, params)
+    else if (params[1] == "Limma")
+        de_res <- runLimma(data, columns, conds, params)
     de_res
 }
 
@@ -44,19 +86,19 @@ runDE <- function(data = NULL, columns = NULL, conds = NULL, pars = NULL) {
 #'     to be analyzed. These columns has to match with the given data.
 #' @param conds, experimental conditions. The order has to match
 #'     with the column order
-#' @param fitType, either "parametric", "local", or "mean" for the type 
+#' @param params, fitType: either "parametric", "local", or "mean" for the type 
 #'     of fitting of dispersions to the mean intensity. 
 #'     See estimateDispersions for description.
-#' @param betaPrior, whether or not to put a zero-mean normal prior
+#'  betaPrior: whether or not to put a zero-mean normal prior
 #'     on the non-intercept coefficients See nbinomWaldTest for 
 #'     description of the calculation of the beta prior. By default, 
 #'     the beta prior is used only for the Wald test, but can also be 
 #'     specified for the likelihood ratio test.
-#' @param testType, either "Wald" or "LRT", which will then use either 
+#' testType: either "Wald" or "LRT", which will then use either 
 #'     Wald significance tests (defined by nbinomWaldTest), or the 
 #'     likelihood ratio test on the difference in deviance between a 
 #'     full and reduced model formula (defined by nbinomLRT)
-#' @param rowsum.filter, regions/genes/isoforms with total count 
+#' rowsum.filter: regions/genes/isoforms with total count 
 #'      (across all samples) below this value will be filtered out
 #' @return deseq2 results
 #'
@@ -65,11 +107,11 @@ runDE <- function(data = NULL, columns = NULL, conds = NULL, pars = NULL) {
 #' @examples
 #'     x <- runDESeq2()
 #'
-runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL,
-    fitType = c("parametric", "local", "mean"),
-    betaPrior = 0,
-    testType = c("Wald", "LRT"),
-    rowsum.filter = NULL) {
+runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL, params) {
+    fitType <- if (!is.null(params[2])) params[2]
+    betaPrior <-  if (!is.null(params[3])) params[3]
+    testType <- if (!is.null(params[4])) params[4]
+    rowsum.filter <-  if (!is.null(params[5])) params[5]
     if (is.null(data)) return (NULL)
     data <- data[, columns]
 
@@ -107,23 +149,23 @@ runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL,
 #'     to be analyzed. These columns has to match with the given data.
 #' @param conds, experimental conditions. The order has to match
 #'     with the column order
-#' @param normfact, Calculate normalization factors to scale the raw 
+#' @param params, normfact: Calculate normalization factors to scale the raw 
 #'     library sizes. Values can be "TMM","RLE","upperquartile","none".
-#' @param dispersion, either a numeric vector of dispersions or a character 
+#' dispersion: either a numeric vector of dispersions or a character 
 #'     string indicating that dispersions should be taken from the data 
 #'     object. If a numeric vector, then can be either of length one or 
 #'     of length equal to the number of genes. Allowable character 
 #'     values are "common", "trended", "tagwise" or "auto". 
 #'     Default behavior ("auto" is to use most complex dispersions 
 #'     found in data object.
-#' @param testType, exactTest or glmLRT. exactTest: Computes p-values for differential 
+#' testType: exactTest or glmLRT. exactTest: Computes p-values for differential 
 #'     abundance for each gene between two digital libraries, conditioning 
 #'     on the total count for each gene. The counts in each group as a 
 #'     proportion of the whole are assumed to follow a binomial distribution. 
 #'     glmLRT: Fit a negative binomial generalized log-linear model to the read 
 #'     counts for each gene. Conduct genewise statistical tests for a given 
 #'     coefficient or coefficient contrast.
-#' @param rowsum.filter, regions/genes/isoforms with total count 
+#' rowsum.filter: regions/genes/isoforms with total count 
 #'      (across all samples) below this value will be filtered out
 #' @return edgeR results
 #'
@@ -132,11 +174,11 @@ runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL,
 #' @examples
 #'     x <- runEdgeR()
 #'
-runEdgeR<- function(data = NULL, columns = NULL, conds = NULL,
-    normfact = c("TMM","RLE","upperquartile","none"),
-    dispersion = 0,
-    testType = c("glmLRT", "exactTest"),
-    rowsum.filter = NULL) {
+runEdgeR<- function(data = NULL, columns = NULL, conds = NULL, params = NULL){
+    normfact <- if (!is.null(params[2])) params[2]
+    dispersion <- if (!is.null(params[3])) params[3]
+    testType <- if (!is.null(params[4])) params[4]
+    rowsum.filter <- if (!is.null(params[5])) params[5]
     if (is.null(data)) return (NULL)
     data <- data[, columns]
     data[, columns] <- apply(data[, columns], 2,
@@ -192,13 +234,13 @@ runEdgeR<- function(data = NULL, columns = NULL, conds = NULL,
 #'     to be analyzed. These columns has to match with the given data.
 #' @param conds, experimental conditions. The order has to match
 #'     with the column order
-#' @param normfact, Calculate normalization factors to scale the raw 
+#' @param params, normfact: Calculate normalization factors to scale the raw 
 #'     library sizes. Values can be "TMM","RLE","upperquartile","none".
-#' @param fitType, fitting method; "ls" for least squares or "robust" 
+#' fitType, fitting method; "ls" for least squares or "robust" 
 #'     for robust regression
-#' @param normBet, Normalizes expression intensities so that the 
+#' normBet: Normalizes expression intensities so that the 
 #'     intensities or log-ratios have similar distributions across a set of arrays.
-#' @param rowsum.filter, regions/genes/isoforms with total count 
+#' rowsum.filter: regions/genes/isoforms with total count 
 #'     (across all samples) below this value will be filtered out
 #' @return Limma results
 #'
@@ -207,18 +249,17 @@ runEdgeR<- function(data = NULL, columns = NULL, conds = NULL,
 #' @examples
 #'     x <- runLimma()
 #'
-runLimma<- function(data = NULL, columns = NULL, conds = NULL,
-    normfact = c("none", "TMM", "RLE", "upperquartile"),
-    fitType = c("ls", "robust"),
-    normBet = c("none", "scale", "quantile", "cyclicloess",
-        "Aquantile", "Gquantile", "Rquantile","Tquantile"),
-    rowsum.filter = NULL) {
+runLimma<- function(data = NULL, columns = NULL, conds = NULL){
+    normfact = if (!is.null(params[2])) params[2]
+    fitType = if (!is.null(params[3])) params[3]
+    normBet = if (!is.null(params[4])) params[4]
+    rowsum.filter <-if (!is.null(params[5])) params[5]
     if (is.null(data)) return (NULL)
     data <- data[, columns]
     data[, columns] <- apply(data[, columns], 2,
         function(x) as.integer(x))
     conds <- factor(conds)
-    
+ 
     cnum = summary(conds)[levels(conds)[1]]
     tnum = summary(conds)[levels(conds)[2]]
     filtd <- data

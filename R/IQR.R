@@ -1,20 +1,3 @@
-#' getIQRPlotUI
-#'
-#' IQR plot UI.  
-#'
-#' @note \code{getIQRPlotUI}
-#' @return the panel for IQR plots;
-#'
-#' @examples
-#'     x <- getIQRPlotUI()
-#'
-#' @export
-#'
-getIQRPlotUI <- function(id) {
-  ns <- NS(id)
-  uiOutput(ns("IQRUI"))
-}
-
 #' debrowserIQRplot
 #'
 #' Module for an IQR plot that can be used in data prep and 
@@ -41,6 +24,23 @@ debrowserIQRplot <- function(input, output, session, data = NULL) {
         draggable = TRUE,  plotlyOutput(session$ns("IQR"),
              width = input$width, height=input$height))
     })
+}
+
+#' getIQRPlotUI
+#'
+#' IQR plot UI.  
+#'
+#' @note \code{getIQRPlotUI}
+#' @return the panel for IQR plots;
+#'
+#' @examples
+#'     x <- getIQRPlotUI()
+#'
+#' @export
+#'
+getIQRPlotUI <- function(id) {
+    ns <- NS(id)
+    uiOutput(ns("IQRUI"))
 }
 
 #' IQRPlotControlsUI
