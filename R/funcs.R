@@ -291,4 +291,34 @@ getNormalizedMatrix <- function(M = NULL, method = "TMM") {
     return(norm)
 }
 
+#' logSliderJScode
+#'
+#' Generates the log based slider to be used by the user within
+#' DEBrowser.
+#'
+#' @param slidername, id of the slider
+#' @note \code{logSliderJScode}
+#' @return returns the slider values in log10 scale
+#' @examples
+#'     x <- logSliderJScode()
+#' @export
+#'
+logSliderJScode <- function(slidername = NULL){
+    if (is.null(slidername)) return (NULL)
+    paste0("$(function() {
+           setTimeout(function(){
+           var vals = [0];
+           var powStart = 4;
+           var powStop = 0;
+           for (i = powStart; i >= powStop; i--) {
+           var val = Math.pow(10, -i)/2;
+           val = parseFloat(val.toFixed(8));
+           vals.push(val);
+           var val = Math.pow(10, -i);
+           val = parseFloat(val.toFixed(8));
+           vals.push(val);
+           }
+           $('#", slidername,"').data('ionRangeSlider').update({'values':vals})
+           }, 4)})")
+}
 

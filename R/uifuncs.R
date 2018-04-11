@@ -209,66 +209,7 @@ getQCLeftMenu <- function( input = NULL) {
     )
 }
 
-#' logSliderJScode
-#'
-#' Generates the log based slider to be used by the user within
-#' DEBrowser.
-#'
-#' @param slidername, id of the slider
-#' @note \code{logSliderJScode}
-#' @return returns the slider values in log10 scale
-#' @examples
-#'     x <- logSliderJScode()
-#' @export
-#'
-logSliderJScode <- function(slidername = NULL){
-    if (is.null(slidername)) return (NULL)
-    paste0("$(function() {
-    setTimeout(function(){
-    var vals = [0];
-    var powStart = 4;
-    var powStop = 0;
-    for (i = powStart; i >= powStop; i--) {
-    var val = Math.pow(10, -i)/2;
-    val = parseFloat(val.toFixed(8));
-    vals.push(val);
-    var val = Math.pow(10, -i);
-    val = parseFloat(val.toFixed(8));
-    vals.push(val);
-    }
-    $('#", slidername,"').data('ionRangeSlider').update({'values':vals})
-    }, 4)})")
-}
 
-#' getCutOffSelection
-#'
-#' Gathers the cut off selection for DE analysis
-#'
-#' @param nc, total number of comparisons
-#' @note \code{getCutOffSelection}
-#' @return returns the left menu according to the selected tab;
-#' @examples
-#'     x <- getCutOffSelection()
-#' @export
-#'
-getCutOffSelection <- function(nc = 1){
-    compselect <- getCompSelection(nc)
-    list( conditionalPanel( (condition <- "input.dataset!='most-varied' &&
-        input.methodtabs!='panel0'"),
-        tags$head(tags$script(HTML(logSliderJScode("padj")))),
-        shinydashboard::menuItem(" Filter", icon = getMenuIcon(),
-            #h4("Filter"),
-            sliderInput("padj", "padj value cut off",
-                min=0, max=10, value=6, sep = "",
-                animate = FALSE),
-            textInput("padjtxt", "or padj", value = "0.01" ),
-            sliderInput("foldChange", "Fold Change cut off",
-                1, 10, 2, step = 0.1),
-            textInput("foldChangetxt", "or foldChange", value = "2" ),
-            compselect
-        )
-    ) )
-}
 
 #' getInitialMenu
 #'

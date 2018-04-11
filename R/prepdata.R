@@ -73,46 +73,6 @@ prepDataContainer <- function(data = NULL, counter=NULL,
 }
 
 
-
-#' setFilterParams
-#'
-#' It sets the filter parameters 
-#'
-#' @param session, session variable
-#' @param input, input parameters
-#' @export
-#'
-#' @examples
-#'     x <- setFilterParams()
-#'
-setFilterParams <- function(session = NULL, input = NULL) {
-    if (!is.null(input$padj)){
-        if (input$padj %% 2)
-            valpadj = (10 ^ (-1*as.integer(
-                (10-input$padj)/2 )) ) /2
-        else
-            valpadj = (10 ^ (-1*(10-input$padj)/2))
-        if(input$padj == 0) valpadj = 0
-        updateTextInput(session, "padjtxt",
-            value = valpadj ) 
-    }
-    if (!is.null(input$gopvalue)){
-        if (input$gopvalue%%2)
-            gopval = (10 ^ (-1*as.integer(
-            (10-input$gopvalue)/2 )) ) /2
-      else
-            gopval = (10 ^ (-1*(10-input$gopvalue)/2))
-      if(input$gopvalue==0) gopval = 0
-      updateTextInput(session, "pvaluetxt",
-          value = gopval ) 
-    }
-    if (!is.null(input$foldChange)){
-        valpadjfoldChange = input$foldChange
-        updateTextInput(session, "foldChangetxt",
-            value = valpadjfoldChange)
-    }
-}
-
 #' prepDEOutput
 #'
 #' Prepares the output data from DE analysis to be used within
