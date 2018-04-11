@@ -156,11 +156,15 @@ all2allplotly <- function(data, input) {
 #' @export
 #'
 all2all <- function(data, input) {
-    pcor <- function(x, y, ...) panel.cor(x, y, cex.cor = input$cex)
+    cex <- 2
+    if (!is.null(input$cex))
+        cex <- input$cex
+    pcor <- function(x, y, ...) panel.cor(x, y, cex.cor = cex)
     nr <- nrow(data)
+
     if (nr > 1000)
         nr <- 1000
-    pairs(log10(data[1:nr, ]), cex = 0.25,
+    pairs(log10(data[1:nr, ]), cex = 0.5,
           diag.panel = panel.hist, lower.panel = pcor)
 }
 

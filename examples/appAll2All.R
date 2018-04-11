@@ -1,5 +1,7 @@
 library(shiny)
+library(shinydashboard)
 library(GGally)
+library(plotly)
 library(shinyjs)
 source("../R/plotSize.R")
 source("../R/funcs.R")
@@ -17,13 +19,13 @@ sidebar <- dashboardSidebar(  sidebarMenu(id="DEAnlysis",
 ))
 
 body <- dashboardBody(
-  tabItems(
-    tabItem(tabName="All2All", 
+    tabItems(
+        tabItem(tabName="All2All", 
         fluidRow(
             column(12,
             getAll2AllPlotUI("all2all")))
     )
-  ))
+))
 
 ui <- dashboardPage(header, sidebar, body, skin = "blue")
 

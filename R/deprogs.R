@@ -16,13 +16,15 @@ debrowserdeanalysis <- function(input, output, session, data = NULL, columns = N
     deres <- reactive({
         runDE(data, columns, conds, params)
     })
-    
     prepDat <- reactive({
-        addDataCols(data, deres(), columns, conds)
+        applyFilters(addDataCols(data, deres(), columns, conds), input)
     })
     observe({
-        getTableDetails(output, session, "DEResults", prepDat(), modal=FALSE)
+        setFilterParams(session, input)
+        dat <-  prepDat()[prepDat()$Legend == input$legendradio,]
+        getTableDetails(output, session, "DEResults", dat, modal=FALSE)
     })
+    list(dat = prepDat)
 }
 #' getDEResultsUI
 #' Creates a panel to visualize DE results
@@ -49,6 +51,105 @@ getDEResultsUI<- function (id) {
         )
 }
 
+#' cutOffSelectionUI
+#'
+#' Gathers the cut off selection for DE analysis
+#'
+#' @param nc, total number of comparisons
+#' @note \code{cutOffSelectionUI}
+#' @return returns the left menu according to the selected tab;
+#' @examples
+#'     x <- cutOffSelectionUI()
+#' @export
+#'
+cutOffSelectionUI <- function(id){
+    ns <- NS(id)
+    list( 
+        tags$head(tags$script(HTML(logSliderJScode(ns("padj"))))),
+        
+        shinydashboard::menuItem("Filter",
+             getLegendRadio(id),
+             sliderInput(ns("padj"), "padj value cut off",
+                         min=0, max=10, value=6, sep = "",
+                         animate = FALSE),
+             textInput(ns("padjtxt"), "or padj", value = "0.01" ),
+             sliderInput(ns("foldChange"), "Fold Change cut off",
+                         1, 20, 2, step = 0.1),
+             textInput(ns("foldChangetxt"), "or foldChange", value = "2" )
+        )
+    )
+}
+
+#' setFilterParams
+#'
+#' It sets the filter parameters 
+#'
+#' @param session, session variable
+#' @param input, input parameters
+#' @export
+#'
+#' @examples
+#'     x <- setFilterParams()
+#'
+setFilterParams <- function(session = NULL, input = NULL) {
+    if (!is.null(input$padj)){
+        if (input$padj %% 2)
+            valpadj = (10 ^ (-1*as.integer(
+                (10-input$padj)/2 )) ) /2
+        else
+            valpadj = (10 ^ (-1*(10-input$padj)/2))
+        if(input$padj == 0) valpadj = 0
+        updateTextInput(session, "padjtxt",
+                        value = valpadj ) 
+    }
+    if (!is.null(input$gopvalue)){
+        if (input$gopvalue%%2)
+            gopval = (10 ^ (-1*as.integer(
+                (10-input$gopvalue)/2 )) ) /2
+        else
+            gopval = (10 ^ (-1*(10-input$gopvalue)/2))
+        if(input$gopvalue==0) gopval = 0
+        updateTextInput(session, "pvaluetxt",
+            value = gopval ) 
+    }
+    if (!is.null(input$foldChange)){
+        valpadjfoldChange = input$foldChange
+        updateTextInput(session, "foldChangetxt",
+            value = valpadjfoldChange)
+    }
+}
+
+#' applyFilters
+#'
+#' Apply filters based on foldChange cutoff and padj value.
+#' This function adds a "Legend" column with "Up", "Down" or
+#' "NS" values for visualization.
+#'
+#' @param data, loaded dataset
+#' @param input, input parameters
+#' @return data
+#' @export
+#'
+#' @examples
+#'     x <- applyFilters()
+#'
+applyFilters <- function(data, input) {
+    if (is.null(data)) return(NULL)
+    padj_cutoff <- as.numeric(input$padjtxt)
+    foldChange_cutoff <- as.numeric(input$foldChangetxt)
+    m <- data
+    if (!("Legend" %in% names(m))) {
+        m$Legend <- character(nrow(m))
+        m$Legend <- "NS"
+    }
+    m$Legend[m$foldChange >= foldChange_cutoff &
+        m$padj <= padj_cutoff] <- "Up"
+    m$Legend[m$foldChange <= (1 / foldChange_cutoff) &
+        m$padj <= padj_cutoff] <- "Down"
+    return(m)
+}
+
+    
 #' runDE
 #'
 #' Run DE algorithms on the selected parameters.  Output is
@@ -125,7 +226,7 @@ runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL, params) {
     data[, columns] <- apply(data[, columns], 2,
         function(x) as.integer(x))
 
-    coldata <- prepGroup(conds, cols)
+    coldata <- prepGroup(conds, columns)
     # Filtering non expressed genes
     filtd <- data
     if (is.numeric(rowsum.filter) && !is.na(rowsum.filter))
@@ -134,9 +235,17 @@ runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL, params) {
     # DESeq data structure is going to be prepared
     dds <- DESeqDataSetFromMatrix(countData = as.matrix(filtd),
         colData = coldata, design = ~group)
-
+    dds <- estimateSizeFactors(dds)
+    dds <- estimateDispersions(dds)
     # Running DESeq
-    dds <- DESeq(dds, fitType = fitType)
+    if (testType == "LRT")
+        dds <- DESeq(dds, fitType = fitType, betaPrior = as.logical(betaPrior), test=testType, reduced= ~ 1)
+    else
+        dds <- DESeq(dds, fitType = fitType, betaPrior = as.logical(betaPrior), test=testType)
+    
+    print(head(assays(dds)[["replaceCounts"]]))
+    print(head(assays(dds)[["counts"]]))
+    
     res <- results(dds)
     return(res)
 }
@@ -326,7 +435,7 @@ prepGroup <- function(conds = NULL, cols = NULL) {
 #'
 addDataCols <- function(data = NULL, de_res = NULL, cols = NULL, conds = NULL) {
     if (is.null(data) || is.null(de_res)) return (NULL)
-    norm_data <- getNormalizedMatrix(data[, cols])
+    norm_data <- data[, cols]
     
     coldata <- prepGroup(conds, cols)
     
@@ -334,8 +443,8 @@ addDataCols <- function(data = NULL, de_res = NULL, cols = NULL, conds = NULL) {
     mean_cond_second <- getMean(norm_data, as.vector(coldata[coldata$group==levels(coldata$group)[2], "libname"]))
     
     m <- cbind(rownames(de_res), norm_data[rownames(de_res), cols],
-               log10(unlist(mean_cond_second) + 0.1),
-               log10(unlist(mean_cond_first) + 0.1),
+               log10(unlist(mean_cond_second) + 1),
+               log10(unlist(mean_cond_first) + 1),
                de_res[rownames(de_res),
                       c("padj", "log2FoldChange", "pvalue")], 
                2 ^ de_res[rownames(de_res),
@@ -370,4 +479,27 @@ getMean<-function(data = NULL, selcols=NULL) {
     else
         mean_cond <-list(norm_data[selcols])
     mean_cond
+}
+
+
+#' getLegendRadio
+#'
+#' Radio buttons for the types in the legend
+#'
+#' @note \code{getLegendRadio}
+#' @return radio control
+#'
+#' @examples
+#'    
+#'     x <- getLegendRadio()
+#'
+#' @export
+#'
+getLegendRadio <- function(id) {
+    ns <- NS(id)
+    types <- c("Up", "Down", "NS")
+    radioButtons(inputId=ns("legendradio"), 
+                 label="Data Type:",
+                 choices=types
+                 )
 }
