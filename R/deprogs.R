@@ -242,10 +242,7 @@ runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL, params) {
         dds <- DESeq(dds, fitType = fitType, betaPrior = as.logical(betaPrior), test=testType, reduced= ~ 1)
     else
         dds <- DESeq(dds, fitType = fitType, betaPrior = as.logical(betaPrior), test=testType)
-    
-    print(head(assays(dds)[["replaceCounts"]]))
-    print(head(assays(dds)[["counts"]]))
-    
+
     res <- results(dds)
     return(res)
 }
@@ -503,3 +500,5 @@ getLegendRadio <- function(id) {
                  choices=types
                  )
 }
+
+

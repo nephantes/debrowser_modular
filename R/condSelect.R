@@ -35,7 +35,10 @@ debrowsercondselect <- function(input, output, session, data, metadata=NULL) {
         if (choicecounter$nc > 0) 
             choicecounter$nc <- choicecounter$nc - 1
     })
-
+    cc <- reactive({
+        choicecounter$nc
+    })
+    list(cc = cc)
 }
 
 #' condSelectUI
@@ -51,11 +54,12 @@ debrowsercondselect <- function(input, output, session, data, metadata=NULL) {
 condSelectUI<- function () {
 list(
     fluidRow(
-        helpText( "Please add new comparisons for DE analysis!" ),
+        helpText( "Please add comparisons for DE analysis!" ),
         uiOutput("conditionSelector"),
-        column(12,actionButton("add_btn", "Add New Comparison"),
-               actionButton("rm_btn", "Remove"),
-               getHelpButton("method", "http://debrowser.readthedocs.io/en/develop/deseq/deseq.html"))
+        column(12,actionButton("add_btn", "Add New Comparison",styleclass = "primary"),
+               actionButton("rm_btn", "Remove", styleclass = "primary"),
+               getHelpButton("method", "http://debrowser.readthedocs.io/en/develop/deseq/deseq.html"),
+               actionButton("startDE", "Start DE!", styleclass = "primary"))
     )
 )
 }
@@ -80,9 +84,10 @@ getMethodDetails <- function(num = 0, input = NULL) {
                                 c("parametric", "local", "mean"), 
                                 selectedInput("testType", num, "parametric",
                                                 input), 3),
-                column(2, textInput(paste0("betaPrior", num), "Beta Prior", 
-                                        value = isolate(selectedInput(
-                                        "betaPrior", num, "0", input)) )),
+                getSelectInputBox("betaPrior", "betaPrior", num, 
+                                            c(F, T), 
+                                            selectedInput("betaPrior", num,
+                                                          F, input),2),
                 getSelectInputBox("testType", "Test Type", num, 
                             c("Wald", "LRT"),  
                             selectedInput("testType", num, "Wald", input))),
@@ -409,4 +414,74 @@ getSampleNames <- function(cnames = NULL, part = 1) {
         m[[i]] <- cn[i]
     }
     m
+}
+
+#' prepDataContainer
+#'
+#' Prepares the data container that stores values used within DESeq.
+#'
+#' @param data, loaded dataset
+#' @param counter, the number of comparisons
+#' @param input, input parameters
+#' @return data
+#' @export
+#'
+#' @examples
+#'     x <- prepDataContainer()
+#'
+prepDataContainer <- function(data = NULL, counter=NULL, 
+                              input = NULL) {
+    if (is.null(data)) return(NULL)
+    dclist<-list()
+    inputconds <- reactiveValues(demethod_params = list(), conds = list())
+    observeEvent(input$startDE, {
+        inputconds$conds <- list()
+        for (cnt in seq(1:(2*counter))){
+            inputconds$conds[cnt] <- list(isolate(input[[paste0("condition",cnt)]]))
+        }
+        #Get parameters for each method
+        inputconds$demethod_params <- NULL
+        for (cnt in seq(1:counter)){
+            if (isolate(input[[paste0("demethod",cnt)]]) == "DESeq2"){
+                inputconds$demethod_params[cnt] <- paste(
+                    isolate(input[[paste0("demethod",cnt)]]),
+                    isolate(input[[paste0("fitType",cnt)]]),
+                    isolate(input[[paste0("betaPrior",cnt)]]),
+                    isolate(input[[paste0("testType",cnt)]]), sep=",")
+            }
+            else if (isolate(input[[paste0("demethod",cnt)]]) == "EdgeR"){
+                inputconds$demethod_params[cnt]<- paste(
+                    isolate(input[[paste0("demethod",cnt)]]),
+                    isolate(input[[paste0("edgeR_normfact",cnt)]]),
+                    isolate(input[[paste0("dispersion",cnt)]]),
+                    isolate(input[[paste0("edgeR_testType",cnt)]]), sep=",")
+            }
+            else if (isolate(input[[paste0("demethod",cnt)]]) == "Limma"){
+                inputconds$demethod_params[cnt] <- paste(
+                    isolate(input[[paste0("demethod",cnt)]]),
+                    isolate(input[[paste0("limma_normfact",cnt)]]),
+                    isolate(input[[paste0("limma_fitType",cnt)]]),
+                    isolate(input[[paste0("normBetween",cnt)]]), sep=",")
+            }
+        }
+        
+        for (i in seq(1:counter))
+        {
+            conds <- c(rep(paste0("Cond", 2*i-1), 
+                           length(inputconds$conds[[2*i-1]])), 
+                       rep(paste0("Cond", 2*i), length(inputconds$conds[[2*i]])))
+            cols <- c(paste(inputconds$conds[[2*i-1]]), 
+                      paste(inputconds$conds[[2*i]]))
+            params <- unlist(strsplit(inputconds$demethod_params[i], ","))
+            withProgress(message = 'Running DE Algorithms', detail = inputconds$demethod_params[i], value = 0, {
+                initd <- callModule(debrowserdeanalysis, paste0("DEResults",cnt), data = data, 
+                      columns = cols, conds = conds, params = params)
+                m <- list(conds = conds, cols = cols, init_data=initd, 
+                      demethod_params = inputconds$demethod_params[i])
+                incProgress(1/counter)
+            })
+            dclist[[i]] <- m
+        }
+    })
+    return(dclist)
 }
