@@ -12,7 +12,8 @@ header <- dashboardHeader(
 )
 sidebar <- dashboardSidebar(  sidebarMenu(id="DEAnalysis",
     menuItem("DEAnalysis", tabName = "DEAnalysis"),
-    cutOffSelectionUI("DEResults")
+    shinydashboard::menuItem("Filter", tabName = "DEAnalysis",
+    cutOffSelectionUI("DEResults"))
 ))
 
 body <- dashboardBody(
