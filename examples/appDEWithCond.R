@@ -8,16 +8,23 @@ source("../R/condSelect.R")
 source("../R/deprogs.R")
 
 header <- dashboardHeader(
-  title = "DEBrowser Condition Selector"
+  title = "DEBrowser DE Analysis"
 )
 sidebar <- dashboardSidebar(  sidebarMenu(id="DataPrep",
-    menuItem("CondSelect", tabName = "CondSelect")
+    menuItem("CondSelect", tabName = "CondSelect"),
+    menuItem("DEAnalysis", tabName = "DEAnalysis"),
+    shinydashboard::menuItem("Filter", tabName = "DEAnalysis",
+    uiOutput("cutOffUI"),
+    uiOutput("compselectUI"))
 ))
 
 body <- dashboardBody(
   tabItems(
-    tabItem(tabName="CondSelect", 
-    condSelectUI(),
+    tabItem(tabName="CondSelect",
+    condSelectUI()),
+    tabItem(tabName="DEAnalysis",
+    
+    uiOutput("deresUI"),
     column(12,
            verbatimTextOutput("dcres")
     ))
@@ -38,14 +45,28 @@ server <- function(input, output, session) {
             prepDataContainer(filtd, sel$cc(), input)
   })
   
+  output$compselectUI <- renderUI({
+      if (is.null(dc())) return(NULL)
+      getCompSelection(sel$cc())
+  })
+  
+  compsel <- reactive({
+      cp <- 1
+      if (!is.null(input$compselect))
+          cp <- input$compselect
+      cp
+  })
+  output$cutOffUI <- renderUI({
+      if (is.null(dc())) return(NULL)
+      cutOffSelectionUI(paste0("DEResults", compsel()))
+  })  
+  output$deresUI <- renderUI({
+      if (is.null(dc())) return(NULL)
+      column(12, getDEResultsUI(paste0("DEResults",compsel())))
+  })
   output$dcres <- renderPrint({
-      if ( sel$cc() > 0 ){
-          for (i in seq(1:sel$cc()))
-          {
-              if(is.list(dc()))
-                    print(isolate( dc()[i]))
-          }
-      }
+      if (is.null(dc())) return("")
+        print(head(dc()$comp()))
   })
 }
 

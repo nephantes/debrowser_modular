@@ -64,10 +64,9 @@ getDEResultsUI<- function (id) {
 #'
 cutOffSelectionUI <- function(id){
     ns <- NS(id)
-    list( 
+    list(
         tags$head(tags$script(HTML(logSliderJScode(ns("padj"))))),
         
-        shinydashboard::menuItem("Filter",
              getLegendRadio(id),
              sliderInput(ns("padj"), "padj value cut off",
                          min=0, max=10, value=6, sep = "",
@@ -76,7 +75,6 @@ cutOffSelectionUI <- function(id){
              sliderInput(ns("foldChange"), "Fold Change cut off",
                          1, 20, 2, step = 0.1),
              textInput(ns("foldChangetxt"), "or foldChange", value = "2" )
-        )
     )
 }
 
@@ -235,8 +233,6 @@ runDESeq2 <- function(data = NULL, columns = NULL, conds = NULL, params) {
     # DESeq data structure is going to be prepared
     dds <- DESeqDataSetFromMatrix(countData = as.matrix(filtd),
         colData = coldata, design = ~group)
-    dds <- estimateSizeFactors(dds)
-    dds <- estimateDispersions(dds)
     # Running DESeq
     if (testType == "LRT")
         dds <- DESeq(dds, fitType = fitType, betaPrior = as.logical(betaPrior), test=testType, reduced= ~ 1)

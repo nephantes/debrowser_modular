@@ -53,14 +53,15 @@ debrowsercondselect <- function(input, output, session, data, metadata=NULL) {
 #'
 condSelectUI<- function () {
 list(
+    shinydashboard::box(title = "Comparison Selection",
+        solidHeader = T, status = "info",  width = NULL, height = NULL, collapsible = TRUE,
     fluidRow(
-        helpText( "Please add comparisons for DE analysis!" ),
         uiOutput("conditionSelector"),
         column(12,actionButton("add_btn", "Add New Comparison",styleclass = "primary"),
                actionButton("rm_btn", "Remove", styleclass = "primary"),
                getHelpButton("method", "http://debrowser.readthedocs.io/en/develop/deseq/deseq.html"),
                actionButton("startDE", "Start DE!", styleclass = "primary"))
-    )
+    ))
 )
 }
 #getMethodDetails
@@ -432,8 +433,8 @@ getSampleNames <- function(cnames = NULL, part = 1) {
 prepDataContainer <- function(data = NULL, counter=NULL, 
                               input = NULL) {
     if (is.null(data)) return(NULL)
-    dclist<-list()
-    inputconds <- reactiveValues(demethod_params = list(), conds = list())
+    
+    inputconds <- reactiveValues(demethod_params = list(), conds = list(), dclist = list())
     observeEvent(input$startDE, {
         inputconds$conds <- list()
         for (cnt in seq(1:(2*counter))){
@@ -474,14 +475,28 @@ prepDataContainer <- function(data = NULL, counter=NULL,
                       paste(inputconds$conds[[2*i]]))
             params <- unlist(strsplit(inputconds$demethod_params[i], ","))
             withProgress(message = 'Running DE Algorithms', detail = inputconds$demethod_params[i], value = 0, {
-                initd <- callModule(debrowserdeanalysis, paste0("DEResults",cnt), data = data, 
+                initd <- callModule(debrowserdeanalysis, paste0("DEResults",i), data = data, 
                       columns = cols, conds = conds, params = params)
-                m <- list(conds = conds, cols = cols, init_data=initd, 
-                      demethod_params = inputconds$demethod_params[i])
+                if (nrow(initd$dat()) > 1){
+                    inputconds$dclist[[i]] <- list(conds = conds, cols = cols, init_data=initd$dat(), 
+                        demethod_params = inputconds$demethod_params[i])
+                }
                 incProgress(1/counter)
             })
-            dclist[[i]] <- m
         }
     })
-    return(dclist)
+
+    comparison <- reactive({
+        compselect <- 1
+        dat <- NULL
+        if(length(inputconds$dclist) <1) return(NULL)
+        if (!is.null(input$compselect))
+            compselect <- as.integer(input$compselect)
+        if (length(inputconds$dclist) > 1 && !is.null(inputconds$dclist[[compselect]])){
+            dat <- inputconds$dclist[[compselect]]
+        }
+        dat
+    })
+    
+    list(comp = comparison)
 }
