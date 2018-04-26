@@ -342,4 +342,24 @@ getCompSelection <- function(count = NULL) {
     }
     a
 }
+#' getHelpButton
+#' prepares a helpbutton for to go to a specific site in the documentation
+#'
+#' @param name, name that are going to come after info
+#' @param link, link of the help
+#' @return the info button
+#'
+#' @examples
+#'     x<- getHelpButton()
+#'
+#' @export
+getHelpButton<-function(name = NULL, link = NULL){
+    if (is.null(name)) return(NULL)
+    btn <- actionButton(paste0("info_",name),"",icon="info",
+                        styleclass="info", size="small")
+    
+    a <- HTML(paste0("<a id=\"info_",name,"\" href=\"",link,"\" target=\"_blank\">",
+                     btn,"</a>"))
+    
+}
 

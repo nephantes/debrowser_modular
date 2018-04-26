@@ -3,6 +3,7 @@ library(shinyjs)
 library(DESeq2)
 library(edgeR)
 library(limma)
+library(shinydashboard)
 source("../R/funcs.R")
 source("../R/condSelect.R")
 source("../R/deprogs.R")
@@ -13,7 +14,7 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(  sidebarMenu(id="DataPrep",
     menuItem("CondSelect", tabName = "CondSelect"),
     menuItem("DEAnalysis", tabName = "DEAnalysis"),
-    shinydashboard::menuItem("Filter", tabName = "DEAnalysis",
+    shinydashboard::menuItem("Filter", tabName = "DEAnalysis", startExpanded = TRUE,
     uiOutput("cutOffUI"),
     uiOutput("compselectUI"))
 ))
@@ -21,9 +22,8 @@ sidebar <- dashboardSidebar(  sidebarMenu(id="DataPrep",
 body <- dashboardBody(
   tabItems(
     tabItem(tabName="CondSelect",
-    condSelectUI()),
+        condSelectUI()),
     tabItem(tabName="DEAnalysis",
-    
     uiOutput("deresUI"),
     column(12,
            verbatimTextOutput("dcres")
@@ -35,21 +35,24 @@ ui <- dashboardPage(header, sidebar, body, skin = "blue")
 server <- function(input, output, session) {
   load(system.file("extdata", "demo", "demodata.Rda",
                    package = "debrowser"))
+  # Filter out the rows that has maximum 10 reads in a sample
   filtd <-
-        # Filter out the rows that has maximum 100 reads in a sample
         subset(demodata, apply(demodata, 1, max, na.rm = TRUE)  >=  10)
     
   sel <- debrowsercondselect(input, output, session, demodata, metadatatable)
+  observeEvent(input$startDE, {
+      updateTabItems(session, "DataPrep", "DEAnalysis")
+  })
   dc <- reactive({
       if (input$startDE)
-            prepDataContainer(filtd, sel$cc(), input)
+          prepDataContainer(filtd, sel$cc(), input)
   })
   
   output$compselectUI <- renderUI({
       if (is.null(dc())) return(NULL)
       getCompSelection(sel$cc())
   })
-  
+
   compsel <- reactive({
       cp <- 1
       if (!is.null(input$compselect))
@@ -66,7 +69,7 @@ server <- function(input, output, session) {
   })
   output$dcres <- renderPrint({
       if (is.null(dc())) return("")
-        print(head(dc()$comp()))
+          print(head(sel$cc()))
   })
 }
 
