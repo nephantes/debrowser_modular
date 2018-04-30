@@ -23,10 +23,10 @@ debrowsercondselect <- function(input, output, session, data, metadata=NULL) {
     
     output$conditionSelector <- renderUI({
         selectConditions(Dataset = data,
-                         metadata = metadata,
-                         choicecounter = choicecounter,
-                         input = input,
-                         session = session)
+            metadata = metadata,
+            choicecounter = choicecounter,
+            input = input,
+            session = session)
     })
     observeEvent(input$add_btn, {
         choicecounter$nc <- choicecounter$nc + 1

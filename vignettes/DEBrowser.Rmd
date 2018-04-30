@@ -1,7 +1,7 @@
 ---
 title: "DEBrowser user guide"
-author: "Alper Kucukural, Berk Sarioz, Nicholas Merowsky, Manuel Garber"
-output: BiocStyle::html_document2
+author: "Alper Kucukural, Manuel Garber"
+output: BiocStyle::html_document
 fig_caption: true
 vignette: >
     %\VignetteIndexEntry{DEBrowser Vignette}

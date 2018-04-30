@@ -20,7 +20,7 @@ debrowserdeanalysis <- function(input, output, session, data = NULL, columns = N
         applyFilters(addDataCols(data, deres(), columns, conds), input)
     })
     observe({
-        setFilterParams(session, input)
+        setFilterParams(session, isolate(input))
         dat <-  prepDat()[prepDat()$Legend == input$legendradio,]
         getTableDetails(output, session, "DEResults", dat, modal=FALSE)
     })
@@ -66,15 +66,14 @@ cutOffSelectionUI <- function(id){
     ns <- NS(id)
     list(
         tags$head(tags$script(HTML(logSliderJScode(ns("padj"))))),
-        
-             getLegendRadio(id),
-             sliderInput(ns("padj"), "padj value cut off",
-                         min=0, max=10, value=6, sep = "",
-                         animate = FALSE),
-             textInput(ns("padjtxt"), "or padj", value = "0.01" ),
-             sliderInput(ns("foldChange"), "Fold Change cut off",
-                         1, 20, 2, step = 0.1),
-             textInput(ns("foldChangetxt"), "or foldChange", value = "2" )
+            getLegendRadio(id),
+            sliderInput(ns("padj"), "padj value cut off",
+                min=0, max=10, value=6, sep = "",
+                animate = FALSE),
+        textInput(ns("padjtxt"), "or padj", value = "0.01" ),
+        sliderInput(ns("foldChange"), "Fold Change cut off",
+            1, 20, 2, step = 0.1),
+        textInput(ns("foldChangetxt"), "or foldChange", value = "2" )
     )
 }
 
@@ -98,7 +97,7 @@ setFilterParams <- function(session = NULL, input = NULL) {
             valpadj = (10 ^ (-1*(10-input$padj)/2))
         if(input$padj == 0) valpadj = 0
         updateTextInput(session, "padjtxt",
-                        value = valpadj ) 
+            value = valpadj ) 
     }
     if (!is.null(input$gopvalue)){
         if (input$gopvalue%%2)
