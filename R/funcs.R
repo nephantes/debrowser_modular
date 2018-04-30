@@ -165,21 +165,21 @@ getTableDetails <- function(output, session, tablename, data = NULL, modal = NUL
     
     output[[tablenameUI]] <- DT::renderDataTable({
         if (!is.null(data)){
-            DT::datatable(data, , extensions = 'Buttons'
-                          , options = list( server = TRUE,
-                              dom = "Blfrtip"
-                              , buttons = 
-                                  list("copy", list(
-                                      extend = "collection"
-                                      , buttons = c("csv", "excel", "pdf")
-                                      , text = "Download"
-                                  ) ) # end of buttons customization
-                              
-                              # customize the length menu
-                              , lengthMenu = list( c(10, 20,  50, -1) # declare values
-                                                   , c(10, 20, 50, "All") # declare titles
-                              ) # end of lengthMenu customization
-                              , pageLength = 10))
+            DT::datatable(data, , extensions = 'Buttons',
+            options = list( server = TRUE,
+            dom = "Blfrtip",
+            buttons = 
+              list("copy", list(
+                  extend = "collection"
+                  , buttons = c("csv", "excel", "pdf")
+                  , text = "Download"
+              ) ), # end of buttons customization
+            
+            # customize the length menu
+            lengthMenu = list( c(10, 20,  50, -1) # declare values
+                               , c(10, 20, 50, "All") # declare titles
+            ), # end of lengthMenu customization
+            pageLength = 10))
         }
     })
 }
@@ -238,9 +238,9 @@ round_vals <- function(l) {
 #'     actionButton("goDE", "Go to DE Analysis!")
 #'
 actionButton <- function(inputId, label, styleclass = "", size = "",
-                         block = FALSE, icon = NULL, css.class = "", ...) {
+        block = FALSE, icon = NULL, css.class = "", ...) {
     if (styleclass %in% c("primary", "info", "success", "warning",
-                          "danger", "inverse", "link")) {
+        "danger", "inverse", "link")) {
         btn.css.class <- paste("btn", styleclass, sep = "-")
     } else btn.css.class = ""
     
@@ -256,8 +256,8 @@ actionButton <- function(inputId, label, styleclass = "", size = "",
         icon.code <- HTML(paste0("<i class='fa fa-", icon, "'></i>"))
     } else icon.code = ""
     tags$button(id = inputId, type = "button", class = paste("btn action-button",
-                                                             btn.css.class, btn.size.class, btn.block, css.class, collapse = " "),
-                icon.code, label, ...)
+        btn.css.class, btn.size.class, btn.block, css.class, collapse = " "),
+        icon.code, label, ...)
 }
 
 
@@ -286,7 +286,7 @@ getNormalizedMatrix <- function(M = NULL, method = "TMM") {
         if (is.null(M) ) return (NULL)
         norm.factors <- edgeR::calcNormFactors(M, method = method)
         norm <- edgeR::equalizeLibSizes(edgeR::DGEList(M,
-                                                       norm.factors = norm.factors))$pseudo.counts
+            norm.factors = norm.factors))$pseudo.counts
     }
     return(norm)
 }
@@ -306,20 +306,20 @@ getNormalizedMatrix <- function(M = NULL, method = "TMM") {
 logSliderJScode <- function(slidername = NULL){
     if (is.null(slidername)) return (NULL)
     paste0("$(function() {
-           setTimeout(function(){
-           var vals = [0];
-           var powStart = 4;
-           var powStop = 0;
-           for (i = powStart; i >= powStop; i--) {
-           var val = Math.pow(10, -i)/2;
-           val = parseFloat(val.toFixed(8));
-           vals.push(val);
-           var val = Math.pow(10, -i);
-           val = parseFloat(val.toFixed(8));
-           vals.push(val);
-           }
-           $('#", slidername,"').data('ionRangeSlider').update({'values':vals})
-           }, 4)})")
+        setTimeout(function(){
+        var vals = [0];
+        var powStart = 4;
+        var powStop = 0;
+        for (i = powStart; i >= powStop; i--) {
+        var val = Math.pow(10, -i)/2;
+        val = parseFloat(val.toFixed(8));
+        vals.push(val);
+        var val = Math.pow(10, -i);
+        val = parseFloat(val.toFixed(8));
+        vals.push(val);
+        }
+        $('#", slidername,"').data('ionRangeSlider').update({'values':vals})
+        }, 4)})")
 }
 
 #' getCompSelection
@@ -337,8 +337,8 @@ getCompSelection <- function(count = NULL) {
     a <- NULL
     if (count>1){
         a <- list(selectInput("compselect",
-                              label = "Choose a comparison:",
-                              choices = c(1:count) ))
+            label = "Choose a comparison:",
+            choices = c(1:count) ))
     }
     a
 }
@@ -356,10 +356,10 @@ getCompSelection <- function(count = NULL) {
 getHelpButton<-function(name = NULL, link = NULL){
     if (is.null(name)) return(NULL)
     btn <- actionButton(paste0("info_",name),"",icon="info",
-                        styleclass="info", size="small")
+        styleclass="info", size="small")
     
-    a <- HTML(paste0("<a id=\"info_",name,"\" href=\"",link,"\" target=\"_blank\">",
-                     btn,"</a>"))
+    HTML(paste0("<a id=\"info_",name,"\" href=\"",link,"\" target=\"_blank\">",
+       btn,"</a>"))
     
 }
 

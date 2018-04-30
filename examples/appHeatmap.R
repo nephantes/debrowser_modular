@@ -1,6 +1,9 @@
 library(shiny)
+library(shinydashboard)
 library(heatmaply)
 library(shinyjs)
+library(gplots)
+library(colourpicker)
 source("../R/plotSize.R")
 source("../R/heatmap.R")
 

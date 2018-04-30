@@ -21,7 +21,7 @@ debrowserheatmap <- function( input, output, session, data){
         shinyjs::onevent("click", "heatmap", js$getHoverName(session$ns("hoveredgenenameclick")))
         #shinyjs::onclick( "heatmap", js$getHoverName(session$ns("hoveredgenename1")))
         withProgress(message = 'Drawing Heatmap', detail = "part 0", value = 0, {
-            runHeatmap(input, data)
+            runHeatmap(input, session, data)
         })
     })
     
@@ -30,9 +30,9 @@ debrowserheatmap <- function( input, output, session, data){
         column(12,
         shinydashboard::box(
         collapsible = TRUE, title = "Heatmap", status = "primary", 
-        solidHeader = TRUE,width=NULL,
+        solidHeader = TRUE,
         draggable = TRUE, plotlyOutput(session$ns("heatmap"),
-        height=input$plotheight, width=input$plotwidth)
+        height=input$height, width=input$width)
         ))))
     })
     
@@ -62,7 +62,6 @@ debrowserheatmap <- function( input, output, session, data){
 #'
 #' Creates a heatmap based on the user selected parameters within shiny.#'
 #' @param input, input variables
-#' @param output, output objects
 #' @param session, session 
 #' @param data, a matrix that includes expression values
 #' @return heatmapply plot
@@ -74,7 +73,7 @@ debrowserheatmap <- function( input, output, session, data){
 #' @import heatmaply
 #'
 #'
-runHeatmap <- function(input, data){
+runHeatmap <- function(input, session, data){
     cld <- prepHeatData(data)
     
     hclustfun_row <- function(x, ...) hclust(x, method = input$hclustFun_Row)
@@ -93,7 +92,8 @@ runHeatmap <- function(input, data){
             return(as.dist(1 - cor(t(x))))
         }
     }
-    if (is.null(input$customColors1))    
+
+    if (!input$customColors )  
         heatmapColors <- eval(parse(text=paste0(input$pal,
             '(',input$ncol,')')))
     else{
@@ -121,7 +121,6 @@ runHeatmap <- function(input, data){
         k_row = input$k_Row
         ) %>% 
     plotly::layout(
-        width=input$width - 100, height=input$height,
         margin = list(l = input$left,
         b = input$bottom,
         t = input$top,
@@ -161,10 +160,11 @@ getHeatmapUI <- function(id) {
 heatmapControlsUI <- function(id) {
     ns <- NS(id)
     list(
+        kmeansControlsUI(id),
         dendControlsUI(id, "Row"),
         dendControlsUI(id, "Col"),
         shinydashboard::menuItem("Heatmap Colors",
-            conditionalPanel(paste0('!input.', r(ns('customColors'), "-")),
+            conditionalPanel(paste0("!input['", ns("customColors"), "']"),
             palUI(id),
             sliderInput(ns("ncol"), "# of Colors", 
                 min = 1, max = 256, value = 256)),
@@ -188,7 +188,30 @@ heatmapControlsUI <- function(id) {
                 value = 45,min=0,max=180)
     ))
 }
-
+#' kmeansControlsUI
+#'
+#' get kmeans controls
+#'
+#' @note \code{kmeansControlsUI}
+#' @param id, module ID
+#' @return controls
+#' @examples
+#'     x <- kmeansControlsUI("heatmap")
+#' @export
+#'
+kmeansControlsUI <- function(id) {
+    ns <- NS(id)
+    shinydashboard::menuItem("kmeans",
+        checkboxInput(ns('kmeansControl'), 'kmeans clustering', value = FALSE),
+        conditionalPanel(paste0("input['", ns("kmeansControl"), "']"),
+            sliderInput(ns("knum"), "k: # of Clusters", 
+                min = 2, max = 20, value = 2),
+            selectizeInput(ns("kmeansalgo"), "kmeans.algorithm",
+                c("Hartigan-Wong", "Lloyd", "Forgy",
+                "MacQueen"), selected = 'Lloyd'),
+            textInput(ns('clusterorder'), 
+                'The order of the clusters', "")))
+}
 #' dendControlsUI
 #'
 #' get distance metric parameters 
@@ -196,7 +219,7 @@ heatmapControlsUI <- function(id) {
 #' @note \code{dendControlsUI}
 #' @param id, module ID
 #' @param dendtype, Row or Col
-#' @return pals
+#' @return controls
 #' @examples
 #'     x <- dendControlsUI("heatmap")
 #' @export
@@ -291,8 +314,8 @@ palUI <- function(id) {
 customColorsUI <- function(id) {
     ns <- NS(id)
     list(
-        checkboxInput(r(ns('customColors'), "-"), 'Custom Colors', value = FALSE),
-        conditionalPanel(paste0('input.', r(ns('customColors'), "-")),
+        checkboxInput(ns('customColors'), 'Custom Colors', value = FALSE),
+        conditionalPanel(paste0("input['", ns("customColors"), "']"),
         colourpicker::colourInput(ns("color1"), "Choose min colour", "blue"),
         colourpicker::colourInput(ns("color2"), "Choose median colour", "white"),
         colourpicker::colourInput(ns("color3"), "Choose max colour", "red")))
@@ -317,23 +340,6 @@ prepHeatData <- function(data)
     cldt <- scale(t(ld), center = TRUE, scale = TRUE)
     cld <- t(cldt)
     return(cld)
-}
-
-#' getIntHeatmap
-#'
-#' getIntHeatmap
-#'
-#' @param data, heatData
-#' @param input, all input params
-#' @return plot
-#' @export
-#'
-#' @examples
-#'     getIntHeatmap()
-#'
-getIntHeatmap <- function(data = NULL,  input = NULL) {
-    if(is.null(data)) return(NULL)
-    runHeatmap(data, input)
 }
 
 #' getSelHeat
