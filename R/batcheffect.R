@@ -148,8 +148,8 @@ batchMethodRadio <- function(id) {
 #'     x<-correctCombat ()
 correctCombat <- function (input = NULL, idata = NULL, metadata = NULL) {
   if (is.null(idata) || input$batch == "None") return(NULL)
-  batch <- metadata[, input$batch]
-  treatment <- metadata[, input$treatment]
+  batch <- as.factor(metadata[, input$batch])
+  treatment <- as.factor(metadata[, input$treatment])
   columns <- colnames(idata)
   meta <- data.frame(cbind(columns, treatment, batch))
   datacor <- data.frame(idata[, columns])
