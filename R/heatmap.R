@@ -37,7 +37,6 @@ debrowserheatmap <- function( input, output, session, data){
     })
     
     hselGenes <- reactive({
-        
         if (is.null(input$selgenenames)) return("")
         unlist(strsplit(input$selgenenames, split=","))
     })
@@ -75,24 +74,37 @@ debrowserheatmap <- function( input, output, session, data){
 #'
 runHeatmap <- function(input, session, data){
     cld <- prepHeatData(data)
-    
-    hclustfun_row <- function(x, ...) hclust(x, method = input$hclustFun_Row)
-    hclustfun_col <- function(x, ...) hclust(x, method = input$hclustFun_Col)
-    distfun_row <- function(x, ...) {
-        if (input$distFun_Row != "cor") {
-            return(dist(x, method = input$distFun_Row))
-        } else {
-            return(as.dist(1 - cor(t(x))))
-        }
-    }
-    distfun_col <- function(x, ...) {
-        if (input$distFun_Col != "cor") {
-            return(dist(x, method = input$distFun_Col))
-        } else {
-            return(as.dist(1 - cor(t(x))))
-        }
-    }
 
+        hclustfun_row <- function(x, ...) hclust(x, method = input$hclustFun_Row)
+        hclustfun_col <- function(x, ...) hclust(x, method = input$hclustFun_Col)
+        distfun_row <- function(x, ...) {
+            if (input$distFun_Row != "cor") {
+                return(dist(x, method = input$distFun_Row))
+            } else {
+                return(as.dist(1 - cor(t(x))))
+            }
+        }
+        distfun_col <- function(x, ...) {
+            if (input$distFun_Col != "cor") {
+                return(dist(x, method = input$distFun_Col))
+            } else {
+                return(as.dist(1 - cor(t(x))))
+            }
+        }
+    
+    if (input$kmeansControl)
+    {
+        print("BEFORE")
+        print(head(cld))
+        res <- niceKmeans(cld, input)
+        updateTextInput(session, "clusterorder", value = paste(seq(1:input$knum), collapse=","))
+        cld <- data.frame(res$clustered)
+        cld <- as.matrix(cld [, -match("class",names(cld))])
+        reorderfun = function(d,w) { d }
+        #cld <- as.matrix(res$clustered)
+        print("AFTER")
+        print(head(cld))
+    }
     if (!input$customColors )  
         heatmapColors <- eval(parse(text=paste0(input$pal,
             '(',input$ncol,')')))
@@ -102,6 +114,27 @@ runHeatmap <- function(input, session, data){
                 input$color2, input$color3))(n = 1000)
         #heatmapColors <- colorRampPalette(c("red", "white", "blue"))(n = 1000)
     }
+    dat <- reactiveValues()
+    orderData <- reactive({
+        # if (input$changeOrder)
+        #     return(dat$newcluster)
+        cld
+    })
+
+    # observeEvent(input$changeOrder, {
+    #     newcluster <- cld
+    #     if (input$kmeansControl){
+    #         idx <- as.integer(as.vector(unlist(strsplit(input$clusterorder, ","))))
+    #         da <- data.frame(cld)
+    #         for (i in 1:length(idx)) {
+    #             newcluster <- rbind(newcluster, da[da$class == idx[i], ])
+    #         }
+    #         dat$newcluster <- newcluster
+    #     }
+    # })
+    # 
+    
+    if (!input$kmeansControl){
     p <- heatmaply(cld,
         main = input$main,
         xlab = input$xlab,
@@ -116,19 +149,90 @@ runHeatmap <- function(input, session, data){
         hclustfun_row = hclustfun_row,
         distfun_col = distfun_col,
         hclustfun_col = hclustfun_col,
-        showticklabels = c(input$labRow, input$labCol),
+        showticklabels = c(input$labCol, input$labRow),
         k_col = input$k_Col, 
         k_row = input$k_Row
-        ) %>% 
-    plotly::layout(
-        margin = list(l = input$left,
-        b = input$bottom,
-        t = input$top,
-        r = input$right
-        ))
+        ) 
+    }else {
+       rhcr <- hclust(dist(orderData()))
+       chrc <- hclust(dist(t(orderData())))
+       p <- heatmaply(orderData(),
+       main = input$main,
+       xlab = input$xlab,
+       ylab = input$ylab,
+       row_text_angle = input$row_text_angle,
+       column_text_angle = input$column_text_angle,
+       dendrogram = input$dendrogram,
+       branches_lwd = input$branches_lwd,
+       seriate = input$seriation,
+       colors = heatmapColors,
+       showticklabels = c(input$labCol, input$labRow),
+       Rowv = as.dendrogram(rhcr),
+       Colv = as.dendrogram(chrc),
+       k_col = input$k_Col,
+       k_row = input$knum
+       )
+    }
+    p <- p %>% 
+        plotly::layout(
+            margin = list(l = input$left,
+                          b = input$bottom,
+                          t = input$top,
+                          r = input$right
+            ))
     p$elementId <- NULL
     p
 }
+
+#' niceKmeans
+#'
+#' Generates hierarchially clustered K-means clusters
+#'
+#' @note \code{getHeatmapUI}
+#' @param id, module ID
+#' @return heatmap plot area
+#' @examples
+#'     x <- niceKmeans("heatmap")
+#' @export
+#'
+niceKmeans <-function (df, input, iter.max = 1000, nstart=100) {
+    source <-df
+
+    kmeans <- kmeans(source, centers = input$knum, iter.max = iter.max, algorithm=input$kmeansalgo, nstart=nstart)
+    clustered <- data.frame()
+    distfun_row <- function(x, ...) {
+        if (input$distFun_Row != "cor") {
+            return(dist(x, method = input$distFun_Row))
+        } else {
+            return(as.dist(1 - cor(t(x))))
+        }
+    }
+    breaks <- c();
+    for (i in 1:input$knum) {
+        cluster <- source[kmeans$cluster==i,]
+        rows <- row.names(cluster)
+        clust <- hclust(distfun_row(as.matrix(cluster)), method = input$hclustFun_Row)
+        clust$rowInd <- clust[[3]]
+        cluster.ordered <- cluster[clust$rowInd,]
+        cluster.ordered.genes <- rows[clust$rowInd]
+        row.names(cluster.ordered) <- cluster.ordered.genes
+        class <- data.frame(row.names = cluster.ordered.genes)
+        class[,"class"] <- i 
+        cluster.ordered <- cbind(cluster.ordered, class)
+        clustered <- rbind(clustered, cluster.ordered)
+        if(i > 1 & i < input$knum) {
+            breaks[i] <- as.numeric(breaks[i-1]) + length(rows)
+        } else if(i==1) {
+            breaks[i] <- length(rows);
+        }
+    }
+    
+    result <- list();
+    result$clustered <- clustered;
+    result$breaks <- breaks;
+    return(result);
+}
+
 
 #' getHeatmapUI
 #'
@@ -210,7 +314,8 @@ kmeansControlsUI <- function(id) {
                 c("Hartigan-Wong", "Lloyd", "Forgy",
                 "MacQueen"), selected = 'Lloyd'),
             textInput(ns('clusterorder'), 
-                'The order of the clusters', "")))
+                'The order of the clusters', ""),
+            actionButton(ns("changeOrder"), label = "Change Order", styleclass = "primary")))
 }
 #' dendControlsUI
 #'
@@ -234,7 +339,8 @@ dendControlsUI <- function(id, dendtype = "Row") {
            clustFunParamsUI(), 
         selected = 'complete'),
         sliderInput(ns(paste0("k_", dendtype)), "# of Clusters", 
-            min = 1, max = 10, value = 2))
+            min = 1, max = 10, value = 2),
+        checkboxInput(ns(paste0('lab',dendtype)), paste0(dendtype, ' Labels'), value = TRUE))
 }
 
 #' clustFunParamsUI

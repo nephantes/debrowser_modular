@@ -6,7 +6,7 @@ library(gplots)
 library(colourpicker)
 source("../R/plotSize.R")
 source("../R/heatmap.R")
-
+options(warn=-1)
 header <- dashboardHeader(
     title = "DEBrowser Heatmap"
 )
@@ -28,12 +28,14 @@ body <- dashboardBody(
 ui <- dashboardPage(header, sidebar, body, skin = "blue")
 
 server <- function(input, output, session) {
+    #filtd <-
+        # Filter out the rows that has maximum 100 reads in a sample
+    #    subset(a, apply(a, 1, max, na.rm = TRUE)  >=  10)
     withProgress(message = 'Creating plot', style = "notification", value = 0.1, {
-        selected <- callModule(debrowserheatmap, "heatmap", mtcars)
+        selected <- callModule(debrowserheatmap, "heatmap", filtd)
     })
     
     output$heatmap_hover <- renderPrint({
-       
         if (selected$shgClicked() != "")
             return(paste0("Clicked: ",selected$shgClicked()))
         else
