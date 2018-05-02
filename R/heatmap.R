@@ -16,23 +16,50 @@
 #'
 #'
 debrowserheatmap <- function( input, output, session, data){
+    
     output$heatmap <- renderPlotly({
         shinyjs::onevent("mousemove", "heatmap", js$getHoverName(session$ns("hoveredgenename")))
         shinyjs::onevent("click", "heatmap", js$getHoverName(session$ns("hoveredgenenameclick")))
         #shinyjs::onclick( "heatmap", js$getHoverName(session$ns("hoveredgenename1")))
-        withProgress(message = 'Drawing Heatmap', detail = "part 0", value = 0, {
-            runHeatmap(input, session, data)
+        withProgress(message = 'Drawing Heatmap', detail = "interactive", value = 0, {
+            runHeatmap(input, session, orderData())
         })
     })
+    output$heatmap2 <- renderPlot({
+        withProgress(message = 'Drawing Heatmap', detail = "non-interactive", value = 0, {
+            runHeatmap2(input, session, orderData())
+        })
+    })
+    heatdata <- reactive({
+        cld <- prepHeatData(data)
+        if (input$kmeansControl)
+        {
+            res <- niceKmeans(cld, input)
+            cld <- res$clustered
+        }
+        cld
+    })
     
+    button <- reactiveVal(FALSE)
+    orderData <- reactive({
+        newclus <- heatdata()
+        if (input$changeOrder && isolate(button()) && !is.null(input$clusterorder)){
+            newclus <- changeClusterOrder(isolate(input$clusterorder), newclus)
+        }
+        button(FALSE)
+        newclus
+    })
+    observeEvent(input$changeOrder,{
+        button(TRUE)
+    })
     output$heatmapUI <- renderUI({
+        if (is.null(input$interactive)) return(NULL)
         list(fluidRow(
         column(12,
         shinydashboard::box(
         collapsible = TRUE, title = "Heatmap", status = "primary", 
-        solidHeader = TRUE,
-        draggable = TRUE, plotlyOutput(session$ns("heatmap"),
-        height=input$height, width=input$width)
+        solidHeader = TRUE, width = input$width, height =  input$height + 100,
+        draggable = TRUE, getPlotArea(input, session)
         ))))
     })
     
@@ -46,6 +73,9 @@ debrowserheatmap <- function( input, output, session, data){
         input$hoveredgenename
     })
     observe({
+       if(!input$changeOrder)
+            updateTextInput(session, "clusterorder", value = paste(seq(1:input$knum), collapse=","))
+        
        if (is.null(shg()))
            js$getSelectedGenes()
     })
@@ -56,83 +86,80 @@ debrowserheatmap <- function( input, output, session, data){
     
     list( shg = (shg), shgClicked=(shgClicked), selGenes=(hselGenes))
 }
+#' getPlotArea
+#'
+#' returns plot area either for heatmaply or heatmap.2
+#' @param input, input variables
+#' @param session, session 
+#' @return heatmapply/heatmap.2 plot area
+#'
+#' @examples
+#'     x <- getPlotArea()
+#'
+#' @export
+#' @import getPlotArea
+#'
+#'
+getPlotArea <- function(input, session){
+    ret <- c()
+
+    if (input$interactive){
+        ret <- plotlyOutput(session$ns("heatmap"),
+            height=input$height, width=input$width)
+    }
+    else{
+        ret <- plotOutput(session$ns("heatmap2"),
+            height = input$height, input$width)
+    }
+    ret
+}
+
+
 
 #' runHeatmap
 #'
-#' Creates a heatmap based on the user selected parameters within shiny.#'
+#' Creates a heatmap based on the user selected parameters within shiny
 #' @param input, input variables
 #' @param session, session 
 #' @param data, a matrix that includes expression values
 #' @return heatmapply plot
 #'
 #' @examples
-#'     x <- heatmaply(mtcars)
+#'     x <- runHeatmap(mtcars)
 #'
 #' @export
-#' @import heatmaply
+#' @import runHeatmap
 #'
 #'
 runHeatmap <- function(input, session, data){
-    cld <- prepHeatData(data)
-
-        hclustfun_row <- function(x, ...) hclust(x, method = input$hclustFun_Row)
-        hclustfun_col <- function(x, ...) hclust(x, method = input$hclustFun_Col)
-        distfun_row <- function(x, ...) {
-            if (input$distFun_Row != "cor") {
-                return(dist(x, method = input$distFun_Row))
-            } else {
-                return(as.dist(1 - cor(t(x))))
-            }
+    cld <-data
+    hclustfun_row <- function(x, ...) hclust(x, method = input$hclustFun_Row)
+    hclustfun_col <- function(x, ...) hclust(x, method = input$hclustFun_Col)
+    distfun_row <- function(x, ...) {
+        if (input$distFun_Row != "cor") {
+            return(dist(x, method = input$distFun_Row))
+        } else {
+            return(as.dist(1 - cor(t(x))))
         }
-        distfun_col <- function(x, ...) {
-            if (input$distFun_Col != "cor") {
-                return(dist(x, method = input$distFun_Col))
-            } else {
-                return(as.dist(1 - cor(t(x))))
-            }
-        }
-    
-    if (input$kmeansControl)
-    {
-        print("BEFORE")
-        print(head(cld))
-        res <- niceKmeans(cld, input)
-        updateTextInput(session, "clusterorder", value = paste(seq(1:input$knum), collapse=","))
-        cld <- data.frame(res$clustered)
-        cld <- as.matrix(cld [, -match("class",names(cld))])
-        reorderfun = function(d,w) { d }
-        #cld <- as.matrix(res$clustered)
-        print("AFTER")
-        print(head(cld))
     }
-    if (!input$customColors )  
+    distfun_col <- function(x, ...) {
+        if (input$distFun_Col != "cor") {
+            return(dist(x, method = input$distFun_Col))
+        } else {
+            return(as.dist(1 - cor(t(x))))
+        }
+    }
+
+    if (!input$customColors ) {
         heatmapColors <- eval(parse(text=paste0(input$pal,
             '(',input$ncol,')')))
+    }
     else{
         if (!is.null(input$color1))
             heatmapColors <- colorRampPalette(c(input$color1, 
                 input$color2, input$color3))(n = 1000)
         #heatmapColors <- colorRampPalette(c("red", "white", "blue"))(n = 1000)
     }
-    dat <- reactiveValues()
-    orderData <- reactive({
-        # if (input$changeOrder)
-        #     return(dat$newcluster)
-        cld
-    })
-
-    # observeEvent(input$changeOrder, {
-    #     newcluster <- cld
-    #     if (input$kmeansControl){
-    #         idx <- as.integer(as.vector(unlist(strsplit(input$clusterorder, ","))))
-    #         da <- data.frame(cld)
-    #         for (i in 1:length(idx)) {
-    #             newcluster <- rbind(newcluster, da[da$class == idx[i], ])
-    #         }
-    #         dat$newcluster <- newcluster
-    #     }
-    # })
-    # 
     
     if (!input$kmeansControl){
     p <- heatmaply(cld,
@@ -154,15 +181,20 @@ runHeatmap <- function(input, session, data){
         k_row = input$k_Row
         ) 
     }else {
-       rhcr <- hclust(dist(orderData()))
-       chrc <- hclust(dist(t(orderData())))
-       p <- heatmaply(orderData(),
+       if (!input$showClasses){
+          cld <- data.frame(cld)
+          cld <- as.matrix(cld [, -match("class",names(cld))])
+       }
+       rhcr <- hclust(dist(cld))
+       chrc <- hclust(dist(t(cld)))
+       p <- heatmaply(cld,
        main = input$main,
        xlab = input$xlab,
        ylab = input$ylab,
        row_text_angle = input$row_text_angle,
        column_text_angle = input$column_text_angle,
-       dendrogram = input$dendrogram,
+       #dendrogram = input$dendrogram,
+       dendrogram = "none",
        branches_lwd = input$branches_lwd,
        seriate = input$seriation,
        colors = heatmapColors,
@@ -184,11 +216,90 @@ runHeatmap <- function(input, session, data){
     p
 }
 
+#' runHeatmap2
+#'
+#' Creates a heatmap based on the user selected parameters within shiny
+#' @param input, input variables
+#' @param session, session 
+#' @param data, a matrix that includes expression values
+#' @return heatmap.2
+#'
+#' @examples
+#'     x <- runHeatmap2(mtcars)
+#'
+#' @export
+#'
+#'
+runHeatmap2 <- function(input, session, data){
+    if(is.null(data)) return(NULL)
+    if (nrow(data)>5000)
+        data <- data[1:5000, ]
+
+    if (!input$customColors ) {
+        heatmapColors <- eval(parse(text=paste0(input$pal,
+                                                '(',input$ncol,')')))
+    }
+    else{
+        if (!is.null(input$color1))
+            heatmapColors <- colorRampPalette(c(input$color1, 
+                                                input$color2, input$color3))(n = 1000)
+        #heatmapColors <- colorRampPalette(c("red", "white", "blue"))(n = 1000)
+    }
+    
+    hclustfun_row <- function(x, ...) hclust(x, method = input$hclustFun_Row)
+    distfun_row <- function(x, ...) {
+        if (input$distFun_Row != "cor") {
+            return(dist(x, method = input$distFun_Row))
+        } else {
+            return(as.dist(1 - cor(t(x))))
+        }
+    }
+    if (!input$showClasses && "class" %in% names(data) ){
+        data <- data.frame(data)
+        data <- as.matrix(data [, -match("class",names(data))])
+    }
+    if (input$kmeansControl){
+        m <- heatmap.2(as.matrix(data), Rowv = F, main = input$main, dendrogram = input$dendrogram,
+           Colv = F, col = heatmapColors, labRow = input$labRow,
+           distfun = distfun_row, hclustfun = hclustfun_row, density.info = "none",
+           trace = "none", margins = c(10,10))
+    }else{
+        m <- heatmap.2(as.matrix(data), main = input$main, dendrogram = input$dendrogram,
+           col = heatmapColors, labRow = input$labRow,
+           distfun = distfun_row, hclustfun = hclustfun_row, density.info = "none",
+           trace = "none", margins = c(10,10))
+    }
+    m
+}
+
+
+#' changeClusterOrder
+#'
+#' change order of K-means clusters
+#'
+#' @note \code{changeClusterOrder}
+#' @param id, module ID
+#' @return heatmap plot area
+#' @examples
+#'     x <- changeClusterOrder()
+#' @export
+#'
+changeClusterOrder <- function(order, cld){
+    newcluster <- c()
+    idx <- as.integer(as.vector(unlist(strsplit(order, ","))))
+    da <- data.frame(cld)
+    for (i in 1:length(idx)) {
+        newcluster <- rbind(newcluster, da[da$class == idx[i], ])
+    }
+    newcluster
+}
+
+
 #' niceKmeans
 #'
 #' Generates hierarchially clustered K-means clusters
 #'
-#' @note \code{getHeatmapUI}
+#' @note \code{niceKmeans}
 #' @param id, module ID
 #' @return heatmap plot area
 #' @examples
@@ -197,7 +308,6 @@ runHeatmap <- function(input, session, data){
 #'
 niceKmeans <-function (df, input, iter.max = 1000, nstart=100) {
     source <-df
-
     kmeans <- kmeans(source, centers = input$knum, iter.max = iter.max, algorithm=input$kmeansalgo, nstart=nstart)
     clustered <- data.frame()
     distfun_row <- function(x, ...) {
@@ -264,6 +374,7 @@ getHeatmapUI <- function(id) {
 heatmapControlsUI <- function(id) {
     ns <- NS(id)
     list(
+        checkboxInput(ns('interactive'), 'Interactive', value = FALSE),
         kmeansControlsUI(id),
         dendControlsUI(id, "Row"),
         dendControlsUI(id, "Col"),
@@ -315,7 +426,8 @@ kmeansControlsUI <- function(id) {
                 "MacQueen"), selected = 'Lloyd'),
             textInput(ns('clusterorder'), 
                 'The order of the clusters', ""),
-            actionButton(ns("changeOrder"), label = "Change Order", styleclass = "primary")))
+            actionButton(ns("changeOrder"), label = "Change Order", styleclass = "primary"),
+        checkboxInput(ns('showClasses'), 'Show Classes', value = FALSE)))
 }
 #' dendControlsUI
 #'
@@ -442,7 +554,8 @@ customColorsUI <- function(id) {
 prepHeatData <- function(data) 
 {
     if(is.null(data)) return(NULL)
-    ld <- log2(data + 0.1)
+    ld <- data
+    #ld <- log2(data + 0.1)
     cldt <- scale(t(ld), center = TRUE, scale = TRUE)
     cld <- t(cldt)
     return(cld)

@@ -41,7 +41,6 @@ server <- function(input, output, session) {
         else
             return(paste0("Hovered:", selected$shg()))
     })
-
     output$heatmap_selected <- renderPrint({
          selected$selGenes()
     })
