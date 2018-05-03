@@ -92,6 +92,7 @@ debrowserdataload <- function(input, output, session) {
         }
         return(ret)
     })
+    
     observe({
         getSampleDetails(output, "uploadSummary", "sampleDetails", loadeddata())
     })
@@ -118,8 +119,9 @@ dataLoadUI<- function (id) {
              fileUploadBox(id, "metadata", "Metadata")
         ),
         fluidRow(column(12,
-        actionButton(ns("uploadFile"), label = "Upload"), 
-        actionButton(ns("demo"),  label = "Load Demo!"))
+        actionButton(ns("uploadFile"), label = "Upload", styleclass = "primary"), 
+        actionButton(ns("demo"),  label = "Load Demo!", styleclass = "primary"),
+        actionButton("Filter", label = "Filter", styleclass = "primary"))
         ),
   fluidRow(
     shinydashboard::box(title = "Upload Summary",

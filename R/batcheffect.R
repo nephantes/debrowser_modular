@@ -47,11 +47,11 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
   observe({
     getSampleDetails(output, "uploadSummary", "sampleDetails", ldata)
     getSampleDetails(output, "filteredSummary", "filteredDetails", batcheffectdata())
-    getTableDetails(output, session, "loadedtable", ldata$count, modal=TRUE)
+    getTableDetails(output, session, "beforebatchtable", ldata$count, modal=TRUE)
     callModule(debrowserIQRplot, "beforeCorrection",  ldata$count)
     if ( !is.null(batcheffectdata()$count ) && nrow(batcheffectdata()$count)>2 ){
       withProgress(message = 'Drawing the plot', detail = "Preparing!", value = NULL, {
-       getTableDetails(output, session, "batcheffecttable", batcheffectdata()$count, modal=TRUE)
+       getTableDetails(output, session, "afterbatchtable", batcheffectdata()$count, modal=TRUE)
        callModule(debrowserIQRplot, "afterCorrection",  batcheffectdata()$count)
       })
     }
@@ -81,7 +81,7 @@ batchEffectUI<- function (id) {
           column(5,div(style = 'overflow: scroll',
                        tableOutput(ns("uploadSummary")),
                        DT::dataTableOutput(ns("sampleDetails"))),
-                 uiOutput(ns("loadedtable"))
+                 uiOutput(ns("beforebatchtable"))
           ),
           column(2,
              shinydashboard::box(title = "Correction Methods",
@@ -96,7 +96,7 @@ batchEffectUI<- function (id) {
                        
                        tableOutput(ns("filteredSummary")),
                        DT::dataTableOutput(ns("filteredDetails"))),
-                 uiOutput(ns("filteredtable"))
+                 uiOutput(ns("afterbatchtable"))
                  
           )
         ),
@@ -148,8 +148,8 @@ batchMethodRadio <- function(id) {
 #'     x<-correctCombat ()
 correctCombat <- function (input = NULL, idata = NULL, metadata = NULL) {
   if (is.null(idata) || input$batch == "None") return(NULL)
-  batch <- as.factor(metadata[, input$batch])
-  treatment <- as.factor(metadata[, input$treatment])
+  batch <- metadata[, input$batch]
+  treatment <- metadata[, input$treatment]
   columns <- colnames(idata)
   meta <- data.frame(cbind(columns, treatment, batch))
   datacor <- data.frame(idata[, columns])
@@ -161,7 +161,7 @@ correctCombat <- function (input = NULL, idata = NULL, metadata = NULL) {
   
   modcombat = model.matrix(~1, data = meta)
   
-  combat_blind = ComBat(dat=datacor, batch=batch)
+  combat_blind = ComBat(dat=as.matrix(datacor), batch=batch)
   
   a <- cbind(idata[rownames(combat_blind), 2], combat_blind)
   

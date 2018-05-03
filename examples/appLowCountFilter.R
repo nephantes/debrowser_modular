@@ -1,5 +1,6 @@
 library(debrowser)
 library(shiny)
+library(shinyBS)
 library(shinydashboard)
 source("../R/plotSize.R")
 source("../R/funcs.R")

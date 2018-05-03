@@ -24,12 +24,12 @@ debrowserlowcountfilter <- function(input, output, session, ldata) {
 
     if (input$lcfmethod == "Max"){
       filtd <- subset(filtd, apply(filtd, 1, max, na.rm = TRUE)  >=  as.numeric(input$maxCutoff))
-    } else if (input$lcfmethod == "RowSum") {
-      filtd <- subset(filtd, rowSums(filtd) >= as.numeric(input$rowsumCutoff))
+    } else if (input$lcfmethod == "Mean") {
+      filtd <- subset(filtd, rowMeans(filtd, na.rm = TRUE) >= as.numeric(input$rowsumCutoff))
     }
     else if (input$lcfmethod == "CPM") {
       cpmcount <- edgeR::cpm(filtd)
-      filtd <- subset(filtd, rowSums(cpmcount > as.numeric(input$CPMCutoff) ) >= as.numeric(input$numSample))
+      filtd <- subset(filtd, rowSums(cpmcount > as.numeric(input$CPMCutoff) , na.rm = TRUE) >= as.numeric(input$numSample))
     }
     fdata$count <- filtd
     fdata$meta <- ldata$meta
@@ -104,7 +104,8 @@ dataLCFUI<- function (id) {
                                  uiOutput(ns("filteredtable"))
 
                             )
-                          )
+                          ),
+                          actionButton("Batch", label = "Batch Effect Correction", styleclass = "primary")
       )
     ))
 }
