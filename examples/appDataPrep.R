@@ -6,6 +6,10 @@ source("../R/plotSize.R")
 source("../R/funcs.R")
 source("../R/dataLoad.R")
 source("../R/lowcountfilter.R")
+source("../R/IQR.R")
+source("../R/pca.R")
+source("../R/density.R")
+source("../R/histogram.R")
 
 options(shiny.maxRequestSize = 30*1024^2)
 
@@ -42,12 +46,16 @@ server <- function(input, output, session) {
         ret
     })
     observeEvent (input$Filter, {
-        updateTabItems(session, "DataPrep", "Filter")
-        filtd(callModule(debrowserlowcountfilter, "lcf", updata()$load()))
+        if(!is.null(updata()$load())){ 
+            updateTabItems(session, "DataPrep", "Filter")
+            filtd(callModule(debrowserlowcountfilter, "lcf", updata()$load()))
+        }
     })
     observeEvent (input$Batch, {
-        updateTabItems(session, "DataPrep", "BatchEffect")
-        batch(callModule(debrowserbatcheffect, "batcheffect", filtd()$filter()))
+        if(!is.null(filtd()$filter())){ 
+            updateTabItems(session, "DataPrep", "BatchEffect")
+            batch(callModule(debrowserbatcheffect, "batcheffect", filtd()$filter()))
+        }
     })
     
     output$loadedtable <- renderPrint({

@@ -23,8 +23,11 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
     if (input$batchmethod == "Combat"){
        batchdata$count <- correctCombat(input, ldata$count, ldata$meta)
     }
-    else{
+    else if (input$batchmethod == "Harman"){
        batchdata$count <- correctHarman(input, ldata$count, ldata$meta)
+    }
+    else{
+        batchdata$count <-  ldata$count
     }
     })
     batchdata$meta <- ldata$meta
@@ -32,8 +35,9 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
   
   output$batchfields <- renderUI({
     if (!is.null(ldata$meta))
-        list(selectGroupInfo( ldata$meta, input, session$ns("treatment"), "Treatment"),
-        selectGroupInfo( ldata$meta, input, session$ns("batch"), "Batch"))
+        list( conditionalPanel(condition <- paste0("input['", session$ns("batchmethod"),"']!='none'"),
+             selectGroupInfo( ldata$meta, input, session$ns("treatment"), "Treatment"),
+             selectGroupInfo( ldata$meta, input, session$ns("batch"), "Batch")))
   })
   
   batcheffectdata <- reactive({
@@ -48,11 +52,15 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
     getSampleDetails(output, "uploadSummary", "sampleDetails", ldata)
     getSampleDetails(output, "filteredSummary", "filteredDetails", batcheffectdata())
     getTableDetails(output, session, "beforebatchtable", ldata$count, modal=TRUE)
-    callModule(debrowserIQRplot, "beforeCorrection",  ldata$count)
+    callModule(debrowserpcaplot, "beforeCorrectionPCA", ldata$count, ldata$meta)
+    callModule(debrowserIQRplot, "beforeCorrectionIQR",  ldata$count)
+    callModule(debrowserdensityplot, "beforeCorrectionDensity", ldata$count)
     if ( !is.null(batcheffectdata()$count ) && nrow(batcheffectdata()$count)>2 ){
       withProgress(message = 'Drawing the plot', detail = "Preparing!", value = NULL, {
        getTableDetails(output, session, "afterbatchtable", batcheffectdata()$count, modal=TRUE)
-       callModule(debrowserIQRplot, "afterCorrection",  batcheffectdata()$count)
+       callModule(debrowserpcaplot, "afterCorrectionPCA",  batcheffectdata()$count, batcheffectdata()$meta)
+       callModule(debrowserIQRplot, "afterCorrectionIQR",  batcheffectdata()$count)
+       callModule(debrowserdensityplot, "afterCorrectionDensity", batcheffectdata()$count)
       })
     }
   })
@@ -84,53 +92,95 @@ batchEffectUI<- function (id) {
                  uiOutput(ns("beforebatchtable"))
           ),
           column(2,
-             shinydashboard::box(title = "Correction Methods",
+             shinydashboard::box(title = "Options",
                  solidHeader = T, status = "info",
                  width = 12, 
-                 batchMethodRadio(id),
+                 normalizationMethods(id),
+                 batchMethod(id),
                  uiOutput(ns("batchfields")),
                  actionButton(ns("submitBatchEffect"), label = "Submit", styleclass = "primary")
            )
           ),
           column(5,div(style = 'overflow: scroll', 
-                       
                        tableOutput(ns("filteredSummary")),
                        DT::dataTableOutput(ns("filteredDetails"))),
                  uiOutput(ns("afterbatchtable"))
-                 
           )
-        ),
-        fluidRow(
-            column(5,
-                   getIQRPlotUI(ns("beforeCorrection"))),
-            column(2, div()),
-            column(5,
-                   getIQRPlotUI(ns("afterCorrection")))
+        )),
+      shinydashboard::box(title = "Plots",
+        solidHeader = T, status = "info",  width = 12, 
+        fluidRow(column(1, div()),
+            tabsetPanel( id = ns("batchTabs"),
+                tabPanel(id = ns("PCA"), "PCA",
+                    column(5,
+                        getPCAPlotUI(ns("beforeCorrectionPCA"))),
+                    column(2,  shinydashboard::box(title = "Before Correction",
+                                                   solidHeader = T, status = "info",
+                                                   width = 12,
+                           pcaPlotControlsUI(ns("beforeCorrectionPCA"))),
+                           shinydashboard::box(title = "After Correction",
+                                               solidHeader = T, status = "info",
+                                               width = 12,
+                              pcaPlotControlsUI(ns("afterCorrectionPCA")))),
+                    column(5,
+                        getPCAPlotUI(ns("afterCorrectionPCA")))
+                ),
+                tabPanel(id = ns("IQR"), "IQR",
+                    column(5,
+                        getIQRPlotUI(ns("beforeCorrectionIQR"))),
+                    column(2, div()),
+                    column(5,
+                        getIQRPlotUI(ns("afterCorrectionIQR")))
+                ),
+                tabPanel(id = ns("Density"), "Density",
+                    column(5,
+                        getDensityPlotUI(ns("beforeCorrectionDensity"))),
+                    column(2, div()),
+                    column(5,
+                        getDensityPlotUI(ns("afterCorrectionDensity")))
+                )
+            )
         )
       )
     ))
 }
-
-#' batchMethodRadio
+#' normalizationMethods
 #'
-#' Radio buttons to sellect batch effect method
+#' Select box to select normalization method prior to batch effect correction
 #'
-#' @note \code{batchMethodRadio}
+#' @note \code{normalizationMethods}
 #' @return radio control
 #'
 #' @examples
 #'    
-#'     x <- batchMethodRadio()
+#'     x <- normalizationMethods()
 #'
 #' @export
 #'
-batchMethodRadio <- function(id) {
+normalizationMethods <- function(id) {
+    ns <- NS(id)
+    selectInput(ns("norm_method"), "Normalization Method:",
+        choices <- c("none", "DESeq2", "TMM", "RLE", "upperquartile"))
+}
+
+
+#' batchMethod
+#'
+#' select batch effect method
+#'
+#' @note \code{batchMethod}
+#' @return radio control
+#'
+#' @examples
+#'    
+#'     x <- batchMethod()
+#'
+#' @export
+#'
+batchMethod <- function(id) {
   ns <- NS(id)
-  radioButtons(inputId=ns("batchmethod"), 
-               label="Correction method:",
-               choices=c(Combat='Combat',
-                         Harman='Harman'
-               ),
+  selectInput(ns("batchmethod"), "Correction Method:",
+              choices <- c("none", "Combat", "Harman"),
                selected='Combat'
   )
 }

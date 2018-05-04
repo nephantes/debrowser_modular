@@ -10,6 +10,8 @@ source("../R/plotSize.R")
 source("../R/funcs.R")
 source("../R/batcheffect.R")
 source("../R/IQR.R")
+source("../R/pca.R")
+source("../R/density.R")
 
 header <- dashboardHeader(
     title = "DEBrowser Batch Effect"
@@ -25,7 +27,7 @@ body <- dashboardBody(
                 )
         )
     ))
-                
+
 ui <- dashboardPage(header, sidebar, body, skin = "blue")
 
 server <- function(input, output, session) {

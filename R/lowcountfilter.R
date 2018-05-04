@@ -16,7 +16,6 @@
 debrowserlowcountfilter <- function(input, output, session, ldata) {
   
   fdata <- reactiveValues(count=NULL, meta = NULL)
-  
   observeEvent(input$submitLCF, {
     if (is.null(ldata$count)) return (NULL)
     filtd <- ldata$count
@@ -25,7 +24,7 @@ debrowserlowcountfilter <- function(input, output, session, ldata) {
     if (input$lcfmethod == "Max"){
       filtd <- subset(filtd, apply(filtd, 1, max, na.rm = TRUE)  >=  as.numeric(input$maxCutoff))
     } else if (input$lcfmethod == "Mean") {
-      filtd <- subset(filtd, rowMeans(filtd, na.rm = TRUE) >= as.numeric(input$rowsumCutoff))
+      filtd <- subset(filtd, rowMeans(filtd, na.rm = TRUE) >= as.numeric(input$meanCutoff))
     }
     else if (input$lcfmethod == "CPM") {
       cpmcount <- edgeR::cpm(filtd)
@@ -37,8 +36,8 @@ debrowserlowcountfilter <- function(input, output, session, ldata) {
   
   output$cutoffLCFMet <- renderUI({
     ret<-textInput(session$ns("maxCutoff"), "Filter features where Max Value <", value = "10" )
-    if (input$lcfmethod == "RowSum"){
-      ret<-textInput(session$ns("rowsumCutoff"), "Filter features where Row Sum <", value = "10" )
+    if (input$lcfmethod == "Mean"){
+      ret<-textInput(session$ns("meanCutoff"), "Filter features where Row Means <", value = "10" )
     }
     else if (input$lcfmethod == "CPM"){
       ret <- list(textInput(session$ns("CPMCutoff"), "Filter features where CPM <", value = "1" ),
@@ -59,8 +58,12 @@ debrowserlowcountfilter <- function(input, output, session, ldata) {
     getSampleDetails(output, "uploadSummary", "sampleDetails", ldata)
     getSampleDetails(output, "filteredSummary", "filteredDetails", filtereddata())
     getTableDetails(output, session, "loadedtable",  data = ldata$count,  modal = TRUE)
-    if ( !is.null(filtereddata()$count ) && nrow(filtereddata()$count)>2 )
+    callModule(debrowserhistogram, "beforeFiltering", ldata$count)
+    
+    if ( !is.null(filtereddata()$count ) && nrow(filtereddata()$count)>2 ) {
         getTableDetails(output, session, "filteredtable",  data = filtereddata()$count, modal = TRUE)
+        callModule(debrowserhistogram, "afterFiltering", filtereddata()$count)
+    }
   })
   
   list(filter=filtereddata)
@@ -106,7 +109,15 @@ dataLCFUI<- function (id) {
                             )
                           ),
                           actionButton("Batch", label = "Batch Effect Correction", styleclass = "primary")
-      )
+      ),
+      shinydashboard::box(title = "Histograms",
+                          solidHeader = T, status = "info",  width = 12, 
+      fluidRow(
+          column(6,histogramControlsUI(ns("beforeFiltering")),
+                 getHistogramUI(ns("beforeFiltering"))),
+          column(6,histogramControlsUI(ns("afterFiltering")),
+                 getHistogramUI(ns("afterFiltering")))
+      ))
     ))
 }
 
@@ -128,7 +139,7 @@ lcfMetRadio <- function(id) {
   radioButtons(inputId=ns("lcfmethod"), 
                label="Low count filtering method:",
                choices=c(Max='Max',
-                         RowSum='RowSum',
+                         Mean='Mean',
                          CPM='CPM'
                ),
                selected='Max'
