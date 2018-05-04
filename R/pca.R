@@ -81,12 +81,10 @@ debrowserpcaplot <- function(input, output, session, pcadata = NULL, metadata = 
 #'
 pcaPlotControlsUI <- function(id) {
     ns <- NS(id)
-    shinydashboard::menuItem("PCA Options",
-    getPCselection(id, 1, "x"),
-    getPCselection(id, 2, "y"),
-    textInput(ns("pctile"), "Top %", value = "0.05" ),
-    getTextOnOff(id),
-    getLegendSelect(id),
+    list(fluidRow(column(6, getPCselection(id, 1, "x")), 
+         column(6, getPCselection(id, 2, "y"))),
+         fluidRow(column(6, getTextOnOff(id)),
+         column(6, getLegendSelect(id))),
     uiOutput(ns("colorShapeSelect")))
 }
 
@@ -370,8 +368,8 @@ getPCselection <- function(id, num = 1, xy = "x" ) {
 #'
 getColorShapeSelection <- function(metadata = NULL, input = NULL, session = NULL) {
     if (is.null(metadata)) return (NULL)
-    list(selectGroupInfo(metadata, input, session$ns("color_pca"), "Color field"),
-         selectGroupInfo(metadata, input, session$ns("shape_pca"), "Shape field"))
+    list(fluidRow(column(6, selectGroupInfo(metadata, input, session$ns("color_pca"), "Color field")),
+    column(6, selectGroupInfo(metadata, input, session$ns("shape_pca"), "Shape field"))))
 }
 
 #' getLegendSelect

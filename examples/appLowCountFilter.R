@@ -4,6 +4,7 @@ library(shinyBS)
 library(shinydashboard)
 source("../R/plotSize.R")
 source("../R/funcs.R")
+source("../R/histogram.R")
 source("../R/lowcountfilter.R")
 source("../R/downloadData.R")
 
@@ -21,7 +22,7 @@ body <- dashboardBody(
                 )
         )
     ))
-                
+
 ui <- dashboardPage(header, sidebar, body, skin = "blue")
 
 server <- function(input, output, session) {

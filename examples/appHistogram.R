@@ -11,9 +11,11 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(  sidebarMenu(id="DataAssessment",
     menuItem("Histogram", tabName = "Histogram"),
     textInput("maxCutoff", "Max Cutoff", value = "10" ),
-    histogramControlsUI("histogram"),
+    shinydashboard::menuItem("histogram - Options",
+    histogramControlsUI("histogram")),
     plotSizeMarginsUI("histogram", w=400, h=300),
-    histogramControlsUI("afterFiltering"),
+    shinydashboard::menuItem("afterFiltering - Options",
+    histogramControlsUI("afterFiltering")),
     plotSizeMarginsUI("afterFiltering", w=400, h=300)
 ))
 

@@ -32,7 +32,9 @@ getHistogramUI <- function(id) {
 #'
 debrowserhistogram <- function(input, output, session, data = NULL) {
     output$histogram <- renderPlotly({
+       
       h <- hist(log10(rowSums(data)), breaks = as.numeric(input$breaks), plot = FALSE)
+      
       p <- plot_ly(x = h$mids, y = h$counts, 
           width = input$width, height=input$height) %>% 
       add_bars() %>%
@@ -66,7 +68,5 @@ debrowserhistogram <- function(input, output, session, data = NULL) {
 #'
 histogramControlsUI <- function(id) {
   ns <- NS(id)
-  shinydashboard::menuItem(paste0(id, " - Options"),
-      textInput(ns("breaks"), "Breaks", value = "100" )
-  )
+  textInput(ns("breaks"), "Breaks", value = "100" )
 }

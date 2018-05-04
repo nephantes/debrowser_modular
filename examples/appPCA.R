@@ -10,7 +10,8 @@ header <- dashboardHeader(
 )
 sidebar <- dashboardSidebar(  sidebarMenu(id="DataAssessment",
     menuItem("PCA", tabName = "PCA"),
-    pcaPlotControlsUI("pca"),
+    menuItem("PCA Options",
+    pcaPlotControlsUI("pca")),
     plotSizeMarginsUI("pca", w=600, h=400, t=50, b=50, l=60, r=0)
     ))
 
