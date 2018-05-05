@@ -15,19 +15,31 @@
 #'
 debrowserbatcheffect <- function(input, output, session, ldata) {
   
-  batchdata <- reactiveValues(count=NULL, meta = NULL)
+    batchdata <- reactiveValues(count=NULL, meta = NULL)
   
-  observeEvent(input$submitBatchEffect, {
+    observeEvent(input$submitBatchEffect, {
     if (is.null(ldata$count)) return (NULL)
+    
+    countData <- ldata$count
+    print("Before normalized")
+    print(head(countData))
+    withProgress(message = 'Normalization', detail = "Normalization", value = NULL, {
+        if (input$norm_method != "none"){
+             countData <- getNormalizedMatrix(ldata$count, method=input$norm_method)
+        }
+    })
+    print("After normalized")
+    print(head(countData))
+    
     withProgress(message = 'Batch Effect Correction', detail = "Adjusting the Data", value = NULL, {
     if (input$batchmethod == "Combat"){
-       batchdata$count <- correctCombat(input, ldata$count, ldata$meta)
+        batchdata$count <- correctCombat(input, countData, ldata$meta)
     }
     else if (input$batchmethod == "Harman"){
-       batchdata$count <- correctHarman(input, ldata$count, ldata$meta)
+        batchdata$count <- correctHarman(input, countData, ldata$meta)
     }
     else{
-        batchdata$count <-  ldata$count
+        batchdata$count <-  countData
     }
     })
     batchdata$meta <- ldata$meta
@@ -79,32 +91,32 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
 #'
 #' @export
 #'
-batchEffectUI<- function (id) {
+batchEffectUI <- function (id) {
   ns <- NS(id)
   list(
     fluidRow(
-      shinydashboard::box(title = "Batch Effect Correction",
+        shinydashboard::box(title = "Batch Effect Correction and Normalization",
         solidHeader = T, status = "info",  width = 12, 
         fluidRow(
-          column(5,div(style = 'overflow: scroll',
-                       tableOutput(ns("uploadSummary")),
-                       DT::dataTableOutput(ns("sampleDetails"))),
-                 uiOutput(ns("beforebatchtable"))
-          ),
-          column(2,
-             shinydashboard::box(title = "Options",
-                 solidHeader = T, status = "info",
-                 width = 12, 
-                 normalizationMethods(id),
-                 batchMethod(id),
-                 uiOutput(ns("batchfields")),
-                 actionButton(ns("submitBatchEffect"), label = "Submit", styleclass = "primary")
+            column(5,div(style = 'overflow: scroll',
+                tableOutput(ns("uploadSummary")),
+                DT::dataTableOutput(ns("sampleDetails"))),
+                uiOutput(ns("beforebatchtable"))
+            ),
+            column(2,
+            shinydashboard::box(title = "Options",
+                solidHeader = T, status = "info",
+                width = 12, 
+                normalizationMethods(id),
+                batchMethod(id),
+                uiOutput(ns("batchfields")),
+                actionButton(ns("submitBatchEffect"), label = "Submit", styleclass = "primary")
            )
           ),
           column(5,div(style = 'overflow: scroll', 
-                       tableOutput(ns("filteredSummary")),
-                       DT::dataTableOutput(ns("filteredDetails"))),
-                 uiOutput(ns("afterbatchtable"))
+                tableOutput(ns("filteredSummary")),
+                DT::dataTableOutput(ns("filteredDetails"))),
+                uiOutput(ns("afterbatchtable"))
           )
         )),
       shinydashboard::box(title = "Plots",
@@ -115,13 +127,13 @@ batchEffectUI<- function (id) {
                     column(5,
                         getPCAPlotUI(ns("beforeCorrectionPCA"))),
                     column(2,  shinydashboard::box(title = "Before Correction",
-                                                   solidHeader = T, status = "info",
-                                                   width = 12,
-                           pcaPlotControlsUI(ns("beforeCorrectionPCA"))),
-                           shinydashboard::box(title = "After Correction",
-                                               solidHeader = T, status = "info",
-                                               width = 12,
-                              pcaPlotControlsUI(ns("afterCorrectionPCA")))),
+                        solidHeader = T, status = "info",
+                        width = 12,
+                        pcaPlotControlsUI(ns("beforeCorrectionPCA"))),
+                        shinydashboard::box(title = "After Correction",
+                        solidHeader = T, status = "info",
+                        width = 12,
+                        pcaPlotControlsUI(ns("afterCorrectionPCA")))),
                     column(5,
                         getPCAPlotUI(ns("afterCorrectionPCA")))
                 ),
@@ -162,7 +174,6 @@ normalizationMethods <- function(id) {
     selectInput(ns("norm_method"), "Normalization Method:",
         choices <- c("none", "DESeq2", "TMM", "RLE", "upperquartile"))
 }
-
 
 #' batchMethod
 #'
@@ -211,7 +222,7 @@ correctCombat <- function (input = NULL, idata = NULL, metadata = NULL) {
   
   modcombat = model.matrix(~1, data = meta)
   
-  combat_blind = ComBat(dat=as.matrix(datacor), batch=batch)
+  combat_blind = sva::ComBat(dat=as.matrix(datacor), batch=batch)
   
   a <- cbind(idata[rownames(combat_blind), 2], combat_blind)
   

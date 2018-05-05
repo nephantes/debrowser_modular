@@ -6,12 +6,14 @@ library(shinyBS)
 library(reshape2)
 library(shinydashboard)
 library(plotly)
+library(DESeq2)
 source("../R/plotSize.R")
 source("../R/funcs.R")
 source("../R/batcheffect.R")
 source("../R/IQR.R")
 source("../R/pca.R")
 source("../R/density.R")
+source("../R/deprogs.R")
 
 header <- dashboardHeader(
     title = "DEBrowser Batch Effect"

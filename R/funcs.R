@@ -281,12 +281,22 @@ getNormalizedMatrix <- function(M = NULL, method = "TMM") {
     
     M[is.na(M)] <- 0
     norm <- M
-    if (method != "none"){
-        M <- M[rowSums(M)>0, ]
-        if (is.null(M) ) return (NULL)
+    M <- M[rowSums(M)>0, ]
+    if (is.null(M) ) return (NULL)
+    if (!(method == "none" || method == "DESeq2")){
         norm.factors <- edgeR::calcNormFactors(M, method = method)
         norm <- edgeR::equalizeLibSizes(edgeR::DGEList(M,
             norm.factors = norm.factors))$pseudo.counts
+    }else if(method == "DESeq2"){
+        columns <- colnames(M)
+        conds <- columns
+        coldata <- prepGroup(conds, columns)
+        M[, columns] <- apply(M[, columns], 2,
+            function(x) as.integer(x))
+        dds <- DESeqDataSetFromMatrix(countData = as.matrix(M),
+            colData = coldata, design = ~group)
+        dds <- estimateSizeFactors(dds)
+        norm <- counts(dds, normalized=TRUE)
     }
     return(norm)
 }
