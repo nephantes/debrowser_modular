@@ -12,8 +12,10 @@ source("../R/lowcountfilter.R")
 source("../R/batcheffect.R")
 source("../R/IQR.R")
 source("../R/pca.R")
+source("../R/deprogs.R")
 source("../R/density.R")
 source("../R/histogram.R")
+source("../R/downloadData.R")
 
 options(shiny.maxRequestSize = 30*1024^2)
 

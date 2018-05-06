@@ -1,12 +1,13 @@
 library(debrowser)
 library(shiny)
 library(shinyBS)
+library(shinyjs)
 library(shinydashboard)
+source("../R/downloadData.R")
 source("../R/plotSize.R")
 source("../R/funcs.R")
 source("../R/histogram.R")
 source("../R/lowcountfilter.R")
-source("../R/downloadData.R")
 
 header <- dashboardHeader(
     title = "DEBrowser Filter"

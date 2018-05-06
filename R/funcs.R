@@ -156,16 +156,29 @@ getBSTableUI<-function(name,  label, trigger, size="large", modal = NULL){
 getTableDetails <- function(output, session, tablename, data = NULL, modal = NULL){
     if (is.null(data)) return(NULL)
     tablenameUI <-  paste0(tablename,"Table")
+    output[[paste(tablename, "Download")]] <- downloadHandler(
+        filename = function() {
+            paste0(tablename,".tsv")
+        },
+        content = function(file) {
+            if(!("ID" %in% names(data)))
+                data <- addID(data)
+            write.table(data, file, sep = "\t", row.names = FALSE)
+        }
+    )
+    
     output[[tablename]] <- renderUI({
         ret <- getBSTableUI( session$ns(tablenameUI), "Show Data", paste0("show",tablename), modal = modal) 
         if (!is.null(modal) && modal)
-           ret <- list(actionButton(paste0("show",tablename), "Show Data", styleclass = "primary", icon="show"), ret)
+           ret <- list( downloadButton(session$ns(paste(tablename, "Download")), "Download"),
+               actionButton(paste0("show",tablename), "Show Data", styleclass = "primary", icon="show"),
+               ret)
         ret    
     })
     
     output[[tablenameUI]] <- DT::renderDataTable({
         if (!is.null(data)){
-            DT::datatable(data, , extensions = 'Buttons',
+            DT::datatable(data, extensions = 'Buttons',
             options = list( server = TRUE,
             dom = "Blfrtip",
             buttons = 

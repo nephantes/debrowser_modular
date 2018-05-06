@@ -21,15 +21,11 @@ debrowserbatcheffect <- function(input, output, session, ldata) {
     if (is.null(ldata$count)) return (NULL)
     
     countData <- ldata$count
-    print("Before normalized")
-    print(head(countData))
     withProgress(message = 'Normalization', detail = "Normalization", value = NULL, {
         if (input$norm_method != "none"){
              countData <- getNormalizedMatrix(ldata$count, method=input$norm_method)
         }
     })
-    print("After normalized")
-    print(head(countData))
     
     withProgress(message = 'Batch Effect Correction', detail = "Adjusting the Data", value = NULL, {
     if (input$batchmethod == "Combat"){

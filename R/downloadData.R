@@ -15,17 +15,12 @@
 debrowserdownload <- function(input, output, session, data = NULL) {
     
     output$downloadData <- downloadHandler(filename = function() {
-        session$ns("data.csv")
-    }, content = function(file) {
+        "data.csv"
+    }, content = function(filename) {
         if(!("ID" %in% names(data)))
             data <- addID(data)
         write.table(data, file, sep = ",", row.names = FALSE)
     })
-    
-   output$downloadButtonUI <- renderUI({
-       if (!is.null(data))
-        column(2, downloadButton(session$ns("downloadData"), "Download"))
-   })
 }
 
 
@@ -39,7 +34,8 @@ debrowserdownload <- function(input, output, session, data = NULL) {
 #'     x <- downloadSectionUI()
 #' @export
 #'
-downloadSectionUI <- function(id) {
+downloadObjUI <- function(id, ...) {
     ns <- NS(id)
-    uiOutput(ns("downloadButtonUI"))
+    
+    downloadButton(n("data_download"), label = "Download Data")
 }
